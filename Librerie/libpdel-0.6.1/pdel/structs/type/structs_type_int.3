@@ -1,0 +1,157 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: structs_type_int.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRUCTS_TYPE_INT 3
+.Os
+.Sh NAME
+.Nm structs_type_int
+.Nd structs types for integral types
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In pdel/structs/structs.h
+.In pdel/structs/type/int.h
+.Vt extern const struct structs_type structs_type_char ;
+.Vt extern const struct structs_type structs_type_uchar ;
+.Vt extern const struct structs_type structs_type_hchar ;
+.Vt extern const struct structs_type structs_type_short ;
+.Vt extern const struct structs_type structs_type_ushort ;
+.Vt extern const struct structs_type structs_type_hshort ;
+.Vt extern const struct structs_type structs_type_int ;
+.Vt extern const struct structs_type structs_type_uint ;
+.Vt extern const struct structs_type structs_type_hint ;
+.Vt extern const struct structs_type structs_type_long ;
+.Vt extern const struct structs_type structs_type_ulong ;
+.Vt extern const struct structs_type structs_type_hlong ;
+.Vt extern const struct structs_type structs_type_int8 ;
+.Vt extern const struct structs_type structs_type_uint8 ;
+.Vt extern const struct structs_type structs_type_hint8 ;
+.Vt extern const struct structs_type structs_type_int16 ;
+.Vt extern const struct structs_type structs_type_uint16 ;
+.Vt extern const struct structs_type structs_type_hint16 ;
+.Vt extern const struct structs_type structs_type_int32 ;
+.Vt extern const struct structs_type structs_type_uint32 ;
+.Vt extern const struct structs_type structs_type_hint32 ;
+.Vt extern const struct structs_type structs_type_int64 ;
+.Vt extern const struct structs_type structs_type_uint64 ;
+.Vt extern const struct structs_type structs_type_hint64 ;
+.Sh DESCRIPTION
+The
+.Xr structs 3
+library includes these pre-defined integral types:
+.Pp
+.Bl -ohang -width xxx -offset 3n
+.It Em structs_type_char
+For values of type
+.Li "char" .
+.It Em structs_type_uchar
+For values of type
+.Li "u_char" .
+.It Em structs_type_hchar
+For values of type
+.Li "u_char"
+expressed as hexadecimal.
+.It Em structs_type_short
+For values of type
+.Li "short" .
+.It Em structs_type_ushort
+For values of type
+.Li "u_short" .
+.It Em structs_type_hshort
+For values of type
+.Li "u_short"
+expressed as hexadecimal.
+.It Em structs_type_int
+For values of type
+.Li "int" .
+.It Em structs_type_uint
+For values of type
+.Li "u_int" .
+.It Em structs_type_hint
+For values of type
+.Li "u_int"
+expressed as hexadecimal.
+.It Em structs_type_long
+For values of type
+.Li "long" .
+.It Em structs_type_ulong
+For values of type
+.Li "u_long" .
+.It Em structs_type_hlong
+For values of type
+.Li "u_long"
+expressed as hexadecimal.
+.It Em structs_type_int8
+For values of type
+.Li "int8_t" .
+.It Em structs_type_uint8
+For values of type
+.Li "u_int8_t" .
+.It Em structs_type_hint8
+For values of type
+.Li "u_int8_t"
+expressed as hexadecimal.
+.It Em structs_type_int16
+For values of type
+.Li "int16_t" .
+.It Em structs_type_uint16
+For values of type
+.Li "u_int16_t" .
+.It Em structs_type_hint16
+For values of type
+.Li "u_int16_t"
+expressed as hexadecimal.
+.It Em structs_type_int32
+For values of type
+.Li "int32_t" .
+.It Em structs_type_uint32
+For values of type
+.Li "u_int32_t" .
+.It Em structs_type_hint32
+For values of type
+.Li "u_int32_t"
+expressed as hexadecimal.
+.It Em structs_type_int64
+For values of type
+.Li "int64_t" .
+.It Em structs_type_uint64
+For values of type
+.Li "u_int64_t" .
+.It Em structs_type_hint64
+For values of type
+.Li "u_int64_t"
+expressed as hexadecimal.
+.El
+.Pp
+.Em Note :
+the
+.Dq short ,
+.Dq int ,
+and
+.Dq long
+variants have sizes that are machine dependent, because they represent
+primitive types whose sizes are machine dependent.
+Therefore, the binary encodings of these types are also machine dependent
+(although they are independent of byte-order).
+.Pp
+To ensure machine independence in binary encodings, use the fixed-size
+.Dq 8 ,
+.Dq 16 ,
+.Dq 32 ,
+and
+.Dq 64
+variants.
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr structs 3 ,
+.Xr structs_type 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

@@ -1,0 +1,91 @@
+@set("page_id", "$Id: config.tmpl 547 2002-08-19 20:41:07Z archie $")
+@set("page_title", "Global Configuration")
+@set("page_url", "/admin/config")
+@eval(@readfile("head.tmpl"))
+
+<form method="post" action="doconfig">
+
+<table border="0" cellspacing="2" cellpadding="0">
+
+@object_reset("config")
+
+@header(@get("page_title"))
+
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;</td>
+  <td nowrap align="right"><b>PID file:&nbsp;&nbsp;</b></td>
+  <td align="left">@config_textinput("pidfile", "32", "256")</td>
+</tr>
+
+<tr>
+  <td>&nbsp;</td>
+  <td nowrap align="right"><b>Error log:&nbsp;&nbsp;</b></td>
+  <td align="left">@config_textinput("error_log.path", "32", "256")</td>
+</tr>
+
+<tr>
+  <td>&nbsp;</td>
+  <td nowrap align="right"><b>Syslog ID:&nbsp;&nbsp;</b></td>
+  <td align="left">@config_textinput("error_log.name", "16", "32")
+    &nbsp;&nbsp;(leave blank to disable syslog logging)</td>
+</tr>
+
+<tr>
+  <td>&nbsp;</td>
+  <td nowrap align="right"><b>Syslog Facility:&nbsp;&nbsp;</b></td>
+  <td align="left">
+    <select name="error_log.facility">
+    @select("daemon", @facility_pretty("daemon"))
+    @select("user", @facility_pretty("user"))
+    @loop("8")
+	@select(@cat("local", @loopindex()),
+	    @facility_pretty(@cat("local", @loopindex())))
+    @endloop
+    </select>
+</tr>
+
+<tr>
+  <td>&nbsp;</td>
+  <td nowrap align="right"><b>Syslog Server:&nbsp;&nbsp;</b></td>
+  <td align="left">@config_textinput_ip("error_log.remote_server")
+    &nbsp;&nbsp;(leave blank for local syslog logging)</td>
+</tr>
+
+<tr>
+  <td>&nbsp;</td>
+  <td nowrap align="right"><b>Admin Login:&nbsp;&nbsp;</b></td>
+  <td align="left">@nop()
+    @textinput("property:admin.username",
+      "16", "64", @get_property("admin.username"))
+    &nbsp;&nbsp;(leave fields blank to not require a login)</td>
+  </td>
+</tr>
+
+@if(@not(@empty(@get_property("admin.password"))))
+    @set("pw", "*****")
+@endif
+
+<tr>
+  <td>&nbsp;</td>
+  <td nowrap align="right"><b>Password:&nbsp;&nbsp;</b></td>
+  <td align="left">@nop()
+    @passinput("crypt:property:admin.password", "16", "64", @get("pw"))
+    @nop()&nbsp;&nbsp;<b>Confirm:&nbsp;&nbsp;</b>@nop()
+    @passinput("confirm:crypt:property:admin.password", "16", "64", @get("pw"))
+  </td>
+</tr>
+
+<tr>
+  <td colspan="2">&nbsp;</td>
+  <td align="left"><input type="submit" name="button" value="Update">
+  &nbsp;&nbsp;<input type="reset" value="Reset">
+  </td>
+</tr>
+
+<tr><td colspan="3">&nbsp;</td><td>
+
+</table>
+
+</form>
+
+@eval(@readfile("foot.tmpl"))

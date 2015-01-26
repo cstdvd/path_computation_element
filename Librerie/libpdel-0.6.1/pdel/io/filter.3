@@ -1,0 +1,222 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: filter.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt FILTER 3
+.Os
+.Sh NAME
+.Nm filter_read ,
+.Nm filter_write ,
+.Nm filter_end ,
+.Nm filter_convert ,
+.Nm filter_destroy ,
+.Nm filter_fopen ,
+.Nm filter_process
+.Nd generic data filtering
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdio.h
+.In pdel/io/filter.h
+.Ft int
+.Fn filter_read "struct filter *f" "void *buf" "int len"
+.Ft int
+.Fn filter_write "struct filter *f" "const void *data" "int len"
+.Ft int
+.Fn filter_end "struct filter *f"
+.Ft int
+.Fn filter_convert "struct filter *f" "int num" "int forward"
+.Ft void
+.Fn filter_destroy "struct filter **fp"
+.Ft "FILE *"
+.Fn filter_fopen "struct filter *filter" "int flags" "FILE *fp" "const char *mode"
+.Ft "int"
+.Fn filter_process "struct filter *filter" "const void *input" "int len" "int final" "u_char **outputp" "const char *mtype"
+.Sh DESCRIPTION
+These functions operate on
+.Em filters ,
+which are objects that have an input side and an output side and
+perform some kind of encoding or operation on data as it passes through.
+.Ss "Filter Objects"
+A filter object looks like this:
+.Pp
+.Bd -literal -offset 3n
+struct filter {
+    filter_read_t       *read;          /* read data out of filter */
+    filter_write_t      *write;         /* write data into filter */
+    filter_end_t        *end;           /* signal end of data */
+    filter_convert_t    *convert;       /* map # bytes in <-> out */
+    filter_destroy_t    *destroy;       /* destroy filter */
+    void                *private;       /* object private data */
+};
+.Pp
+.Ed
+The
+.Va read ,
+.Va write ,
+.Va end ,
+.Va convert ,
+and
+.Va destroy
+fields are pointers to functions having the following types:
+.Pp
+.Bd -literal -offset 3n
+typedef int   filter_read_t(struct filter *f, void *buf, int len);
+typedef int   filter_write_t(struct filter *f,
+                  const void *data, int len);
+typedef int   filter_end_t(struct filter *f);
+typedef int   filter_convert_t(struct filter *f,
+                  int num, int forward);
+typedef void  filter_destroy_t(struct filter **fp);
+.Ed
+.Pp
+.Em Note :
+these functions must be implemented to be thread-safe.
+For example, two threads should be able to write to and read from
+the same filter object simultaneously.
+.Pp
+The
+.Fn read
+method should read data from the filter and return the number of bytes
+read (up to
+.Fa len
+bytes),
+or 0 if more data needs to be written to the filter (i.e., the filter's
+internal buffer is empty).
+If an error is encountered, it should return -1 with
+.Va errno
+set appropriately.
+.Pp
+The
+.Fn write
+method inputs data into the filter, returning the number of bytes input
+(up to
+.Fa len
+bytes).
+It should return 0 if the filter's internal buffer is full, or -1 and set
+.Va errno
+on error.
+.Pp
+The
+.Fn end
+method indicates to the filter that no more data will be input.
+It should return 0 on success or -1 and set
+.Va errno
+on error.
+After this method is called, any calls to
+.Fn write
+should return -1 with
+.Va errno
+set to
+.Er EPIPE.
+.Pp
+The
+.Fn convert
+method provides estimates of the ratio of input length
+to output length, and vice-versa.
+If
+.Fa forward
+is non-zero,
+.Fn convert
+should return an upper bound on the number of bytes of that
+.Fa num
+bytes of input will generate.
+Otherwise, it should return an upper bound on the number of bytes
+of input that are required to generate
+.Fa num
+(or more) bytes of output.
+.Pp
+The
+.Fn destroy
+method should free all resources associated with the filter and set
+.Fa "*fp"
+to
+.Dv NULL.
+If
+.Fa "*fp"
+is already equal to
+.Dv NULL,
+.Fn destroy
+should do nothing.
+.Pp
+The
+.Fn filter_read ,
+.Fn filter_write ,
+.Fn filter_end ,
+.Fn filter_convert
+and
+.Fn filter_destroy
+functions are convenience wrappers for the corresponding object methods.
+.Pp
+By implementing these methods and providing a constructor function
+to create new instances, user-defined filters may be used with the
+functions below.
+.Ss "Filter Functions"
+.Fn filter_fopen
+pushes a filter on top of a uni-directional stream, returning a new stream.
+Data read from or written to the newly created stream will pass
+through the filter.
+The
+.Fa mode
+argument is as described for
+.Xr fopen 3 ,
+but is restricted to being either "r" or "w".
+.Pp
+If
+.Fa flags
+is zero, calling
+.Xr fclose 3
+on the newly created stream causes the underlying stream
+.Fa fp
+to be closed and
+.Fa filter
+to be destroyed.
+Otherwise, the
+.Fa flags
+value may contain any of the following values OR'd together:
+.Pp
+.Bd -literal -offset 3n
+FILTER_NO_CLOSE_STREAM    fclose() does not close underlying stream
+FILTER_NO_DESTROY_FILTER  fclose() does not destroy the filter
+.Ed
+.Pp
+.Fn filter_process
+sends
+.Fa len
+bytes of data pointed to by
+.Fa input
+through the filter.
+Upon successful return, the results are placed into a newly-allocated
+buffer having
+.Xr typed_mem 3
+type
+.Fa mtype
+and pointed to by
+.Fa "*outputp" ;
+the caller must eventually free this buffer.
+If
+.Fa final
+is non-zero, then the filter's
+.Fn end
+method is called after the last input byte is written.
+.Sh RETURN VALUES
+All functions that have a return value use -1 or
+.Dv NULL
+to indicate an error, with
+.Va errno
+set appropriately.
+.Sh SEE ALSO
+.Xr base64 3 ,
+.Xr fopen 3 ,
+.Xr libpdel 3 ,
+.Xr string_fp 3 ,
+.Xr typed_mem 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

@@ -1,0 +1,61 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: count_fopen.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt COUNT_FOPEN 3
+.Os
+.Sh NAME
+.Nm count_fopen
+.Nd read a fixed number of bytes from a stream
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdio.h
+.In pdel/io/count_fp.h
+.Ft "FILE *"
+.Fn count_fopen "FILE *fp" "off_t count" "int closeit"
+.Sh DESCRIPTION
+.Fn count_fopen
+creates a new read-only stream that reads up to, but no more than,
+.Fa count
+bytes from the underlying stream
+.Fa fp .
+After
+.Fa count
+bytes have been read, further attempts to read from the returned stream
+will return
+.Dv EOF.
+.Pp
+.Xr fclose 3
+should be used to close the returned stream.
+The
+.Fa closeit
+parameter determines whether the underlying stream
+.Fa fp
+is closed when the returned stream is closed.
+.Sh RETURN VALUES
+.Fn boundary_fopen
+returns
+.Dv NULL
+to indicate an error, with
+.Va errno
+set appropriately.
+.Sh SEE ALSO
+.Xr boundary_fopen 3 ,
+.Xr string_fp 3 ,
+.Xr libpdel 3
+.Rs
+.%A N. Freed
+.%A N. Borenstein
+.%T "Multipurpose Internet Mail Extensions (MIME) Part Two: Media Types"
+.%O RFC 2046
+.Re
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

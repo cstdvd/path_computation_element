@@ -1,0 +1,205 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: http_client.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt HTTP_CLIENT 3
+.Os
+.Sh NAME
+.Nm http_client
+.Nd threaded client for HTTP and HTTPS
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdio.h
+.In netinet/in.h
+.In openssl/ssl.h
+.In pdel/http/http_defs.h
+.In pdel/http/http_server.h
+.Ft "struct http_client *"
+.Fn http_client_create "struct pevent_ctx *ctx" "const char *user_agent" "u_int max_conn" "u_int max_cache" "u_int max_cache_idle" "http_logger_t *logger"
+.Ft "int"
+.Fn http_client_destroy "struct http_client **clientp"
+.Ft "struct http_client_connection *"
+.Fn http_client_connect "struct http_client *client" "struct in_addr ip" "u_int16_t port" "int https"
+.Ft "struct in_addr"
+.Fn http_client_get_local_ip "struct http_client_connection *cc"
+.Ft u_int16_t
+.Fn http_client_get_local_port "struct http_client_connection *cc"
+.Ft "struct http_request *"
+.Fn http_client_get_request "struct http_client_connection *client"
+.Ft "struct http_response *"
+.Fn http_client_get_response "struct http_client_connection *client"
+.Ft "void"
+.Fn http_client_close "struct http_client_connection **cconp"
+.Ft "const char *"
+.Fn http_client_get_reason "struct http_client_connection *ccon"
+.Sh DESCRIPTION
+These functions implement threaded HTTP clients, supporting SSL and
+HTTP keep-alive.
+.Pp
+An HTTP client (represented by a
+.Li "struct http_client")
+can be used to make multiple simultaneous individual HTTP connections
+(each corresponding to a single HTTP request/reply pair and represented by a
+.Li "struct http_client_connection") .
+To reduce overhead, a client will cache TCP connections to each remote
+server and reuse TCP connections for subsequent requests, using the
+HTTP keep-alive mechanism.
+.Pp
+.Fn http_client_create
+creates a new HTTP client.
+.Fa ctx
+is a
+.Xr pevent 3
+event context.
+The
+.Fa user_agent
+string is used for the "User-Agent:" HTTP header.
+.Fa max_conn
+limits the number of active connections that may exist simultaneously.
+.Fa max_cache
+is the maximum number of server TCP sessions that the client may cache
+(or zero to disable caching), and
+.Fa max_cache_idle
+is the maximum idle time for cached TCP sessions, after which they are closed.
+.Fa max_cache
+must be strictly less than
+.Fa max_conn .
+The
+.Fa logger ,
+if not
+.Dv NULL,
+specifies a callback for logging:
+.Pp
+.Bd -literal -offset 3n
+typedef void  http_logger_t(int sev, const char *fmt, ...);
+.Ed
+.Pp
+Here
+.Fa sev
+is a
+.Xr syslog 3
+severity level.
+.Pp
+.Fn http_client_destroy
+attempts to destroy an HTTP client.
+If there are still active connections (i.e., connections for which
+.Fn http_client_close
+has yet to be called), then
+.Fn http_client_destroy
+will fail and return -1 with
+.Va errno
+set to
+.Er EBUSY.
+Otherwise, upon return
+.Fa "*clientp"
+is set to
+.Dv NULL.
+If
+.Fa "*clientp"
+is already
+.Dv NULL
+when
+.Fn http_client_destroy
+is invoked, nothing happens.
+.Pp
+.Fn http_client_connect
+creates a new HTTP connection associated with
+.Fa client .
+If there are already
+.Fa max_conn
+active connections, then
+.Fn http_client_connect
+will block until a connection becomes free.
+The new connection is initiated to the HTTP (or HTTPS if
+.Fa https
+is non-zero) server at IP address
+.Fa ip
+and port
+.Fa port .
+.Pp
+.Fn http_client_get_local_ip
+and
+.Fn http_client_get_local_port
+return the local IP address and port used for the connection, respectively.
+.Pp
+.Fn http_client_get_request
+and
+.Fn http_client_get_response
+return the HTTP request and response objects associated with the
+connection (see
+.Xr http_request 3
+and
+.Xr http_response 3) .
+.Pp
+.Fn http_client_close
+closes and frees a connection.
+If caching is enabled and the remote server supports keep-alive,
+the connection will cached for up to
+.Fa max_cache_idle
+seconds.
+Upon return,
+.Fa "*cconp"
+is set to
+.Dv NULL.
+If
+.Fa "*cconp"
+is already
+.Dv NULL
+when
+.Fn http_client_close
+is invoked, nothing happens.
+.Pp
+If
+.Fn http_client_get_response
+returns
+.Dv NULL
+(for example, the server sent back a malformed response), then
+.Fn http_client_get_reason
+may be used to retrieve an explanatory error string.
+The string is only valid until
+.Fn http_client_close
+is invoked.
+.Sh RETURN VALUES
+Upon error,
+.Fn http_client_create ,
+.Fn http_client_connect ,
+and
+.Fn http_client_get_response
+return
+.Dv NULL
+and set
+.Va errno
+to an appropriate value.
+.Sh SEE ALSO
+.Xr http_mime 3 ,
+.Xr http_request 3 ,
+.Xr http_response 3 ,
+.Xr http_server 3 ,
+.Xr http_xml 3 ,
+.Xr libpdel 3 ,
+.Xr pevent 3 ,
+.Xr syslog 3
+.Rs
+.%A R. Fielding
+.%A J. Gettys
+.%A J. Mogul
+.%A H. Frystyk
+.%A L. Masinter
+.%A P. Leach
+.%A T. Berners-Lee
+.%T "Hypertext Transfer Protocol -- HTTP/1.1"
+.%O RFC 2616
+.Re
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org
+.Sh BUGS
+Support for validating a server's SSL certificates against a list of
+known, trusted certificate authorities should be added.

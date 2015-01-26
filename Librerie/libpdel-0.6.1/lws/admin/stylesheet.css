@@ -1,0 +1,83 @@
+/* $Id: stylesheet.css 686 2002-09-06 19:03:18Z archie $ */
+
+/* Page background color */
+body {
+	background-color: #ffffff;
+	background-image: none;
+	leftmargin: 4;
+}
+
+/* Normal text color */
+p {
+	color: #000000;
+}
+
+/* Normal link colors */
+A:link, A:visited, A:active {
+	color: #000000;
+}
+
+/* Headings */
+H2, H3, H4 {
+	color: #3300ff;
+}
+
+/* Text that wants to standout */
+.standout {
+	color: #3300ff;
+}
+
+/* Hot links */
+.hotlink {
+	color: #3300ff;
+}
+
+/* Cold links */
+.coldlink {
+	color: #000000;
+}
+
+/* Top row nav buttons */
+td.nav {
+	background-color: #c0c0c0;
+	background-image: none;
+}
+
+/* Log entries headings */
+th.logs-header {
+	background-color: #ccccff;
+	background-image: none;
+}
+
+/* Log severity colors */
+font.log-debug, font.log-alert, font.log-crit {
+	color: #ff0000
+}
+font.log-err {
+	color: #cc0000
+}
+font.log-warn {
+	color: #cc0000
+}
+font.log-notice {
+	color: #993300
+}
+font.log-info {
+	color: #009900
+}
+font.log-debug {
+	color: #000066
+}
+
+/* Color for errors */
+font.error {
+	color: #cc0000;
+	font-weight: bold;
+}
+
+/* Color for page titles */
+.page-title {
+	color: #3300ff;
+	font-weight: bold;
+}
+

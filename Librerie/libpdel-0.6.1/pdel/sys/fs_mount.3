@@ -1,0 +1,63 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: fs_mount.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt FS_MOUNT 3
+.Os
+.Sh NAME
+.Nm fs_mount ,
+.Nm fs_unmount ,
+.Nd simplified file system mounting
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In pdel/sys/fs_mount.h
+.Ft int
+.Fn fs_mount "const char *path" "int flags"
+.Ft int
+.Fn fs_unmount "const char *path" "int flags"
+.Sh DESCRIPTION
+These functions provide a simplified interface to
+.Xr mount 2
+and
+.Xr unmount 2 .
+.Pp
+.Fn fs_mount
+attempts to mount the filesystem on the directory
+.Fa path .
+The device to be mounted must be described in
+.Pa /etc/fstab .
+The
+.Fa flags
+are passed unchanged to
+.Xr mount 2 .
+.Pp
+.Fn fs_ummount
+attempts to unmount the filesystem mounted on the directory
+.Fa path .
+The
+.Fa flags
+are passed unchanged to
+.Xr unmount 2 .
+.Sh RETURN VALUES
+.Fn fs_mount
+and
+.Fn fs_unmount
+return 0 if successful, otherwise -1 is returned and
+.Va errno
+is set accordingly;
+see
+.Xr mount 2
+for the possible values for
+.Va errno .
+.Sh SEE ALSO
+.Xr mount 2 ,
+.Xr libpdel 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

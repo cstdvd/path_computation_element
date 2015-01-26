@@ -1,0 +1,261 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: structs_type_union.3 958 2004-12-16 16:49:57Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRUCTS_TYPE_UNION 3
+.Os
+.Sh NAME
+.Nm structs_type_union
+.Nd structs types for C unions
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In stddef.h
+.In pdel/structs/structs.h
+.In pdel/structs/type/union.h
+.Fn DEFINE_STRUCTS_UNION struct_name union_name
+.Fn STRUCTS_UNION_TYPE union_name field_list
+.Fn STRUCTS_UNION_FIELD field_name field_type
+.Ft int
+.Fn structs_union_set "const struct structs_type *type" "const char *name" "void *data" "const char *field_name"
+.Sh DESCRIPTION
+The
+.Fn STRUCTS_UNION_TYPE
+macro defines a
+.Xr structs 3
+type (i.e., a
+.Dv "struct structs_type" )
+for describing a
+.Li "struct structs_union" ,
+which is an intermediate structure describing a
+.Li union
+.Fa union_name .
+.Pp
+.Bd -literal -compact -offset 3n
+struct structs_union {
+    const char  *const field_name; /* name of field currently in use */
+    void        *un;               /* pointer to the union itself */
+};
+.Ed
+.Pp
+The
+.Fa field_name
+always indicates which of the union fields is currently in use.
+It should never be modified directly; instead, use the function
+.Fn structs_union_set
+(see below).
+.Fa un
+points to the actual union, which is stored in a separately allocated buffer
+.Xr typed_mem 3
+type
+.Li "union union_name" .
+This buffer is only large enough to hold the specific field currently in use.
+.Pp
+To define a structure equivalent to a
+.Li "struct structs_union"
+that declares
+.Fa un
+to have the correct C type for the union used (instead of
+.Li "void *") ,
+use the
+.Fn DEFINE_STRUCTS_UNION
+macro, where
+.Fa struct_name
+is the name of the structure (or empty if no name is desired) and
+.Fa union_name
+is the name of the represented union.
+Then the
+.Fa un
+field will be declared to have type
+.Fa "union union_name *" .
+.Pp
+The union's fields are accessible by name.
+Of course, only one field may be accessed at a time, and changing the
+current union field causes the previous field contents to be lost.
+.Pp
+As a special case, the field named
+.Dq field_name
+is also read-only accessible and always returns the name of the union
+field currently in use.
+The union itself must not contain a field named
+.Dq field_name,
+or else it will not be accessible.
+The
+.Dq field_name
+field does not appear in the output of
+.Xr structs_xml_output 3
+or
+.Xr structs_traverse 3 .
+.Pp
+.Fn STRUCTS_UNION_TYPE
+defines a
+.Xr structs 3
+type for a C union.
+The
+.Fa field_list
+parameter must point to an array of
+.Li "struct structs_ufield"
+structures describing each union field:
+.Pp
+.Bd -literal -compact -offset 3n
+/* This structure describes one field in a union */
+struct structs_ufield {
+    const char                  *name;       /* field name */
+    const struct structs_type   *type;       /* field type */
+};
+.Ed
+.Pp
+The
+.Fn STRUCTS_UNION_FIELD
+macro should be used to define an entry in the field array:
+.Fa field_name
+is the name of the field and
+.Fa field_type
+is a pointer to the
+.Xr structs 3
+type describing the field.
+.Pp
+The fields need not be listed in the array in the same order as they
+are declared in the C union.
+However, the array must be terminated with
+.Dv STRUCTS_UNION_FIELD_END ,
+which is defined as follows:
+.Pp
+.Dl #define STRUCTS_UNION_FIELD_END { NULL, NULL }
+.Pp
+The first field in the list is the
+.Dq "default field"
+and it is chosen as the current field when a union data type is initialized.
+When a union data type is read in as XML by
+.Xr structs_xml_input 3 ,
+if the innermost XML tag is omitted (i.e., the one that specifies the
+field name) and the default field has primitive type, then the default
+field is assumed.
+.Pp
+.Fn structs_union_set
+should be used to change the union field currently in use,
+to guarantee that the old field's contents are properly deallocated
+and the new field's contents are properly initialized.
+The new field will be initialized to its default value.
+The sub-field
+.Fa name
+of the object pointed to by
+.Fa data
+must correspond to a
+.Li "struct structs_union"
+(or equivalent structure), and
+.Fa field_name
+must match one of the union's field names.
+The
+.Xr structs_find 3
+function may also be used to change the current union field.
+.Sh RETURN VALUES
+.Fn structs_union_set
+returns zero if successful, otherwise -1 with
+.Va errno
+set appropriately.
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr structs 3 ,
+.Xr structs_type 3 ,
+.Xr structs_type_struct 3 ,
+.Xr structs_xml_input
+.Sh EXAMPLES
+The program below sets a union field using the field name and
+value specified on the command line:
+.Pp
+.Bd -literal -compact -offset 3n
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <err.h>
+
+#include <pdel/structs/structs.h>
+#include <pdel/structs/type/union.h>
+#include <pdel/structs/type/string.h>
+#include <pdel/structs/type/ip4.h>
+#include <pdel/structs/type/int.h>
+#include <pdel/util/typed_mem.h>
+
+/* My union */
+union foobar {
+        char            *name;
+        u_int16_t       index;
+        struct in_addr  ipaddr;
+};
+
+/* My structs_union structure */
+DEFINE_STRUCTS_UNION(foobar_union, foobar);
+
+/* Structs type for a 'struct foobar_union' */
+static const struct structs_ufield foobar_fields[] = {
+        STRUCTS_UNION_FIELD(name, &structs_type_string),
+        STRUCTS_UNION_FIELD(index, &structs_type_uint16),
+        STRUCTS_UNION_FIELD(ipaddr, &structs_type_ip4),
+        STRUCTS_UNION_FIELD_END
+};
+static const struct structs_type foobar_type =
+        STRUCTS_UNION_TYPE(foobar, &foobar_fields);
+
+static void
+show_union(struct foobar_union *un)
+{
+        /* Show the result */
+        if (strcmp(un->field_name, "name") == 0)
+                printf("name=\\"%s\\"\\n", un->un->name);
+        else if (strcmp(un->field_name, "index") == 0)
+                printf("index=%u\\n", un->un->index);
+        else if (strcmp(un->field_name, "ipaddr") == 0)
+                printf("ipaddr=%s\\n", inet_ntoa(un->un->ipaddr));
+        else
+                printf("unknown field \\"%s\\"\\n", un->field_name);
+}
+
+int
+main(int argc, char **argv)
+{
+        struct foobar_union un;
+        const char *name;
+        char *value;
+        char ebuf[64];
+
+        /* Initialize union */
+        if (structs_init(&foobar_type, NULL, &un) == -1)
+                err(1, "structs_init");
+        printf("Default value: ");
+        show_union(&un);
+
+        /* Get the requested field's name and value from command line */
+        if (argc != 3)
+                errx(1, "usage: setfield <name> <value>");
+        name = argv[1];
+        value = argv[2];
+
+        /* Set the requested field's value */
+        if (structs_set_string(&foobar_type, name,
+            value, &un, ebuf, sizeof(ebuf)) == -1)
+                errx(1, "%s: %s", name, ebuf);
+
+        /* Show the result */
+        printf("New value: ");
+        show_union(&un);
+
+        /* Done, clean up */
+        structs_free(&foobar_type, NULL, &un);
+        return (0);
+}
+.Ed
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

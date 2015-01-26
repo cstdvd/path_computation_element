@@ -1,0 +1,166 @@
+<?xml version="1.0" standalone="yes"?>
+<structs_test attribute1="foobar" attribute2="janfu">
+
+	<inner_time_gmt>Wed Feb 14 19:37:11 GMT 2001</inner_time_gmt>
+
+	<inner_time_local>Wed Feb 14 11:37:46 2001</inner_time_local>
+
+	<inner_time_iso8601>20010214T19:37:46</inner_time_iso8601>
+
+	<inner_time_rel>12345</inner_time_rel>
+
+	<inner_bpf>ip dst 192.168.0.223 and tcp port 80</inner_bpf>
+
+	<inner_struct>
+		<elem_ip>  192.168.0.0 </elem_ip>
+		<elem_value>65000</elem_value>
+		<elem_float>5.877473155409902e-39</elem_float>
+		<elem_double>2.1125369292536007e-308</elem_double>
+		<elem_ether>55:44:33:22:11:00</elem_ether>
+		<elem_bstring>aaaaaaaaaa</elem_bstring>
+		<elem_dnsname>www.yahoo.com</elem_dnsname>
+	</inner_struct>
+
+	<!-- combined tags test -->
+	<inner_struct_ptr_array.inner_struct_ptr.elem_value>
+	    1234
+	</inner_struct_ptr_array.inner_struct_ptr.elem_value>
+
+	<inner_struct_ptr_array>
+	    <inner_struct_ptr>
+		<elem_bytes> 0123456789abcdef1934abdeaa </elem_bytes>
+		<elem_ip>  192.168.0.1 </elem_ip>
+		<elem_float>3.402823e+38</elem_float>
+		<elem_double>1.797693134862315e+308</elem_double>
+		<elem_value>1</elem_value>
+		<elem_color>Red</elem_color>
+		<elem_ether>11:11:11:11:11:11</elem_ether>
+		<elem_bstring>aaaaaaaaaa</elem_bstring>
+		<elem_dnsname>172.172.172.172</elem_dnsname>
+	    </inner_struct_ptr>
+	    <inner_struct_ptr>
+		<elem_bytes>fff	effffffffffffffffffffff</elem_bytes>
+		<elem_ip>  192.168.0.2 </elem_ip>
+		<elem_value>22</elem_value>
+		<elem_color>Green</elem_color>
+		<elem_ether>22:22:22:22:22:22</elem_ether>
+		<elem_bstring>aaaaaaaaaa</elem_bstring>
+		<elem_dnsname>www.ibm.com</elem_dnsname>
+	    </inner_struct_ptr>
+	    <inner_struct_ptr>
+		<elem_ip>  192.168.0.3 </elem_ip>
+		<elem_value>333</elem_value>
+		<elem_color>Blue</elem_color>
+		<elem_ether>33:33:33:33:33:33</elem_ether>
+		<elem_bytes>abcdefabcdefabcdefabcdefab
+		</elem_bytes>
+		<elem_bstring>aaaaaaaaaa</elem_bstring>
+		<elem_dnsname>www.microsoft.com</elem_dnsname>
+	    </inner_struct_ptr>
+	</inner_struct_ptr_array>
+
+	<inner_data>Zm9vYmFyMQ==</inner_data>
+
+	<inner_data2>a1b2c3d4e5f6</inner_data2>
+
+	<inner_string>This is a string, OK?</inner_string>
+
+	<inner_ether>001122334455</inner_ether>
+
+	<inner_array>
+		<array_elem>
+			<elem_ip>12.32.34.45</elem_ip>
+			<elem_value>12345</elem_value>
+			<elem_string>This string should get nuked</elem_string>
+			<elem_ether>33:33:33:33:33:33</elem_ether>
+		</array_elem>
+	</inner_array>
+
+	<inner_array>
+		<array_elem>
+			<elem_ip>  192.168.0.0 </elem_ip>
+			<elem_value>65000</elem_value>
+			<elem_string>And (&amp;) another string!</elem_string>
+			<elem_ether>55:44:33:22:11:00</elem_ether>
+		</array_elem>
+		<array_elem>
+			<elem_ip>  192.168.0.1 </elem_ip>
+			<elem_value>65001</elem_value>
+			<elem_string>And (&amp;) another string!</elem_string>
+			<elem_color>Blue</elem_color>
+			<elem_ether>55:44:33:22:11:00</elem_ether>
+		</array_elem>
+		<array_elem>
+			<elem_ip>  192.168.0.2 </elem_ip>
+			<elem_value>65002</elem_value>
+			<elem_string>And (&amp;) another string!</elem_string>
+			<elem_color>Blue</elem_color>
+			<elem_ether>55:44:33:22:11:00</elem_ether>
+		</array_elem>
+	</inner_array>
+
+	<inner_alog>
+		<name>foobar</name>
+		<facility>local7</facility>
+		<remote_server>192.168.0.123</remote_server>
+		<min_severity>-123</min_severity>
+		<histlen>1000</histlen>
+	</inner_alog>
+
+	<inner_alog>
+		<min_severity>warning</min_severity>
+	</inner_alog>
+
+	<inner_union>
+		<u_string>Blabba blabba</u_string>
+	</inner_union>
+
+	<inner_union>
+		<u_int64>1234567898754</u_int64>
+	</inner_union>
+
+	<inner_union>
+		<u_string>Aasdf ASFasdf</u_string>
+	</inner_union>
+
+	<inner_union2>
+		<u_bool>True</u_bool>
+	</inner_union2>
+	
+	<ip6_mapped_from_ip4>
+		<ip6>FFFF::1.2.3.4</ip6>
+	</ip6_mapped_from_ip4>
+
+	<ip6>
+		<ip6>ab:cd::12</ip6>
+	</ip6>
+
+	<ip4>
+		<ip4>123.124.125.126</ip4>
+	</ip4>
+
+	<pfx_ip4>
+		<ip_addr>
+			<ip4>123.124.125.126</ip4>
+		</ip_addr>
+		<masklen>30</masklen>
+	</pfx_ip4>
+
+	<pfx_ip6>
+		<ip_addr>
+			<ip6>12:34::cd</ip6>
+		</ip_addr>
+		<masklen>29</masklen>
+	</pfx_ip6>
+
+	<inner_regex>^this.*is (a)+ [pP]attern$</inner_regex>
+
+	<inner_strary>
+		<strary_elem>fixed array element #1</strary_elem>
+		<strary_elem>fixed array element #2</strary_elem>
+		<strary_elem></strary_elem>
+		<strary_elem>fixed array element #4</strary_elem>
+	</inner_strary>
+
+</structs_test>
+

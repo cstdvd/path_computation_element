@@ -1,0 +1,40 @@
+
+@define("nl")
+	@cat("\n")
+@enddef
+
+@define("nop")
+	@cat("\n")
+@enddef
+
+@define("readit")
+	@output(@cat("Please enter your ", @get("arg1"), ": "))
+	@flush()
+	@set(@get("arg1"), @input(@get("arg2")))
+	@if(@get("arg2"))
+		@nl()
+	@endif
+@enddef
+
+@nop()Hello, this is a template input test.@nl()
+
+@while("1")
+
+	@nl()
+	@readit("username", "0")
+
+	@nop()Hello @get("username"), nice to see you.@nl()
+
+	@nl()
+	@readit("password", "1")
+
+	@if(@not(@equal(@get("username"), @get("password"))))
+		@nop()Oops, your password and username must be the same.@nl()
+		@nop()Please try again.@nl()
+		@continue
+	@endif
+	@nop()OK, @get("username"), the test is over.@nl()
+	@nl()
+	@break
+@endwhile
+

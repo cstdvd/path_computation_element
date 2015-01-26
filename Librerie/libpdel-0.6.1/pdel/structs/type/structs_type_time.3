@@ -1,0 +1,67 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: structs_type_time.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRUCTS_TYPE_TIME 3
+.Os
+.Sh NAME
+.Nm structs_type_time
+.Nd structs types for time values
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In pdel/structs/structs.h
+.In pdel/structs/type/time.h
+.Vt extern const struct structs_type structs_type_time_gmt ;
+.Vt extern const struct structs_type structs_type_time_local ;
+.Vt extern const struct structs_type structs_type_time_iso8601 ;
+.Vt extern const struct structs_type structs_type_time_abs ;
+.Vt extern const struct structs_type structs_type_time_rel ;
+.Sh DESCRIPTION
+The
+.Xr structs 3
+library includes several pre-defined types for time values.
+All of the types below describe a variable of type
+.Li "time_t" ,
+which holds the number of seconds since Jan 1, 1970 00:00:00 GMT.
+.Pp
+The only difference between the types below is how the ASCII
+form of a time value is represented.
+.Pp
+.Bl -hang -offset 3n
+.It Em structs_type_time_gmt
+Displays the time in
+.Xr ctime 3
+GMT format, e.g., "Mon Apr 22 19:50:00 GMT 2002".
+.It Em structs_type_time_local
+Displays the time in
+.Xr ctime 3
+local timezone format, but without the timezone explicitly shown,
+e.g., "Mon Apr 22 12:50:00 2002".
+.Em "Warning" :
+This type should be avoided except where it is known that both
+the encoding and decoding time zones are the same.
+.It Em structs_type_time_iso8601
+Displays the time in ISO-8601 format, e.g., "20020422T19:50:00".
+.It Em structs_type_time_abs
+Displays the time in seconds since Jan 1, 1970 GMT, e.g., "1019505000".
+.It Em structs_type_time_rel
+Displays the time in seconds relative to now, e.g., "10413".
+.Em "Warning" :
+The longer the time between ASCII encoding and decoding, the more
+erroneous the value becomes.
+.El
+.Pp
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr structs 3 ,
+.Xr structs_type 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

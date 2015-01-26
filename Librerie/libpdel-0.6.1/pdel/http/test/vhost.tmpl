@@ -1,0 +1,47 @@
+<html>
+<!-- $Id: vhost.tmpl 474 2002-08-08 20:29:54Z archie $ -->
+<head>
+<title>PDEL HTTP server virtual host demo</title>
+</head>
+<body bgcolor="#ffffff">
+
+<h3>PDEL Virtual Hosting</h3>
+
+<p>
+This servlet is registered to handle the ``default'' virtual host,
+i.e., requests that don't match the virtual host specified on the
+command line, which is <b>@htmlencode(@vhost())</b>.
+
+<p>
+@if(@equal(@get_header("Host"), ""))
+	Your browser sent no Host: header. It must be really old.
+@else
+	Your browser sent this Host: header:
+
+	<blockquote>
+	<b>Host: @htmlencode(@get_header("Host"))</b>
+	</blockquote>
+
+@endif
+
+@set("scheme", "http")
+@if(@get_ssl())
+	@set("ssl", "s")
+@endif()
+@if(@or(
+    @and(@not(@get_ssl()), @not(@equal(@get_port(), "80"))),
+    @and(@get_ssl(), @not(@equal(@get_port(), "443")))))
+	@set("port", @cat(":", @get_port()))
+@endif()
+
+@set("url", @cat(@get("scheme"), "://", @vhost(), @get("port"), "/"))
+
+<p>
+To get to the virtual host <b>@htmlencode(@vhost())</b>, click on this link:
+
+<blockquote>
+<b><a href="@get("url")">@htmlencode(@get("url"))</a></b>
+</blockquote>
+
+</body>
+</html>

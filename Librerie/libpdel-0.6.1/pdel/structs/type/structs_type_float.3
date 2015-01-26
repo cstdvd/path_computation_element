@@ -1,0 +1,47 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: structs_type_float.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRUCTS_TYPE_FLOAT 3
+.Os
+.Sh NAME
+.Nm structs_type_float ,
+.Nm structs_type_double
+.Nd structs types for floating point values
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In pdel/structs/structs.h
+.In pdel/structs/type/float.h
+.Vt extern const struct structs_type structs_type_float ;
+.Vt extern const struct structs_type structs_type_double ;
+.Sh DESCRIPTION
+These are
+.Xr structs 3
+types for floating point values stored in variables of type
+.Li float
+and
+.Li double .
+.Pp
+The ASCII form of these types is as produced by
+.Xr printf 3
+using the
+.Li %g
+format.
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr structs 3 ,
+.Xr structs_type 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org
+.Sh BUGS
+These types do not correct for byte-order in the binary representation.
+Therefore, their binary representations are not necessarily byte-order
+independent.

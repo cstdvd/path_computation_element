@@ -1,0 +1,158 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: tinfo.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt TINFO 3
+.Os
+.Sh NAME
+.Nm tinfo
+.Nd self-(de)allocating thread-local data structures
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In pthread.h
+.In pdel/util/tinfo.h
+.Fn TINFO_INIT type mtype initfunc
+.Ft "void *"
+.Fn tinfo_get "struct tinfo *t"
+.Ft "int"
+.Fn tinfo_set "struct tinfo *t" "const void *data"
+.Ft "int"
+.Fn tinfo_set_nocopy "struct tinfo *t" "void *data"
+.Sh DESCRIPTION
+These functions provide support for thread-local data structures defined by
+.Xr structs 3
+types that are automatically initialized and destroyed.
+A thread-local data structure is described by a static or global
+.Li "struct tinfo" ;
+each such structure must be initialized with the
+.Fn TINFO_INIT
+macro.
+For example:
+.Pp
+.Bd -literal -compact -offset 3n
+static struct tinfo foo_info
+        = TINFO_INIT(&foo_type, "foo", fooinit);
+.Ed
+.Pp
+.Fa type
+is the
+.Xr structs 3
+type for the data structure,
+.Fa mtype
+is the
+.Xr typed_mem 3
+type used to allocate memory to hold each thread's instance, and
+.Fa initfunc
+is an optional instance initializer function of this type:
+.Pp
+.Bd -literal -compact -offset 3n
+typedef int tinfo_init_t(struct tinfo *t, void *data);
+.Ed
+.Pp
+.Fn initfunc
+should initialize the data structure pointed to by
+.Fa data
+as an instance of
+.Fa type
+(which will also be available as
+.Fa "t->type") .
+The memory pointed to by
+.Fa data
+will have been allocated with
+.Xr typed_mem 3
+type
+.Fa mtype
+but will be otherwise uninitialized.
+If
+.Fa initfunc
+is
+.Dv NULL ,
+then
+.Xr structs_init 3
+is used to initialize the data structure to the default value defined by
+.Fa type .
+.Pp
+Instances of
+.Nm tinfo
+thread-local data structure are automatically destroyed when the associated
+thread exits, by calling
+.Fn structs_free type NULL data
+and then
+.Fn FREE mtype data .
+.Pp
+.Fn tinfo_get
+returns the current thread's instance of the data structure.
+If this is the thread's first invocation of
+.Fn tinfo_get ,
+a new instance is automatically allocated and initialized.
+The caller should
+.En not
+free the returned value, but may modify it in a way consistent
+with its
+.Xr structs 3
+type.
+.Pp
+.Fn tinfo_set
+sets the current thread's data structure instance to be a copy of
+.Fa data ,
+made using
+.Xr structs_get 3 .
+The original
+.Fa data
+is unmodified and remains the caller's responsibility to free.
+Any existing thread-local data structure instance is automatically
+replaced and freed.
+.Pp
+.Fn tinfo_set_nocopy
+is equivalent to
+.Fn tinfo_set
+except that no copy of
+.Fa data
+is made; therefore,
+.Fa data
+must point to heap memory allocated with
+.Xr typed_mem 3
+type
+.Fa "mtype"
+(also available as
+.Fa "t->mtype")
+and the caller should not dereference
+.Fa data
+once
+.Fn tinfo_set_nocopy
+has returned successfully.
+.Pp
+Both
+.Fn tinfo_set
+and
+.Fn tinfo_set_nocopy
+may take a
+.Dv NULL
+.Fa data
+parameter; this causes any existing thread-local data structure instance
+to be freed so that the next call to
+.Fn tinfo_get
+will cause a new instance to be constructed.
+.Sh RETURN VALUES
+.Fn tinfo_get ,
+.Fn tinfo_set ,
+and
+.Fn tinfo_set_nocopy
+return
+.Dv NULL
+or -1 with
+.Va errno
+set appropriately to indicate an error.
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr structs 3 ,
+.Xr typed_mem 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

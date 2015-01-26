@@ -1,0 +1,95 @@
+@set("page_id", "$Id: index.tmpl 770 2002-10-13 18:34:34Z archie $")
+@set("page_title", "Admin Overview")
+@set("page_url", "/admin/index")
+@eval(@readfile("head.tmpl"))
+
+<table border="0" cellspacing="2" cellpadding="0">
+
+<tr>
+    <td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;</td>
+    <td>&nbsp;&nbsp;</td>
+</tr>
+
+@header(@get("page_title"))
+
+<tr>
+    <td>&nbsp;</td>
+    <td colspan="2">
+
+@loop(@config_get("servers.length"))
+	<a href="server?sid=@loopindex()"><b>@pretty_server(@cat("servers.",
+	    @loopindex()))</b></a><br>
+	<blockquote>
+	@loop(@config_get(@cat("servers.",
+	    @loopindex(), ".virtual_hosts.length")))
+		<a href="vhost?sid=@loopindex("1")&vid=@loopindex()">@nop()
+		    <b>@pretty_vhost(@cat("servers.", @loopindex("1"),
+		      ".virtual_hosts.", @loopindex()))</b></a>@nop()
+		&nbsp;&nbsp;[<a href="@nop()
+		@set("scheme", "http")
+		@if(@config_get(@cat("servers.",
+		    @loopindex("1"), ".ssl.enabled")))
+			@set("scheme", "https")
+		@endif
+		@set("host", @config_get(@cat("servers.",
+		    @loopindex("1"), ".virtual_hosts.", @loopindex(),
+		    ".server_name")))
+		@if(@empty(@get("host")))
+			@set("host", @config_get(@cat("servers.",
+			    @loopindex("1"), ".ip")))
+		@endif
+		@if(@equal(@get("host"), "0.0.0.0"))
+			@set("host", @hostname())
+		@endif
+		@url(@get("scheme"), @get("host"),
+		    @config_get(@cat("servers.", @loopindex("1"),
+		    ".port")), "/")
+		@nop()">take me there</a>]
+		<br>
+		<blockquote>
+		@loop(@config_get(@cat("servers.", @loopindex("1"),
+		    ".virtual_hosts.", @loopindex(), ".servlets.length")))
+			<a href="servlet?sid=@loopindex("2")@nop()
+			    @nop()&vid=@loopindex("1")@nop()
+			    @nop()&lid=@loopindex()">@nop()
+			    @pretty_servlet(@cat("servers.", @loopindex("2"),
+			      ".virtual_hosts.", @loopindex("1"), ".servlets.",
+			      @loopindex()))</a><br>
+		@endloop
+		</blockquote>
+	@endloop
+	</blockquote>
+@endloop
+
+    </td>
+</tr>
+
+@header("Controls")
+
+<tr>
+    <td colspan="2">&nbsp;</td>
+    <td>
+    <form method="post" action="confirm">
+    @hidden("Restart-confirm", "Restart")
+    @hidden("Restart-ok-action", @cat("doit?title=Restart&msg=Restarting...",
+	"&argc=3&arg0=signal&arg1=USR1&arg2=2"))
+    @hidden("Restart-cancel-action", "index")
+    <input type="submit" name="button" value="Restart">&nbsp;&nbsp;
+    @hidden("Reload Config-confirm", "Reload Config")
+    @hidden("Reload Config-ok-action", @cat("doit?title=Reload%20Config",
+	"&msg=Reloading...&argc=3&arg0=signal&arg1=HUP&arg2=2"))
+    @hidden("Reload Config-cancel-action", "index")
+    <input type="submit" name="button" value="Reload Config">&nbsp;&nbsp;
+    @hidden("Shutdown-confirm", "Shutdown")
+    @hidden("Shutdown-ok-action", @cat("doit?title=Shutdown&msg=Shutting%20",
+	"down...&argc=3&arg0=signal&arg1=TERM&arg2=2"))
+    @hidden("Shutdown-cancel-action", "index")
+    <input type="submit" name="button" value="Shutdown">&nbsp;&nbsp;
+    </form>
+    </td>
+</tr>
+
+</table>
+
+@eval(@readfile("foot.tmpl"))

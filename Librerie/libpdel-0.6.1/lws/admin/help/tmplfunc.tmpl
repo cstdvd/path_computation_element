@@ -1,0 +1,111 @@
+@set("page_id", "$Id: tmplfunc.tmpl 540 2002-08-18 03:47:42Z archie $")
+@set("page_title", "User-Defined Template Function Reference")
+@set("page_url", "/admin/help/tmplfunc")
+@eval(@readfile("head.tmpl"))
+
+<table border="0" cellspacing="2" cellpadding="0">
+
+<tr>
+  <td>&nbsp;&nbsp;</td>
+  <td>&nbsp;&nbsp;</td>
+</tr>
+
+@header(@get("page_title"))
+
+<tr>
+<td>&nbsp;</td>
+<td align="left">
+
+<table border="0" cellspacing="2" cellpadding="0">
+
+@nop(" Get a template function list field ")
+@define("tmpl_get")
+	@object_get("tmpl_funclist", @get("arg1"))
+@enddef
+
+@nop(" Get a field from a colon-separated string of fields ")
+@define("get_field")
+	@set("s", @get("arg1"))
+	@loop(@get("arg2"))
+		@set("i", @indexof(@get("s"), ":"))
+		@if(@not(@equal(@get("i"), "-1")))
+			@set("s", @substring(@get("s"), @add(@get("i"), "1")))
+		@endif
+	@endloop
+	@set("i", @indexof(@get("s"), ":"))
+	@if(@not(@equal(@get("i"), "-1")))
+		@set("s", @substring(@get("s"), "0", @get("i")))
+	@endif
+	@get("s")
+@enddef
+
+@loop(@tmpl_get("length"))
+
+@set("min", @tmpl_get(@cat(@loopindex(), ".func.min_args")))
+@set("max", @tmpl_get(@cat(@loopindex(), ".func.max_args")))
+@set("args", @tmpl_get(@cat(@loopindex(), ".params")))
+@set("desc", @tmpl_get(@cat(@loopindex(), ".desc")))
+
+<!-- min=@get("min") max=@get("max") args="@get("args")" -->
+
+<tr>
+<td colspan="2">
+<a name="@tmpl_get(@cat(@loopindex(), ".func.name"))">
+<b>@@@tmpl_get(@cat(@loopindex(), ".func.name"))(@nop()
+
+@nop(" Display function arguments, with optional arguments in brackets ")
+@loop(@get("max"))
+	@set(@cat("field", @loopindex()),
+	    @get_field(@get("args"), @loopindex()))
+	@if(@ge(@loopindex(), @get("min")))
+		@nop() [ @nop()
+	@endif
+	@if(@loopindex())
+		@nop(), @nop()
+	@endif
+	@nop()@get(@cat("field", @loopindex()))@nop()
+@endloop
+@loop(@sub(@get("max"), @get("min")))
+	@nop()]@nop()
+@endloop
+@nop())</b></td>
+</tr>
+
+@nop(" Substitute argument names for '$N' strings in the description ")
+
+@loop(@get("max"))
+	@while("1")
+		@set("i", @indexof(@get("desc"),
+		    @cat("$", @add(@loopindex(), "1"))))
+		@if(@equal(@get("i"), "-1"))
+			@break
+		@endif
+		@set("desc", @cat(
+		    @substring(@get("desc"), "0", @get("i")),
+		    "<em>",
+		    @get(@cat("field", @loopindex())),
+		    "</em>",
+		    @substring(@get("desc"), @add(@get("i"), "2"))))
+	@endwhile
+@endloop
+
+@nop(" Display description ")
+
+<tr>
+<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td>@get("desc")</td>
+</tr>
+
+<tr><td colspan="2">&nbsp;</td></tr>
+
+@endloop
+
+</table>
+
+</td></tr>
+
+<tr><td colspan="2">&nbsp;</td></tr>
+
+</table>
+
+@eval(@readfile("foot.tmpl"))

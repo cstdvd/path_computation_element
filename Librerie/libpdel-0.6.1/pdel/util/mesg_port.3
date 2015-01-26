@@ -1,0 +1,110 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: mesg_port.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt MESG_PORT 3
+.Os
+.Sh NAME
+.Nm mesg_port
+.Nd generic message ports
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In pthread.h
+.In pdel/util/mesg_port.h
+.Ft "struct mesg_port *"
+.Fn mesg_port_create "const char *mtype"
+.Ft void
+.Fn mesg_port_destroy "struct mesg_port **portp"
+.Ft int
+.Fn mesg_port_put "struct mesg_port *port" "void *data"
+.Ft "void *"
+.Fn mesg_port_get "struct mesg_port *port" "int timeout"
+.Ft u_int
+.Fn mesg_port_qlen "struct mesg_port *port"
+.Sh DESCRIPTION
+These functions implement a message port for inter-thread communication.
+.Pp
+.Fn mesg_port_create
+creates a new messge port, using
+.Xr typed_mem 3
+type
+.Fa mtype
+for internal memory allocation.
+.Pp
+.Fn mesg_port_destroy
+destroys the message port pointed to by
+.Fa "*portp" .
+There must be no messages in the message port, otherwise
+.Fn mesg_port_destroy
+aborts with an assertion failure.
+Upon return,
+.Fa "*portp"
+will be set to
+.Dv NULL .
+If
+.Fa "*portp"
+is already
+.Dv NULL
+when
+.Fn mesg_port_destroy
+is invoked, nothing happens.
+.Pp
+.Fn mesg_port_put
+writes the message represented by
+.Fa data
+to the message port pointed to by
+.Fa port .
+The
+.Fa data
+may not be
+.Dv NULL .
+.Pp
+.Fn mesg_port_get
+retrieves the next available message written to the message port pointed to by
+.Fa port .
+Messages are read in the same order as they are written.
+If there are no messages,
+.Fn mesg_port_get
+waits for up to
+.Fa timeout
+milliseconds, or indefinitely if
+.Fa timeout
+is negative.
+The thread calling
+.Fn mesg_port_get
+may be canceled without ill effect.
+.Pp
+.Fn mesg_port_qlen
+returns the current number of messages queued on the message port pointed to by
+.Fa port .
+.Pp
+.Fn mesg_port_put ,
+.Fn mesg_port_get ,
+and
+.Fn mesg_port_qlen
+may be called safely at the same time from different threads.
+.Sh RETURN VALUES
+.Fn mesg_port_create ,
+.Fn mesg_port_put ,
+and
+.Fn mesg_port_get
+return
+.Dv NULL
+or -1 to indicate an error,
+with
+.Va errno
+set appropriately.
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr pevent 3 ,
+.Xr pthread 3 ,
+.Xr typed_mem 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

@@ -1,0 +1,58 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: structs_type_dnsname.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRUCTS_TYPE_ETHER 3
+.Os
+.Sh NAME
+.Nm structs_type_dnsname
+.Nd structs type for DNS resolvable hostnames
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In pdel/structs/structs.h
+.In pdel/structs/type/array.h
+.In pdel/structs/type/dnsname.h
+.Vt extern const struct structs_type structs_type_dnsname ;
+.Sh DESCRIPTION
+.Va structs_type_dnsname
+is a
+.Xr structs 3
+types for DNS resolvable hostnames.
+The represented data structure is a
+.Li "struct structs_dnsname" ,
+which contains both the ASCII hostname and an array of one or
+more IP addresses that resulted from a DNS lookup:
+.Pp
+.Bd -literal -compact -offset 3n
+DEFINE_STRUCTS_ARRAY(structs_dnsname_ips, struct in_addr);
+
+struct structs_dnsname {
+    const char			*name;	/* dns name to look up */
+    struct structs_dnsname_ips	ips;	/* array of >= 1 ip addrs */
+};
+.Ed
+.Pp
+The ASCII representation of this type is just the hostname.
+When this ASCII form is converted to native binary form, a
+DNS lookup is performed and the
+.Va ips
+array is filled in with the result.
+If the DNS lookup fails, so too does the ASCII conversion.
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr structs 3 ,
+.Xr structs_type 3 ,
+.Xr structs_type_array 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org
+.Sh BUGS
+This type could be made more general, for example supporting MX records
+or IPv6 addresses.

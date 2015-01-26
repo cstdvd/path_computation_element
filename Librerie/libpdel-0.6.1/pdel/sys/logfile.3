@@ -1,0 +1,181 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: logfile.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt LOGFILE 3
+.Os
+.Sh NAME
+.Nm logfile
+.Nd circular log files
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In pdel/sys/logfile.h
+.Ft "struct logfile *"
+.Fn logfile_open "const char *path" "int flags" "u_int32_t maxent" "u_int32_t maxdata"
+.Ft void
+.Fn logfile_close "struct logfile **lfp"
+.Ft u_int32_t
+.Fn logfile_num_entries "struct logfile *lf"
+.Ft "const void *"
+.Fn logfile_get "struct logfile *lf" "int which" "int *lenp"
+.Ft int
+.Fn logfile_put "struct logfile *lf" "const void *data" "int len"
+.Ft void
+.Fn logfile_trim "struct logfile *lf" "int num"
+.Ft void
+.Fn logfile_sync "struct logfile *lf"
+.Sh DESCRIPTION
+These functions provide support for circular log files.
+A
+.Nm logfile
+file contains the most recently added entries, where an entry
+is any opaque chunk of data supplied by the application.
+When the file becomes full, new entries overwrite the oldest
+entries in a circular fashion.
+.Pp
+Each
+.Nm logfile
+file has a fixed size and is accessed using
+.Xr mmap 2
+for efficiency.
+.Pp
+.Fn logfile_open
+opens the log file with pathname
+.Fa path .
+.Fa flags
+may be equal to zero,
+.Dv O_SHLOCK ,
+or
+.Dv O_EXLOCK
+for locking purposes
+(see
+.Xr open 2
+for details).
+If the file is locked,
+.Fn logfile_open
+does not block, but instead returns
+.Dv NULL
+immediately with
+.Va errno
+set to
+.Er EWOULDBLOCK .
+.Pp
+If the named file exists, it must be a valid
+.Nm logfile
+file and
+.Fa maxent
+and
+.Fa maxdata
+are ignored.
+Otherwise, it is created using those parameters:
+.Fa maxent
+limits the total number of entries that the file may contain, and
+.Fa maxdata
+limit the total amount of entry data (in bytes) that the file
+may contain.
+When full, the file's ultimate size will be approximately
+.Fa maxdata
++ (8 *
+.Fa maxent )
++ 20.
+.Pp
+The 
+.Fa path
+may be
+.Dv NULL ,
+in which case the logfile is not stored in the file system and
+therefore is not persistent.
+.Pp
+.Fn logfile_close
+closes a log file previously opened using
+.Fn logfile_open .
+Upon return,
+.Fa "*lfp"
+will be set to
+.Dv NULL .
+If
+.Fa "*lfp"
+is already equal to
+.Dv NULL
+when
+.Fn logfile_close
+is invoked, nothing happens.
+.Pp
+.Fn logfile_num_entries
+returns the number of valid entries contained in a log file.
+.Pp
+.Fn logfile_get
+retrieves an entry from a log file.
+.Fa which
+must be a negative number: -1 is the most recently added entry,
+-2 is the second most recently added, etc.
+If
+.Fa "lenp"
+is not equal to
+.Dv NULL ,
+then
+.Fa "*lenp"
+is set to the length of the entry.
+Entries returned by
+.Fn logfile_get
+are contiguous and suitably aligned for any type.
+The caller should not free the returned pointer.
+.Pp
+.Fn logfile_put
+adds a new entry to a log file.
+The entry is pointed to by
+.Fa data
+and has length
+.Fa len .
+.Pp
+.Fn logfile_trim
+discards the oldest entries in a log file as necessary to make
+the total number of entries be at most
+.Fa num .
+.Pp
+.Fn logfile_sync
+synchronously flushes any unwritten entries to permanent storage.
+.Pp
+Each
+.Nm logfile
+object maintains an internal mutex lock.
+The functions
+.Fn logfile_num_entries ,
+.Fn logfile_get ,
+.Fn logfile_put ,
+.Fn logfile_trim ,
+and
+.Fn logfile_sync
+may be safely called simultaneously from different threads.
+.Sh RETURN VALUES
+.Fn logfile_open
+and
+.Fn logfile_get
+return
+.Dv NULL
+to indicate an error.
+.Fn logfile_put
+returns -1 to indicate an error.
+In all error cases,
+.Va errno
+is set accordingly.
+.Sh SEE ALSO
+.Xr open 2 ,
+.Xr alog 3 ,
+.Xr libpdel 3 ,
+.Xr typed_mem 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org
+.Sh BUGS
+Meta information is stored in the logfile in host order.
+Therefore,
+.Nm logfile
+files are not portable.

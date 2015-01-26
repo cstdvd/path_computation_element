@@ -1,0 +1,162 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: http_servlet.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt HTTP_SERVLET 3
+.Os
+.Sh NAME
+.Nm http_servlet
+.Nd HTTP response generation API
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdio.h
+.In netinet/in.h
+.In openssl/ssl.h
+.In pdel/http/http_defs.h
+.In pdel/http/http_server.h
+.In pdel/http/http_servlet.h
+.Sh DESCRIPTION
+The
+.Nm http_servlet
+API provides an interface for user code to generate HTTP responses
+for the
+.Xr http_server 3
+HTTP server.
+.Pp
+The PDEL library comes with these predefined servlets:
+.Pp
+.Bl -dash -compact -offset 3n
+.It
+HTTP basic authentication:
+.Xr http_servlet_basicauth 3
+.It
+HTTP secure cookie authentication:
+.Xr http_servlet_cookieauth 3
+.It
+HTTP redirect servlet:
+.Xr http_servlet_redirect 3
+.It
+File servlet:
+.Xr http_servlet_file 3
+.It
+.Xr tmpl 3
+template servlet:
+.Xr http_servlet_tmpl 3
+.It
+XML servlet:
+.Xr http_servlet_xml 3
+.It
+XML-RPC servlet:
+.Xr http_servlet_xmlrpc 3
+.El
+.Pp
+Servlets are registered by first constructing the servlet object
+and then invoking
+.Fn http_server_register_servlet .
+A servlet is represented by a
+.Li "struct http_servlet" :
+.Pp
+.Bd -literal -offset 3n
+typedef int  http_servlet_run_t(struct http_servlet *servlet,
+               struct http_request *req, struct http_response *resp);
+typedef void http_servlet_destroy_t(struct http_servlet *servlet);
+
+struct http_servlet {
+    void                     *arg;         /* servlet cookie */
+    struct http_servlet_hook *hook;        /* server info */
+    http_servlet_run_t       *run;         /* execute method */
+    http_servlet_destroy_t   *destroy;     /* destructor */
+};
+.Ed
+.Pp
+The
+.Va arg
+fields is private to the servlet itself and is ignored by the server.
+.Pp
+The
+.Va hook
+is an
+.Xr http_server 3
+private pointer that should be initialized to
+.Dv NULL
+when the servlet is constructed.
+This pointer is set to a non-
+.Dv NULL
+value when the servlet is registered with a server.
+The servlet itself should not dereference or modify this field.
+.Pp
+.Fn run
+executes the servlet for a single request/response pair.
+Each response is handled by the server in a separate thread,
+and several request/response pairs may exist at the same time for
+the same servlet object; i.e., servlets are multi-threaded.
+Synchronization is the responsibility of the servlet.
+The thread executing the servlet may be canceled at any
+cancellation point, e.g., if the requesting user-agent closes the connection
+before the response has been sent.
+This means that the servlet code may need to register thread cleanup hooks
+to avoid leaking memory or other resources.
+.Pp
+.Fn destroy
+will be called when the servlet is being
+unregistered and destroyed (servlets can be registered only once;
+unregistering a servlet destroys it).
+It should free any resources allocated when the servlet was constructed.
+The
+.Xr http_server 3
+code guarantees that when
+.Fn destroy
+is invoked, there will be no instances of the
+.Fn run
+method currently executing.
+.Sh RETURN VALUES
+If successful,
+.Fn run
+should return 1 to indicate that the response is complete, or 0 to
+indicate that the servlet did not generate a response and execution
+should continue with the next-best matching servlet.
+Zero return values are used by servlets that only generate a response
+conditionally, e.g., authorization servlets.
+.Pp
+On failure
+.Fn run
+should -1 and set
+.Va errno .
+In this case (typically due to a system error), if a response has not
+yet been sent, a generic "500 Internal Server Error" response will be
+automatically generated with the error string from
+.Xr strerror 3 .
+.Sh SEE ALSO
+.Xr http_client 3 ,
+.Xr http_request 3 ,
+.Xr http_response 3 ,
+.Xr http_server 3 ,
+.Xr http_servlet_basicauth 3 ,
+.Xr http_servlet_cookieauth 3 ,
+.Xr http_servlet_file 3 ,
+.Xr http_servlet_redirect 3 ,
+.Xr http_servlet_tmpl 3 ,
+.Xr http_servlet_xml 3 ,
+.Xr http_servlet_xmlrpc 3 ,
+.Xr libpdel 3
+.Rs
+.%A R. Fielding
+.%A J. Gettys
+.%A J. Mogul
+.%A H. Frystyk
+.%A L. Masinter
+.%A P. Leach
+.%A T. Berners-Lee
+.%T "Hypertext Transfer Protocol -- HTTP/1.1"
+.%O RFC 2616
+.Re
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

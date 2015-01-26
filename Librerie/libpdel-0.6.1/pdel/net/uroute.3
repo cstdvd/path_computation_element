@@ -1,0 +1,166 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: uroute.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt UROUTE 3
+.Os
+.Sh NAME
+.Nm uroute
+.Nd networking route objects
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In sys/socket.h
+.In stdio.h
+.In pdel/net/uroute.h
+.Ft "struct uroute *"
+.Fn uroute_create "const struct sockaddr *dest" "const struct sockaddr *gateway" "const struct sockaddr *netmask"
+.Ft "void"
+.Fn uroute_destroy "struct uroute **routep"
+.Ft "const struct sockaddr *"
+.Fn uroute_get_dest "struct uroute *route"
+.Ft "const struct sockaddr *"
+.Fn uroute_get_gateway "struct uroute *route"
+.Ft "const struct sockaddr *"
+.Fn uroute_get_netmask "struct uroute *route"
+.Ft "int"
+.Fn uroute_get_flags "struct uroute *route"
+.Ft "void"
+.Fn uroute_set_flags "struct uroute *route" "int flags"
+.Ft "int"
+.Fn uroute_add "struct uroute *route"
+.Ft "int"
+.Fn uroute_delete "struct uroute *route"
+.Ft "struct uroute *"
+.Fn uroute_get "const struct sockaddr *dest"
+.Ft "int"
+.Fn uroute_get_all "struct uroute ***listp" "const char *mtype"
+.Ft "void"
+.Fn uroute_print "struct uroute *route" "FILE *fp"
+.Sh DESCRIPTION
+These functions support
+.Nm uroute
+objects, used for representing kernel routes in user code.
+Each
+.Nm uroute
+instance is represented by a
+.Li "struct uroute" .
+.Pp
+.Fn uroute_create
+creates a new
+.Nm uroute
+object using copies of the supplied
+.Fa dest ,
+.Fa gateway ,
+and
+.Fa netmask .
+The
+.Fa netmask
+should be
+.Dv NULL
+to specify a host route instead of a network route.
+.Pp
+.Fn uroute_destroy
+destroys the object pointed to by
+.Fa "*routep" .
+Upon return,
+.Fa "*routep"
+will be set to
+.Dv NULL .
+If
+.Fa "*routep"
+is already
+.Dv NULL
+when
+.Fn uroute_destroy
+is invoked, nothing happens.
+.Pp
+.Fn uroute_get_dest ,
+.Fn uroute_get_gateway ,
+and
+.Fn uroute_get_netmask
+return the addresses associated with the route.
+Note that
+.Fn uroute_get_netmask
+returns
+.Dv NULL
+to indicate that
+.Fa route
+is a host route.
+.Pp
+.Fn uroute_get_flags
+and
+.Fn uroute_set_flags
+are used to access or modify the flags associated with the route;
+these flags are defined in the header file
+.Li "<net/route.h>" .
+The only flag set for a newly created route is
+.Dv RTF_STATIC .
+.Pp
+.Fn uroute_add
+attempts to add the
+.Fa route
+to the kernel routing table.
+.Pp
+.Fn uroute_delete
+attempts to remove the
+.Fa route
+from the kernel routing table.
+.Pp
+.Fn uroute_get
+attempts to retrieve the route matching
+.Fa dest
+from the kernel routing table.
+.Pp
+.Fn uroute_get_all
+retrieves the entire kernel routing table.
+Zero or more
+.Nm uroute
+objects are constructed and pointed to by the elements of a newly
+allocated array of pointers.
+The length of the array is returned by
+.Fn uroute_get_all
+and a pointer to the array is stored in
+.Fa "*listp" .
+The array itself is allocated with
+.Xr typed_mem 3
+type
+.Fa mtype ,
+and the caller is responsible for eventually freeing it (as well as
+destroying the individudal
+.Nm uroute
+objects).
+.Pp
+.Fn uroute_print
+prints out
+.Fa uroute
+to the stream
+.Fa fp
+for debugging purposes.
+.Sh RETURN VALUES
+.Fn uroute_create ,
+.Fn uroute_add ,
+.Fn uroute_delete ,
+.Fn uroute_get ,
+and
+.Fn uroute_get_all
+return -1 or
+.Dv NULL
+to indicate an error, with
+.Va errno
+set appropriately.
+.Sh SEE ALSO
+.Xr if_util 3 ,
+.Xr libpdel 3 ,
+.Xr typed_mem 3 ,
+.Xr route_msg 3 ,
+.Xr route 4
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

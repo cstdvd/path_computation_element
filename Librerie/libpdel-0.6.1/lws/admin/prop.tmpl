@@ -1,0 +1,82 @@
+@set("page_id", "$Id: prop.tmpl 547 2002-08-19 20:41:07Z archie $")
+@if(@query("new"))
+	@set("page_title", "New Property")
+@else
+	@set("page_title", "Edit Property")
+@endif
+@set("page_url", "/admin/prop")
+@eval(@readfile("head.tmpl"))
+
+@object_reset("config")
+
+@nop(" Sanity check ")
+@if(@not(@query("new")))
+	@set("pid", @add(@query("pid"), "0"))
+	@if(@or(
+	  @lt(@get("pid"), "0"),
+	  @ge(@get("pid"), @config_get("properties.length"))))
+		<b>Error:</b> No such property with ID @get("pid").
+		@eval(@readfile("foot.tmpl"))
+		@return
+	@endif
+@endif
+
+<form method="post" action="doconfig">
+<table border="0" cellspacing="2" cellpadding="0">
+
+@if(@query("new"))
+	@set("pid", @config_get("properties.length"))
+	@object_array_insert("config", "properties", @get("pid"))
+	@hidden("insert:", @cat("properties:", @get("pid")))
+@else
+	@hidden("delete:", @cat("properties:", @get("pid")))
+@endif
+
+@set("name", @config_get(@cat("properties.", @get("pid"), ".name")))
+@set("value", @config_get(@cat("properties.", @get("pid"), ".value")))
+
+@header(@get("page_title"))
+
+@if(@not(@empty(@regex_match("^admin\.", @get("name")))))
+<tr>
+  <td colspan="3">&nbsp;&nbsp;
+  <font color="#ff0000">Warning:</font> The <b>admin.*</b> properties
+  are reserved for use by this administrative UI and should not be modified.
+  </td>
+</tr>
+
+<tr><td colspan="3">&nbsp;</td><td>
+@endif
+
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;</td>
+  <td nowrap align="right"><b>Name:&nbsp;&nbsp;</b></td>
+  <td align="left">@config_textinput(@cat("properties.",
+	@get("pid"), ".name"), "32", "256")</td>
+</tr>
+
+<tr>
+  <td>&nbsp;&nbsp;&nbsp;</td>
+  <td nowrap align="right"><b>Value:&nbsp;&nbsp;</b></td>
+  <td align="left">@config_textinput(@cat("properties.",
+	@get("pid"), ".value"), "32", "256")</td>
+  @nop()</td>
+</tr>
+
+<tr>
+  <td colspan="2">&nbsp;</td>
+  <td align="left"><input type="submit" name="button" value="Update">
+@if(@not(@query("new")))
+  &nbsp;&nbsp;<input type="submit" name="button" value="Delete">
+@endif
+  &nbsp;&nbsp;<input type="reset" value="Reset">
+  </td>
+</tr>
+
+<tr><td colspan="3">&nbsp;</td><td>
+
+</table>
+
+</form>
+
+@eval(@readfile("foot.tmpl"))

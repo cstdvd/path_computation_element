@@ -1,0 +1,253 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: typed_mem.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt TYPED_MEM 3
+.Os
+.Sh NAME
+.Nm typed_mem
+.Nd heap memory accounting system
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdio.h
+.In stdarg.h
+.In pdel/structs/structs.h
+.In pdel/structs/type/array.h
+.In pdel/util/typed_mem.h
+.Ft "void *"
+.Fn MALLOC "const char *mtype" "size_t size"
+.Ft "void *"
+.Fn CALLOC "const char *mtype" "size_t number" "size_t size"
+.Ft "void *"
+.Fn REALLOC "const char *mtype" "void *mem" "size_t size"
+.Ft "void *"
+.Fn REALLOCF "const char *mtype" "void *mem" "size_t size"
+.Ft "void"
+.Fn FREE "const char *mtype" "void *mem"
+.Ft "char *"
+.Fn STRDUP "const char *mtype" "const char *str"
+.Ft "int"
+.Fn ASPRINTF "const char *mtype" "char **ret" "const char *format" "..."
+.Ft "int"
+.Fn VASPRINTF "const char *mtype" "char **ret" "const char *format" "va_list ap"
+.Ft "int"
+.Fn typed_mem_enable "void"
+.Ft "char *"
+.Fn typed_mem_type "const void *mem" "char *typebuf"
+.Ft "int"
+.Fn typed_mem_usage "struct typed_mem_stats *stats"
+.Ft "void"
+.Fn typed_mem_dump "FILE *fp"
+.Vt extern const struct structs_type typed_mem_stats_type ;
+.Sh DESCRIPTION
+The
+.Nm typed_mem
+library provides accounting and sanity checking for heap-allocated memory,
+configurable at run time.
+.Pp
+If you're reading this man page because you need to pass a variable named
+.Fa mtype
+to a function where a
+.Dq "typed_mem(3) memory type"
+is required, but you don't want to use or deal with typed memory in any way,
+then just pass
+.Dv NULL
+for
+.Fa mtype
+and stop reading here.
+Otherwise, read on...
+.Pp
+In this system, the user code uses the
+.Fn MALLOC ,
+.Fn CALLOC ,
+.Fn REALLOC ,
+.Fn REALLOCF ,
+.Fn FREE ,
+.Fn STRDUP ,
+.Fn ASPRINTF ,
+and
+.Fn VASPRINTF
+macros as replacements for their lowercase standard C library equivalents.
+These macros take an additional first argument, which is the
+.Em memory type
+for the block of memory.
+A memory type is simply an ASCII string (of which only the first
+.Dv "TYPED_MEM_TYPELEN - 1"
+characters are significant) containing a short, human-readable description
+of what the memory is being used for.
+Note it is the contents of the string, not the string pointer itself,
+which defines the type.
+.Pp
+Once typed memory is enabled (see below), any memory allocated with
+a memory type must be reallocated and/or freed with that same type,
+otherwise the library will immediately abort with an assertion failure.
+Similarly, invoking
+.Fn REALLOC ,
+.Fn REALLOCF
+or
+.Fn FREE
+with a pointer that was not returned by one of the allocation macros
+will also cause an abort.
+In addition,
+.Fn FREE
+never modifies the value of
+.Va errno .
+.Pp
+To accomodate code that is not participating in the typed memory system, a
+.Dv NULL
+type may always be used to indicate a block that should not be accounted for.
+That is, the
+.Dv NULL
+memory type just falls through to the existing
+.Xr malloc 3 ,
+.Xr free 3 ,
+etc.
+For example,
+.Xr scandir 3
+returns a heap-allocated array
+.Fa namelist
+which the caller must free.
+Instead of calling
+.Fn free namelist
+the caller may call
+.Fn FREE "NULL" "namelist" .
+Calling
+.Fn FREE
+in this case with any type other than
+.Dv NULL
+would result in an assertion failure.
+Similarly, memory allocated with
+.Dv NULL
+memory type may be freed via the normal
+.Xr free 3 .
+.Pp
+Memory allocated by the
+.Nm typed_mem
+macros is bracketed by guard bytes before and after the returned region.
+The
+.Fn REALLOC ,
+.Fn REALLOCF
+and
+.Fn FREE
+routines detect if the program has modified these bytes, and they generate
+an assertion failure if so.
+.Pp
+If a source file consistently uses the typed memory macros for all
+heap memory operations, then it may define
+.Dv TYPED_MEM_UNDEFINE_ORIGINALS
+before including
+.Li "<pdel/util/typed_mem.h>" .
+This will cause the lowercase names to be redefined in such a way
+that their use will prevent the source file from compiling.
+This helps avoid inadvertently mixing the libc routines with typed
+memory routines.
+.Pp
+Participation in the typed memory system is optional and configurable
+at run time.
+To enable typed memory accounting,
+.Fn typed_mem_enable
+must be called once at program start before any heap allocations are performed.
+This function returns zero if successful, or else -1 with
+.Va errno
+set to 
+.Er EALREADY
+if a typed memory allocation has already been performed.
+.Pp
+If
+.Fn typed_mem_enable
+is never called, then all of the above macros ignore their
+.Fa type
+argument and simply fall through to the underlying libc routines,
+therefore having no effect.
+The program will behave exactly as if the original functions had been used,
+except that there is one function call of overhead for each macro.
+.Pp
+.Fn typed_mem_usage
+may be called to get the current statistics on memory types and usage.
+An array of statistics structures is returned, one for each type,
+containing the number of blocks and total bytes allocated under that type:
+.Pp
+.Bd -literal -offset 3n
+/* Statistics for a single memory type */
+struct typed_mem_typestats {
+    char      type[TYPED_MEM_TYPELEN];    /* type string + '\\0' */
+    u_int     allocs;                     /* # blocks alloc'd */
+    u_int     bytes;                      /* # bytes alloc'd */
+};
+
+/* Variable length array of 'struct typed_mem_typestats' */
+DEFINE_STRUCTS_ARRAY(typed_mem_stats, struct typed_mem_typestats);
+.Ed
+.Pp
+The array is sorted lexicographically by type name.
+The array itself must be eventually freed by the caller, by invoking:
+.Pp
+.Bd -literal -offset 3n
+structs_free(&typed_mem_stats_type, NULL, stats);
+.Ed
+.Pp
+.Fn typed_mem_usage
+returns zero if successful, or else -1 and sets
+.Va errno
+if there was an error;
+in particular,
+.Er ENXIO
+if typed memory is not enabled.
+.Pp
+A
+.Xr structs 3
+type
+.Fa typed_mem_stats_type
+describing a
+.Li "struct typed_mem_stats"
+is pre-defined.
+.Pp
+.Fn typed_mem_type
+retrieves the type for the memory block pointed to by
+.Fa mem
+and writes it (including terminating '\\0') into the buffer pointed to by
+.Fa typebuf ,
+which must have size at least
+.Dv TYPED_MEM_TYPELEN .
+If successful,
+.Fn typed_mem_type
+returns
+.Fa typebuf ;
+otherwise
+.Fn typed_mem_type
+returns
+.Dv NULL .
+This will happen if
+.Fn typed_mem_enable
+has not been called, if
+.Fa mem
+was allocated with type
+.Dv NULL ,
+or if
+.Fa mem
+was never returned by any of these allocation routines.
+.Pp
+.Fn typed_mem_dump
+prints out the current statistics on memory types and usage
+to the supplied output stream.
+.Pp
+The
+.Nm typed_mem
+routines may safely be called from multiple threads simultaneously.
+.Sh SEE ALSO
+.Xr assert 3 ,
+.Xr libpdel 3 ,
+.Xr malloc 3 ,
+.Xr printf 3 ,
+.Xr structs 3 ,
+.Xr structs_type_array 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

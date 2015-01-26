@@ -1,0 +1,91 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: ssl_fp.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt SSL_FP 3
+.Os
+.Sh NAME
+.Nm ssl_fdopen ,
+.Nm ssl_log
+.Nd SSL utility routines
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In openssl/ssl.h
+.In pdel/io/ssl_fp.h
+.Ft "FILE *"
+.Fn ssl_fdopen "SSL_CTX *ssl_ctx" "int fd" "int server" "const char *mtype" "ssl_logger_t *logger" "void *logarg" "u_int timeout"
+.Ft void
+.Fn ssl_log "ssl_logger_t *logger" "void *arg"
+.Sh DESCRIPTION
+.Fn ssl_fdopen
+converts an encrypted SSL file descriptor into an unencrypted stream.
+When the returned stream is closed via
+.Xr fclose 3 ,
+so too is the underlying file descriptor.
+.Pp
+.Fa ssl_ctx
+is the SSL context.
+.Fa fd
+is the original file descriptor, over which the SSL protocol is spoken.
+.Fa server
+should be non-zero if the local side is the server.
+The stream's private state is allocated with
+.Xr typed_mem 3
+type
+.Fa mtype .
+An idle timeout may be specified by setting
+.Fa timeout
+to the number of seconds.
+.Pp
+.Fa logger ,
+if not
+.Dv NULL ,
+is a pointer to a logging function having this type:
+.Pp
+.Bd -literal -compact -offset 3n
+typedef void ssl_logger_t(void *arg, int sev, const char *fmt, ...);
+.Ed
+.Pp
+The
+.Fa logarg
+is passed to
+.Fn logger
+as
+.Fa arg .
+.Fa sev
+is a
+.Xr syslog 3
+severity level, and
+.Fa fmt
+is a
+.Xr printf 3
+like format string with subsequent arguments.
+.Pp
+.Fn ssl_log
+is a routine for logging any SSL error.
+It takes a
+.Fa logger
+and
+.Fa arg
+as specified above.
+.Sh RETURN VALUES
+.Fn ssl_fdopen
+returns
+.Dv NULL
+if an error occurs, with
+.Va errno
+set appropriately.
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr syslog 3 ,
+.Xr typed_mem 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

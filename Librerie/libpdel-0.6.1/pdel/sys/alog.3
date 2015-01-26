@@ -1,0 +1,329 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: alog.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt ALOG 3
+.Os
+.Sh NAME
+.Nm alog
+.Nd logging library
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In netinet/in.h
+.In pdel/structs/structs.h
+.In pdel/structs/type/array.h
+.In pdel/sys/alog.h
+.Ft int
+.Fn alog_configure "int channel" "const struct alog_config *conf"
+.Ft int
+.Fn alog_shutdown "int channel"
+.Ft int
+.Fn alog_set_channel "int channel"
+.Ft void
+.Fn alog "int sev" "const char *fmt" "..."
+.Ft void
+.Fn valog "int sev" "const char *fmt" "va_list args"
+.Ft int
+.Fn alog_get_history "int channel" "int min_severity" "int max_entries" "time_t max_age" "const regex_t *preg" "struct alog_history *list"
+.Ft int
+.Fn alog_clear_history "int channel"
+.Ft int
+.Fn alog_facility "const char *name"
+.Ft "const char *"
+.Fn alog_facility_name "int facility"
+.Ft int
+.Fn alog_severity "const char *name"
+.Ft "const char *"
+.Fn alog_severity_name "int severity"
+.Ft void
+.Fn alog_set_debug "int channel" "int enabled"
+.Ft void
+.Fn alog_expand "const char *fmt" "int errnum" "char *buf" "size_t bufsize"
+.Vt extern const struct structs_type alog_facility_type ;
+.Vt extern const struct structs_type alog_severity_type ;
+.Vt extern const struct structs_type alog_config_type ;
+.Vt extern const struct structs_type alog_history_type ;
+.Sh DESCRIPTION
+These functions provide support for storing and retrieving log messages.
+Up to
+.Dv ALOG_MAX_CHANNELS
+independent log channels are supported.
+Log entries may be printed to standard error, stored in a searchable
+circular log history file, and sent to a local or remote
+.Xr syslog 3
+server.
+.Pp
+.Fn alog_configure
+configures a log channel;
+.Fa channel
+must be between zero and
+.Dv "ALOG_MAX_CHANNELS - 1" ,
+inclusive.
+The channel's configuration is pointed to by
+.Fa conf ,
+which is a pointer to a
+.Li "struct alog_config" :
+.Pp
+.Bd -literal -compact -offset 3n
+struct alog_config {
+    const char     *path;         /* logfile filename, or NULL */
+    const char     *name;         /* syslog id, or NULL to disable */
+    const char     *facility;     /* syslog facility, NULL=stderr */
+    struct in_addr remote_server; /* remote server, or 0.0.0.0 local */
+    int            min_severity;  /* min severity to actually log */
+    int            histlen;       /* how much history to save */
+};
+.Ed
+.Pp
+If
+.Fa path
+is not
+.Dv NULL
+it specifies the pathname of a circular
+.Xr logfile 3
+used to store log entries, and
+.Fa histlen
+specifies the maximum number of entries to store in the file.
+.Pp
+If
+.Fa facility
+is
+.Dv NULL ,
+log messages will be sent to standard error.
+Otherwise, if
+.Fa name
+is not
+.Dv NULL ,
+.Xr syslog 3
+logging is performed:
+.Fa name
+is the
+.Xr syslog 3
+identifier,
+.Fa remote_server
+specifies the IP address of a remote
+.Xr syslog 3
+server to send log entries to (or
+.Li "0.0.0.0"
+for the local
+.Xr syslogd 8
+listening on
+.Pa "/var/run/log)" ,
+and
+.Fa facility
+specifies a
+.Xr syslog 3
+facility, which must be a valid facility name as returned by
+.Fn alog_facility_name
+(see below), e.g., "daemon".
+If
+.Fa name
+is
+.Dv NULL ,
+log messages are not output at all (but will still be stored in the log file).
+.Pp
+.Fa min_severity
+specifies a minimum
+.Xr syslog 3
+severity level (actually a maximum, numerically speaking) for
+logged entries; less severe entries are filtered out.
+.Pp
+After a channel has been configured successfully via
+.Fn alog_configure ,
+access to that channel via
+.Fn alog ,
+.Fn valog ,
+.Fn alog_get_history ,
+and
+.Fn alog_clear_history
+by multiple threads is safe.
+.Pp
+.Fn alog_shutdown
+shuts down an
+.Fa alog
+channel, returning it to its uninitialized, thread-unsafe state.
+Logging to an uninitialized channel is permitted; the output is
+written to standard error.
+This allows applications to log errors before they've configured
+.Nm alog .
+.Pp
+.Fn alog_set_channel
+sets the log channel for newly logged messages.
+This setting persists until another call to
+.Fn alog_set_channel .
+A separate "current channel" variable is kept for each thread.
+.Pp
+.Fn alog
+and
+.Fn valog
+log a message.
+.Fa sev
+is a
+.Xr syslog 3
+severity level such as
+.Dv LOG_ERROR .
+The message is formatted using
+.Fa fmt
+as a
+.Xr printf 3
+like format string.
+As a special case, "%m" is replaced with
+.Fn strerror errno .
+The value of
+.Va errno
+is not modified by these functions.
+Note that when a channel is configured to log to syslog or standard error,
+these functions become thread cancellation points.
+.Pp
+.Fn alog_get_history
+retrieves previously logged entries from the circular log file
+associated with channel
+.Fa channel .
+Only entries with severity greater than
+.Fa min_severity
+are returned;
+only entries logged no earlier than
+.Fa max_age
+seconds ago are returned;
+if
+.Fa preg
+is not
+.Dv NULL ,
+log entries not matching the regular expression are filtered out;
+and finally, at most
+.Fa max_entries
+total entries are returned.
+.Pp
+The returned entries are described by an array of pointers to
+.Li "struct alog_entry" :
+.Pp
+.Bd -literal -compact -offset 3n
+struct alog_entry {
+    time_t  when;           /* when event was logged */
+    int     sev;            /* entry log severity */
+    char    msg[0];         /* entry contents (including '\\0') */
+};
+
+DEFINE_STRUCTS_ARRAY(alog_history, struct alog_entry *);
+.Ed
+.Pp
+This array is stored in
+.Fa "*list" ,
+which will then contain a data structure with
+.Xr structs 3
+type
+.Fa alog_history_type
+and which must eventually be freed by the caller via
+.Xr structs_free 3 .
+.Pp
+.Fn alog_clear_history
+resets a log history file to empty.
+.Pp
+.Fn alog_facility
+takes a
+.Xr syslog 3
+facility name and returns its numeric value.
+.Pp
+.Fn alog_facility_name
+returns the
+.Xr syslog 3
+facility name for
+.Fa facility .
+.Pp
+.Fn alog_severity
+takes a
+.Xr syslog 3
+severity name and returns its numeric value.
+.Pp
+.Fn alog_severity_name
+returns the
+.Xr syslog 3
+severity name for
+.Fa severity .
+.Pp
+.Fn alog_expand
+expands the last occurence of "%m" (if any) in the string
+.Fa fmt
+into
+.Fn strerror errnum
+and writes the result into the buffer pointed to by
+.Fa buf ,
+which has size
+.Fa bufsize .
+.Pp
+.Fn alog_set_debug
+causes the next call to
+.Fn alog_configure
+to act as if
+.Fa facility
+were equal to
+.Dv NULL .
+.Pp
+The following
+.Xr structs 3
+types are pre-defined:
+.Pp
+.Bl -hang -width 2n -offset 3n
+.It Va alog_facility_type
+.Pp
+Same as
+.Xr structs_type_string 3
+but may only take values that are valid
+.Xr syslog 3
+facility names.
+The default value is
+.Dq daemon.
+.It Va alog_severity_type
+.Pp
+Same as
+.Xr structs_type_int 3
+but the ASCII representation is the severity name from
+.Fn alog_severity_name
+instead of a number.
+.It Va alog_config_type
+.Pp
+Describes a
+.Li "struct alog_config" .
+.It Va alog_history_type
+.Pp
+Describes a
+.Li "struct alog_history" ,
+which is a
+.Xr structs 3
+array of
+.Li "struct alog_entry *"
+pointers.
+This type is used for accessing and freeing the log history returned by
+.Fn alog_get_history .
+.El
+.Sh RETURN VALUES
+The above functions return -1 or
+.Dv NULL
+to indicate an error, setting
+.Va errno
+accordingly.
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr regex 3 ,
+.Xr structs 3 ,
+.Xr structs_type_array 3 ,
+.Xr syslog 3 ,
+.Xr typed_mem 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org
+.Sh BUGS
+If multiple channels are configured to write to local syslog,
+messages can get written with the wrong identifier or facility.
+This is an unavoidable consequence of the implementation of
+.Xr openlog 3
+and
+.Xr syslog 3 ,
+which doesn't support threading.

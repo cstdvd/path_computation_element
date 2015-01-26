@@ -1,0 +1,166 @@
+@set("page_id", "$Id: logon.tmpl 540 2002-08-18 03:47:42Z archie $")
+@set("page_title", "Administration Logon")
+@set("page_url", "/admin/logon")
+@set("html_body_extra", "onload=\"document.forms.logon.user.focus()\"")
+@eval(@readfile("macros.tmpl"))
+
+@set("user", @admin_authname())
+
+@set("redirect_url", @query_string())
+@if(@empty(@get("redirect_url")))
+    @set("redirect_url", @query("url"))
+@endif
+
+@nop(" Check if user is logging out ")
+@if(@equal(@query("action"), "Logout"))
+
+    @eval(@readfile("head.tmpl"))
+
+    @nop(" Log them out ")
+    @admin_logout()
+
+    @nop()
+    <p>
+    <font class="standout">
+    <b>You have successfully logged out.</b>
+    </font>
+
+    <p>
+    Press @hotlink("/admin/index", "<b>HERE</b>") to login again.
+    @nop()
+
+    @eval(@readfile("foot.tmpl"))
+    @return
+@endif
+
+@nop(" Check if user is submitting login and password ")
+@if(@or(
+    @equal(@query("action"), "Login"),
+    @and(
+      @empty(@query("action")),
+      @empty(@get_property("admin.username")),
+      @empty(@get_property("admin.password")))))
+
+    @nop(" Verify login/password ")
+
+    @if(@and(
+        @equal(@query("user"), @get_property("admin.username")),
+        @or(
+	  @and(@empty(@query("pass")),
+	    @empty(@get_property("admin.password"))),
+	  @equal(@crypt_hash(@query("pass"), @get_property("admin.password")),
+	    @get_property("admin.password")))))
+
+	@nop(" Save authorization name, but handle empty string case ")
+	@if(@not(@empty(@query("user"))))
+	    @set("user", @query("user"))
+	@else
+	    @set("user", "Administrator")
+	@endif
+
+	@nop(" Log them in ")
+	@admin_login(@get("user"))
+
+	@nop(" Redirect to originally requested page, if any ")
+	@if(@not(@empty(@get("redirect_url"))))
+	    @redirect(@get("redirect_url"))
+	    @return
+	@endif
+
+	@nop(" Show the navigation buttons ")
+	@set("show_nav_buttons", "1")
+
+    @else
+	@set("errmsg", "
+	  <p>
+	  <font class=\"standout\">
+	  <b>&nbsp;&nbsp;&nbsp;Invalid login.</b>
+	  </font>
+	")
+    @endif
+@endif
+
+@nop(" Check if user is already logged in ")
+@if(@not(@empty(@get("user"))))
+
+    @eval(@readfile("head.tmpl"))
+
+    @nop()
+    <p>
+    <b>&nbsp;You are logged in as
+	<font class="standout">@htmlencode(@get("user"))</font></b>.
+
+    <p>
+    <form action="/admin/logon" method="post">
+    <table border="0" cellspacing="2" cellpadding="0">
+    <tr>
+      <td>&nbsp;&nbsp;</td>
+      <td><input name="action" type="submit" value="Logout"></td>
+    </tr>
+    </table>
+    </form>
+    @nop()
+
+    @eval(@readfile("foot.tmpl"))
+    @return
+
+@else
+
+    @eval(@readfile("head.tmpl"))
+
+    @get("errmsg")
+
+    <p>
+    <font class="standout">
+    <b>&nbsp;&nbsp;&nbsp;Please authenticate:</b>
+    </font>
+
+    <form action="/admin/logon" method="post" name="logon">
+    <blockquote>
+    <table border="0" cellspacing="2" cellpadding="0">
+
+    <tr>
+      <td>&nbsp;</td>
+      <td nowrap align="right"><b>Login:&nbsp;&nbsp;</b></td>
+      <td align="left">
+	<input name="user" type="text" size="32" maxlength="128">
+      </td>
+    </tr>
+
+    <tr>
+      <td>&nbsp;</td>
+      <td nowrap align="right"><b>Password:&nbsp;&nbsp;</b></td>
+      <td align="left">
+	<input name="pass" type="password" size="32" maxlength="128">
+      </td>
+    </tr>
+
+    <tr>
+      <td colspan="2">&nbsp;</td>
+      <td>
+	<input name="action" type="submit" value="Login">
+      </td>
+    </tr>
+
+    <tr>
+      <td colspan="3">&nbsp;</td>
+    </tr>
+
+<!--
+    <tr>
+      <td colspan="2">&nbsp;</td>
+      <td>Your web browser must accept cookies to login.</td>
+    </tr>
+-->
+
+    @if(@not(@empty(@get("redirect_url"))))
+      <input name="url" type="hidden" value="@htmlencode(@get("redirect_url"))">
+    @endif
+
+    </table>
+    </blockquote>
+    </form>
+
+@endif
+
+@eval(@readfile("foot.tmpl"))

@@ -1,0 +1,50 @@
+Changes since release 0.3.0 for 0.6.1
+-------------------------------------
+- Minor warning fixes for xBSD and Linux.
+- Fix mktemp to mkstemp that caused issues on *nix platforms.
+- Align version numbers of lws with pel.
+
+Changes since release 0.2.1 for 0.3.0
+-------------------------------------
+- Merge current FreeBSD and Linux build fixes
+- Based on libpdel 0.6.0
+- Refactor GNUmakefile support
+- Windows Support
+	- See libpdel README.Win32 for more details
+	- Cygwin/GCC
+	- Win32 (XP/Vista with Visual Studio 2003/2005 or MSYS/MinGW)
+
+
+Changes since release 0.2
+-------------------------
+
+- FreeBSD port installation fix
+
+Changes since release 0.1.2
+---------------------------
+
+- Log a message when server starts.
+- HTML fixes in the supplied web page templates.
+- Misc build fixes.
+
+Changes since release 0.1.1
+---------------------------
+
+- Added @config_server(), @config_vhost(), @config_servlet(), @http_path(),
+  and @system().
+- Fixed @readfile() to allow absolute pathnames
+- Fixed compiler warnings on FreeBSD-current
+- Add link to each virtual host on the overview page
+- Added man page links to the admin help page
+- Fix shutdown/reload/restart problem under Linux
+- Create and install SSL files in the installation directory, not in
+  the source directory, so they don't get overwritten by each install
+- Update for libpdel version 0.3.3
+
+Changes since release 0.1.0
+---------------------------
+
+- Don't compile -Werror, it breaks on -stable
+- Included top level COPYRIGHT file
+- Included top level Changes file
+

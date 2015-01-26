@@ -1,0 +1,72 @@
+libpdel - the Packet Design Embedded Library
+
+About libpdel
+-------------
+
+The Packet Design Embedded Library (PDEL) is a C library containing an
+assorted collection of code useful for developing embedded applications:
+
+-   C data structure run-time introspection library: structs(3)
+    -   Support for automated conversion to/from XML
+    -   Pre-defined types for most C data structures
+-   Threaded HTTP client/server library: http_server(3)
+    -   SSL support
+    -   User-definable C "servlets": http_servlet(3)
+    -   Several pre-defined servlets
+    -   Support for XML/HTTP and XML-RPC: http_xml(3)
+-   PPP stack library (FreeBSD only): pdel_ppp(3)
+    -	Netgraph(4) based for kernel data packet handling
+    -	Servers for PPTP and L2TP
+-   Application configuration framework: app_config(3)
+-   Heap memory accounting and sanity checking: typed_mem(3)
+-   File template library: tmpl(3)
+-   Routines to configure networking interfaces, ARP table, and routing
+    table (FreeBSD only): if_util(3), route_msg(3), uroute(3)
+-   Logging library: alog(3)
+    -   Automated storage into circular file: logfile(3)
+    -   syslog(3) compatibile
+-   Generic TCP server: tcp_server(3)
+-   Generic hash table implementation: ghash(3)
+-   Generic balanced tree implementation: gtree(3)
+-   FILE * enhancements:
+    -   Generic data "filters": filter_fopen(3)
+    -   MIME boundary input streams: boundary_fopen(3)
+    -   Fixed length input streams: count_fopen(3)
+    -   String buffer input/output streams: string_fp(3)
+    -   Timeout streams: timeout_fdopen(3)
+    -   SSL streams: ssl_fp(3)
+-   Base-64 encoding/decoding: base64(3)
+-   Events and actions with automated locking: paction(3), pevent(3)
+-   Generalized per-thread variables: tinfo(3)
+-   Message ports: mesg_port(3)
+-   Digital signature creation/verification: rsa_util_sign(3)
+-   Filesystem mounting/unmounting (FreeBSD only): fs_mount(3)
+-   String quoting/parsing: string_enquote(3)
+
+For more details, see the individual man pages referenced above.
+
+This library has been tested on FreeBSD and RedHat Linux.
+Other versions of Linux and other operating systems are not
+tested but "should work".
+
+There are a few demonstration/test programs in various test
+sub-directories scattered about.
+
+Note: this is still considered 'alpha' code until the version number
+reaches "1.0.0". Therefore, API's may change between versions. Please
+consult the "Changes" for a list of changes.
+
+Installing libpdel
+------------------
+
+If you are using FreeBSD, just install the FreeBSD port:
+
+    http://www.FreeBSD.org/cgi/ports.cgi?query=libpdel
+
+Otherwise:
+
+1. Type 'make' to build the library
+2. Become root
+3. Type 'make install' to install the library
+
+$Id: README 896 2004-06-02 17:17:34Z archie $

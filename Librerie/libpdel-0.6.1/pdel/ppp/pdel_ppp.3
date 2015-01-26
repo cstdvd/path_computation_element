@@ -1,0 +1,75 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: pdel_ppp.3 888 2004-06-02 16:54:45Z archie $
+.\"
+.Dd June 2, 2004
+.Dt PDEL_PPP 3
+.Os
+.Sh NAME
+.Nm pdel_ppp
+.Nd PPP library for VPNs that uses
+.Xr netgraph 3
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In pdel/ppp/*.h
+.Sh DESCRIPTION
+The
+.Xr libpdel 3
+library includes a PPP stack with support for:
+.Bl -dash
+.It
+The IP network layer (IPCP)
+.It
+Authentication via PAP, CHAP-MD5, MS-CHAPv1, MS-CHAPv2, and RADIUS
+.It
+The PPTP transport layer with PPTP server support
+.It
+The L2TP transport layer with L2TP server support
+.It
+Microsoft MPPE encryption
+.El
+.Pp
+This library works in conjunction with the various
+.Xr netgraph 4
+nodes that come with the FreeBSD kernel and is a PPP library, not
+a PPP server.
+That is, it handles all the PPP state machinery, while deferring
+all
+.Dq policy
+decisions to the application code via callbacks.
+For example, the application is ultimately responsible for acquiring and
+verifying user credentials, determining what IP addresses may be negotiated,
+etc.
+.Pp
+The library constructs netgraph node graphs that have a
+.Dq loose end
+netgraph hook which transmits and receives IP packets;
+the application is responsible for connecting this hook to something useful
+(e.g., an
+.Xr ng_iface 3
+node), configuring the interface, etc.
+The library makes available to the application all the information
+that it needs in order to properly do such configuration (such as
+the negotiated IP addresses).
+.Pp
+At this time, there is no documentation other than this man page
+and the comments in the code.
+There is a fully functioning sample PPTP/L2TP test server in
+the test subdirectory that is statically configured and allows a single
+connection at a time.
+It demonstrates how to create a server and the application callbacks.
+The application callbacks are documented in the corresponding header files.
+.Pp
+Because PPTP and L2TP are the only supported transport types, this
+library is most useful for implementing VPN software.
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

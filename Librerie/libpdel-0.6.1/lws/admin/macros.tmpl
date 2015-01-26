@@ -1,0 +1,257 @@
+
+@if(@get("macros_has_been_read"))
+	@return
+@endif
+@set("macros_has_been_read", "1")
+
+@define("nop")@enddef
+@define("nl")@cat("\n")@enddef
+
+@nop(" *** CONFIGURATION MACROS *** ")
+
+@define("config_get")
+	@object_get("config", @get("arg1"))
+@enddef
+
+@define("config_set")
+	@object_set("config", @get("arg1"), @get("arg2"))
+@enddef
+
+@define("find_property")
+	@loop(@config_get("properties.length"))
+		@if(@equal(@config_get(
+		    @cat("properties.", @loopindex(), ".name")), @get("arg1")))
+			@loopindex()
+			@return
+		@endif
+	@endloop
+	@nop()-1@nop()
+@enddef
+
+@define("get_property")
+	@set("arg1", @find_property(@get("arg1")))
+	@if(@not(@equal(@get("arg1"), "-1")))
+		@config_get(@cat("properties.", @get("arg1"), ".value"))
+		@return
+	@endif
+@enddef
+
+@define("set_property")
+	@loop(@config_get("properties.length"))
+		@if(@equal(@config_get(
+		    @cat("properties.", @loopindex(), ".name")), @get("arg1")))
+			@config_set(@cat("properties.",
+			    @loopindex(), ".value"), @get("arg2"))
+			@break
+		@endif
+	@endloop
+	@object_array_insert("config", "properties", "0")
+	@config_set("properties.0.name", @get("arg1"))
+	@config_set("properties.0.value", @get("arg2"))
+@enddef
+
+@nop(" *** AUTHORIZATION MACROS *** ")
+
+@define("admin_authname")
+	@authname(@get_property("admin.cookie_name"),
+	    @get_property("admin.resource_name"))
+@enddef
+
+@define("admin_login")
+	@login(@get_property("admin.cookie_name"),
+	    @get_property("admin.resource_name"), @get("arg1"),
+	    "/admin", "", "3600", "28800", "0")
+@enddef
+
+@define("admin_logout")
+	@logout(@get_property("admin.cookie_name"))
+@enddef
+
+@nop(" *** HTML MACROS *** ")
+
+@nop("	URLs ")
+@define("url")
+	@get("arg1")://@get("arg2")@nop()
+	@if(@not(@or(
+	    @and(@equal(@get("arg1"), "http"), @equal(@get("arg3"), "80")),
+	    @and(@equal(@get("arg1"), "https"), @equal(@get("arg3"), "443")))))
+		@nop():@get("arg3")
+	@endif
+	@get("arg4")
+@enddef
+
+@nop("	Hotlinks ")
+@define("hotlink")
+	@nop()<a href="@get("arg1")"><font class="hotlink">@get("arg2")</font></a>@nop()
+@enddef
+
+@nop("	Coldlinks ")
+@define("coldlink")
+	@nop()<a href="@get("arg1")"><font class="coldlink">@get("arg2")</font></a>@nop()
+@enddef
+
+@nop("	For radio buttons ")
+@define("radio")
+	@nop()<input type="radio" name="@get("arg1")" value="@get("arg2")"@nop()
+	  @if(@equal(@get("arg2"), @get("arg3"))) checked@endif>
+@enddef
+@define("config_radio")
+	@nop()<input type="radio" name="@get("arg1")" value="@get("arg2")"@nop()
+	  @if(@equal(@config_get(@get("arg1")), @get("arg2"))) checked@endif>
+@enddef
+
+@nop("	For checkboxes ")
+@define("checkbox")
+	@nop()<input type="checkbox" name="@get("arg1")" value="1"@nop()
+	  @if(@get("arg2")) checked@endif>
+@enddef
+
+@nop("	For hidden fields ")
+@define("hidden")
+	@nop()<input type="hidden" name="@get("arg1")" value="@get("arg2")">
+@enddef
+
+@nop("	For pulldown entries ")
+@define("select")
+	@nop()<option value="@get("arg1")"@if(@equal(@get("arg1"), @get("arg3"))) selected@endif>@get("arg2")</option>
+@enddef
+
+@nop("	For text input boxes ")
+@define("textinput")
+	@nop()<input type="text" name="@get("arg1")" size="@get("arg2")"@nop()
+	  @nop() maxlength="@get("arg3")" value="@htmlencode(@get("arg4"))">
+@enddef
+
+@nop("	For password text input boxes ")
+@define("passinput")
+	@nop()<input type="password" name="@get("arg1")"@nop()
+	  @nop() size="@get("arg2")" maxlength="@get("arg3")"@nop()
+	  @nop() value="@htmlencode(@get("arg4"))">
+@enddef
+
+@nop("	For text input boxes of config field with the same name ")
+@define("config_textinput")
+	@textinput(@get("arg1"), @get("arg2"),
+	    @get("arg3"), @config_get(@get("arg1")))
+@enddef
+
+@nop("	Like as @config_textinput() but specially for IP addresses ")
+@define("config_textinput_ip")
+	@if(@not(@equal(@config_get(@get("arg1")), "0.0.0.0")))
+	    @config_textinput(@get("arg1"), "18", "18")
+	@else
+	    @textinput(@get("arg1"), "18", "18", "")
+	@endif
+@enddef
+
+@nop("	Like as @config_textinput() but specially for numbers ")
+@define("config_textinput_num")
+	@if(@not(@equal(@config_get(@get("arg1")), "0")))
+	    @config_textinput(@get("arg1"), "8", "8")
+	@else
+	    @textinput(@get("arg1"), "8", "8", "")
+	@endif
+@enddef
+
+@nop("	Pretty print severity level ")
+@define("severity_pretty")
+	@if(@equal(@get("arg1"), "emerg"))Critical@endif
+	@if(@equal(@get("arg1"), "alert"))Critical@endif
+	@if(@equal(@get("arg1"), "crit"))Critical@endif
+	@if(@equal(@get("arg1"), "err"))Error@endif
+	@if(@equal(@get("arg1"), "warn"))Warning@endif
+	@if(@equal(@get("arg1"), "notice"))Notice@endif
+	@if(@equal(@get("arg1"), "info"))Info@endif
+	@if(@equal(@get("arg1"), "debug"))Debug@endif
+@enddef
+
+@nop("	For converting syslog facilities into nice names ")
+@define("facility_pretty")
+	@if(@equal(@get("arg1"), "daemon"))Daemon@endif
+	@if(@equal(@get("arg1"), "user"))User@endif
+	@loop("8")
+		@if(@equal(@get("arg1"),
+		    @cat("local", @loopindex())))Local @loopindex()
+		@endif
+	@endloop()
+@enddef
+
+@nop("	A section header in the standard table layout ")
+@define("header")
+<tr>
+  <td colspan="3" align="left">
+    <h4><font class="standout">@get("arg1")</font></h4></td>
+</tr>
+@enddef
+
+@nop(" *** MISC MACROS *** ")
+
+@nop("	Trim off leading and trailing whitespace in a string ")
+@define("trim")
+	@regex_match("^([[:space:]]*)((.*[^[:space:]])*)([[:space:]]*)$",
+	    @get("arg1"), "2")
+@enddef
+
+@nop("	Tell if a string is empty ")
+@define("empty")
+	@equal(@get("arg1"), "")
+@enddef
+
+@nop("  Pretty-print a server ")
+@define("pretty_server")
+	@nop()Server #@add("1",
+	    @regex_match("\.([^.]*)$", @get("arg1"), "1")) (@nop()
+	@if(@not(@equal(@config_get(@cat(@get("arg1"), ".ip")), "0.0.0.0")))
+		@config_get(@cat(@get("arg1"), ".ip")), @nop()
+	@endif
+	@nop()Port @config_get(@cat(@get("arg1"), ".port"))
+	@if(@config_get(@cat(@get("arg1"), ".ssl.enabled")))
+		@nop(), SSL@nop()
+	@endif
+	@nop())@nop()
+@enddef
+
+@nop("  Pretty-print a virtual host ")
+@define("pretty_vhost")
+	@if(@not(@empty(@config_get(@cat(@get("arg1"), ".server_name")))))
+		@config_get(@cat(@get("arg1"), ".server_name"))
+		@return
+	@endif
+	@nop()Default virtual host@nop()
+@enddef
+
+@nop("  Pretty-print a servlet ")
+@define("pretty_servlet")
+	@nop()URL's matching ``@config_get(@cat(@get("arg1"),
+	    ".url_pattern"))'' - @config_get(@cat(@get("arg1"),
+	    ".info.field_name"))
+	@nop() servlet@nop()
+	@if(@equal(@config_get(@cat(@get("arg1"), ".info.field_name")), "file"))
+		@nop() (@nop()
+		@if(@not(@empty(@config_get(@cat(@get("arg1"),
+		    ".info.file.filename")))))
+			@if(@not(@empty(@config_get(@cat(@get("arg1"),
+			    ".info.file.docroot")))))
+				@config_get(@cat(@get("arg1"),
+				    ".info.file.docroot"))/@nop()
+			@endif
+			@config_get(@cat(@get("arg1"),
+			    ".info.file.filename"))
+		@else
+			@if(@not(@empty(@config_get(@cat(@get("arg1"),
+			    ".info.file.docroot")))))
+				@config_get(@cat(@get("arg1"),
+				    ".info.file.docroot"))/, @nop()
+			@endif
+			@if(@config_get(@cat(@get("arg1"),
+			    ".info.file.allow_templates")))
+				@nop()templates allowed@nop()
+			@else
+				@nop()no templates@nop()
+			@endif
+		@endif
+		@nop())@nop()
+	@endif
+	@nop(), ordering @config_get(@cat(@get("arg1"), ".ordering"))
+@enddef
+

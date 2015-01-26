@@ -1,0 +1,52 @@
+@eval(@readfile("macros.tmpl"))
+@set("page_id", "$Id: manpage.tmpl 862 2003-05-22 22:47:44Z archie $")
+@if(@not(@empty(@query("section"))))
+	@set("section", @cat("(", @add(@query("section"), "0"), ")"))
+@endif
+@set("page_title", @cat("Man Page for ",
+    @htmlencode(@query("page")), @get("section")))
+@set("page_url", "/admin/manpage")
+@eval(@readfile("head.tmpl"))
+
+@nop(" Safety check page name ")
+@if(@empty(@regex_match("^[[:alnum:]_][[:alnum:]_.+,/=:-]*$", @query("page"))))
+	<b>Invalid man page name ``@htmlencode(@query("page")).''
+	@return
+@endif
+
+@nop(" Get section, if any, and sanitize it ")
+@set("section", @query("section"))
+@if(@not(@empty(@get("section"))))
+	@set("section", @add(@get("section"), "0"))
+@endif
+
+@nop(" Get flag to use extended regular expressions with sed(1) ")
+@if(@not(@empty(@regex_match("Linux", @system("/bin/uname -s")))))
+	@set("extflag", "-r")
+@else
+	@set("extflag", "-E")
+@endif
+
+@nop(" Get man page and fix it up ")
+@set("cmd",
+    @cat("/usr/bin/man ", @get("section"), " ", @query("page"),
+      " | sed ", @get("extflag"),
+      " -e 's/</\x01/g' -e 's/>/\x02/g'",
+      " -e 's/_\x08_/_/g'",
+      " -e 's/_\x08(.)/<em>\\1<\\/em>/g'",
+      " -e 's/.\x08(.)/<b>\\1<\\/b>/g'",
+      " -e 's/<\\/b>([ _,.]*)<b>/\\1/g'",
+      " -e 's/<\\/em>([ _,.]*)<em>/\\1/g'",
+      " -e 's/&/\\&amp;/g' -e 's/\"/\\&quot;/g'",
+      " -e 's/\x01/\\&lt;/g'  -e 's/\x02/\\&gt;/g'",
+      " -e 's/(http:\\/\\/[^[:space:]]+)/<a href=\"\\1\">",
+	"<font class=\"hotlink\">\\1<\\/font><\\/a>/g'",
+      " -e 's/(([-[:alnum:]_]+)\\(([0-9])\\))/<a href=\"\\/admin",
+	"\\/help\\/manpage?page=\\2\\&section=\\3\">",
+	"<font class=\"hotlink\">\\1<\\/font><\\/a>/g' 2>&1"))
+
+<pre>
+@system(@get("cmd"))
+</pre>
+
+@eval(@readfile("foot.tmpl"))

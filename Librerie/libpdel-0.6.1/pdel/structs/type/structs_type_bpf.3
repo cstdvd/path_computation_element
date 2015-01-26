@@ -1,0 +1,116 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: structs_type_bpf.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRUCTS_TYPE_BPF 3
+.Os
+.Sh NAME
+.Nm structs_type_bpf
+.Nd structs types for BPF programs
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In sys/time.h
+.In net/bpf.h
+.In pdel/structs/structs.h
+.In pdel/structs/type/bpf.h
+.Fn BPF_STRUCTS_TYPE linktype compiler
+.Pp
+.Sh DESCRIPTION
+The
+.Fn BPF_STRUCTS_TYPE
+macro defines a
+.Xr structs 3
+type for BPF programs.
+The data structure described by the type is a
+.Li "struct structs_bpf" :
+.Pp
+.Bd -literal -compact -offset 3n
+struct structs_bpf {
+    const char         *ascii;   /* ascii form of program */
+    struct bpf_program bpf;      /* compiled bpf program */
+    int                linktype; /* bpf link type */
+    int                _refs;    /* ref count: don't touch! */
+};
+.Ed
+.Pp
+The
+.Fa linktype
+should be a BPF data-link level type codes, e.g.,
+.Dv DLT_EN10MB .
+.Pp
+The
+.Fa compiler
+is a pointer to a function having this type:
+.Pp
+.Bd -literal -offset 3n
+typedef int structs_bpf_compile_t(const char *string,
+                struct bpf_program *bpf, int linktype,
+                char *ebuf, size_t emax);
+.Ed
+.Pp
+This function should compile the
+.Xr tcpdump 8
+string
+.Fa string
+and fill out the structure pointed to by
+.Fa bpf .
+The
+.Fa "bpf->bf_insns"
+array should be allocated with
+.Dv NULL
+.Xr typed_mem 3
+memory type (to be consistent with pcap(3)).
+In case of an error,
+.Fa compiler
+should return -1 with
+.Va errno
+set appropriately, and it may also fill in
+.Fa ebuf ,
+which has size
+.Fa emax ,
+with a '\0'-terminated error message.
+.Pp
+If
+.Fa compiler
+is
+.Dv NULL ,
+then attempts to convert from ASCII will return the error
+.Er ENOTSUPP .
+.Sh EXAMPLES
+Here is a sample compiler function using pcap(3):
+.Bd -literal -offset 3n
+int
+my_bpf_compiler(const char *string, struct bpf_program *bpf,
+    int linktype, char *ebuf, size_t emax)
+{
+    pcap_t *pcap;
+
+    memset(bpf, 0, sizeof(*bpf));
+    if ((pcap = pcap_open_dead(linktype, 2048)) == NULL)
+	return (-1);
+    if (pcap_compile(pcap, bpf, (char *)string, 1, ~0) != 0) {
+	strlcpy(ebuf, pcap_geterr(pcap), emax);
+	pcap_close(pcap);
+	errno = EINVAL;
+	return (-1);
+    }
+    pcap_close(pcap);
+    return (0);
+}
+.Ed
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr pcap 3 ,
+.Xr structs 3 ,
+.Xr structs_type 3 ,
+.Xr typed_mem 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

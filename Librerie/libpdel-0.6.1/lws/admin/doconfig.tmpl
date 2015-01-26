@@ -1,0 +1,212 @@
+@set("page_id", "$Id: doconfig.tmpl 547 2002-08-19 20:41:07Z archie $")
+@set("page_title", "Configuration Update")
+@set("page_url", "/admin/doserver")
+@eval(@readfile("head.tmpl"))
+
+<h4>Updating configuration...</h4>
+
+@object_reset("config")
+
+@nop(" Common code to 'finish up' ")
+@define("finish")
+
+	@if(@not(@get("fail")))
+		@set("err", @config_apply("2500"))
+		@if(@not(@empty(@get("err"))))
+			<p>
+			<b>Error with the new configuration:</b>
+			@htmlencode(@get("err"))
+			@set("fail", "1")
+		@endif
+	@endif
+
+	<p>
+	@if(@get("fail"))
+		<b>No changes were applied.</b>
+		@object_reset("config")
+	@else
+		<b>Configuration updated.</b>
+	@endif
+
+	@eval(@readfile("foot.tmpl"))
+@enddef
+
+@nop(" Save all submitted HTML form fields as variables with 'form:' prefix ")
+@loop(@query_count())
+	@set(@cat("form:", @query_name(@loopindex())),
+	    @query_value(@loopindex()))
+@endloop
+
+@nop(" Check for 'Delete' operation: delete an array element ")
+@if(@equal(@query("button"), "Delete"))
+
+	@if(@not(@query_exists("delete:")))
+		<b>Internal Error:</b> delete field missing.
+		@set("fail", "1")
+		@finish()
+		@return
+	@endif
+
+	@set("ary", @regex_match("^([^:]*):([^:]*)", @get("form:delete:"), "1"))
+	@set("i", @regex_match("^([^:]*):([^:]*)", @get("form:delete:"), "2"))
+
+	<p>
+	Deleting config element "@get("ary").@get("i")".
+	@set("err", @object_array_delete("config", @get("ary"), @get("i")))
+	@finish()
+	@return
+@endif
+
+@nop(" Check for add operation: add an array elements ")
+@if(@query_exists("insert:"))
+
+	@set("ary", @regex_match("^([^:]*):([^:]*)", @get("form:insert:"), "1"))
+	@set("i", @regex_match("^([^:]*):([^:]*)", @get("form:insert:"), "2"))
+
+	@nop(" Check that array length hasn't changed in the mean time ")
+	@if(@not(@equal(@get("i"),
+	    @config_get(@cat(@get("ary"), ".length")))))
+		<b>Error: conflicting configuration update in progress.</b>
+		@set("fail", "1")
+		@finish()
+		@return
+	@endif
+
+	<p>
+	Adding new config element "@get("ary").@get("i")".
+	@object_array_insert("config", @get("ary"), @get("i"))
+
+@endif
+
+@nop(" Set all unions to the desired field ")
+@loop(@query_count())
+	@set("union", @regex_match("^union:(.*)",
+	    @query_name(@loopindex()), "1"))
+	@if(@and(
+	    @not(@empty(@get("union"))),
+	    @not(@equal(@config_get(@cat(@get("union"), ".field_name")),
+	      @query_value(@loopindex())))))
+		<p>
+		Setting type of config field "@get("union")" 
+		    to "@query_value(@loopindex())".
+		@object_union_set("config", @get("union"),
+		    @query_value(@loopindex()))
+	@endif
+@endloop
+
+@nop(" Function to set a config field ")
+
+@define("setfield")
+	@if(@not(@equal(@config_get(@get("arg1")), @get("arg2"))))
+		<p>
+		Setting config field "@get("arg1")" to "@get("arg2")".
+	@endif
+
+	@set("err", @config_set(@get("arg1"), @get("arg2")))
+	@if(@empty(@get("err")))
+		@return
+	@endif
+	@set("fail", "1")
+
+	<p>
+	<b>Error setting field ``@get("arg1")'' to ``@get("arg2")'':</b>
+	@htmlencode(@get("err"))
+@enddef
+
+@nop(" Iterate through all config fields and set passed values ")
+
+@loop(@query_count())
+
+	@nop(" Get field name and value ")
+	@set("name", @query_name(@loopindex()))
+	@set("value", @trim(@query_value(@loopindex())))
+
+	@nop(" Handle fields within unions (only set if union field agrees) ")
+	@if(@not(@empty(@regex_match("^ufield:", @get("name")))))
+		@set("union", @regex_match(
+		    "^ufield:([^:]*):(([^.]*)\..*)$", @get("name"), "1"))
+		@set("field_name", @regex_match(
+		    "^ufield:([^:]*):(([^.]*)\..*)$", @get("name"), "3"))
+		@set("ufield", @regex_match(
+		    "^ufield:([^:]*):(([^.]*)\..*)$", @get("name"), "2"))
+		@if(@not(@equal(@config_get(@cat(@get("union"),
+		    ".field_name")), @get("field_name"))))
+			@continue
+		@endif
+		@set("name", @cat(@get("union"), ".", @cat(@get("ufield"))))
+	@endif
+
+	@nop(" Handle fields with confirmations ")
+	@if(@not(@empty(@regex_match("^confirm:", @get("name")))))
+		@continue
+	@endif
+	@if(@query_exists(@cat("confirm:", @get("name"))))
+		@set("value2", @get(@cat("form:", "confirm:", @get("name"))))
+		@if(@not(@equal(@get("value"), @get("value2"))))
+			<b>Error: password and confirmation do not match.</b>
+			@set("fail", "1")
+			@finish()
+			@return
+		@endif
+	@endif
+
+	@nop(" Handle crypt-hashed password fields ")
+	@set("crypt", @regex_match("^crypt:(.*)$", @get("name"), "1"))
+	@if(@not(@empty(@get("crypt"))))
+		@set("name", @get("crypt"))
+		@if(@equal(@get("value"), "*****"))
+			@continue
+		@endif
+		@if(@not(@empty(@get("value"))))
+			@set("value", @crypt_hash(@get("value")))
+		@endif
+	@endif
+
+	@nop(" Handle the setting of properties ")
+	@set("prop", @regex_match("^property:(.*)$", @get("name"), "1"))
+	@if(@not(@empty(@get("prop"))))
+		@set("i", @find_property(@get("prop")))
+		@if(@equal(@get("i"), "-1"))
+			@set("i", @config_get("properties.length"))
+			@object_array_insert("config", "properties", @get("i"))
+			@config_set(@cat("properties.", @get("i"), ".name"),
+			    @get("prop"))
+		@endif
+		@set("name", @cat("properties.", @get("i"), ".value"))
+	@endif
+
+	@nop(" Ingore 'control' fields which have ':' characters in them ")
+	@if(@or(
+	    @ge(@indexof(@get("name"), ":"), "0"),
+	    @equal(@get("name"), "button")))
+		@continue
+	@endif
+
+	@nop(" Do special fixups for password fields ")
+	@if(@and(
+	    @or(@not(@empty(@regex_match("\.ip$", @get("name")))),
+	      @equal("error_log.remote_server", @get("name"))),
+	    @empty(@get("value"))))
+		@set("value", "0.0.0.0")
+	@endif
+
+	@nop(" Do special fixups for IP address and numerical fields ")
+	@if(@and(
+	    @not(@empty(@regex_match("\.(ip|remote_server)$", @get("name")))),
+	    @empty(@get("value"))))
+		@set("value", "0.0.0.0")
+	@endif
+	@if(@and(
+	    @not(@empty(@regex_match("\.(port|ordering)$", @get("name")))),
+	    @empty(@get("value"))))
+		@set("value", "0")
+	@endif
+
+	@nop(" Update the field ")
+	@setfield(@get("name"), @get("value"))
+@endloop
+
+@nop(" Now apply the new configuration if there were no errors ")
+
+@finish()
+

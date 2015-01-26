@@ -1,0 +1,31 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<!-- $Id: index.tmpl 583 2002-08-21 21:39:36Z archie $ -->
+<html>
+@eval(@readfile("admin/macros.tmpl"))
+<head>
+<title>The Lil' Web Server</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<br>
+<center>
+<img src="lws.gif">
+<br>
+<em>The Lil' Web Server</em>
+</center>
+<br>
+
+<hr>
+
+<p>
+Congrats, you have successfully installed LWS.
+
+<p>
+To administer this server, click
+  @hotlink(@cat("https://", @hostname(), "/admin"), "HERE").
+You will need to login with username <b>admin</b> and password <b>admin</b>.
+
+<p>&nbsp;</p>
+
+@eval(@readfile("admin/foot.tmpl"))

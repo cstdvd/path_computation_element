@@ -1,0 +1,100 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: structs_type_data.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRUCTS_TYPE_DATA 3
+.Os
+.Sh NAME
+.Nm STRUCTS_DATA_TYPE ,
+.Nm STRUCTS_FIXEDDATA_TYPE
+.Nd structs types for binary data
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In pdel/structs/structs.h
+.In pdel/structs/type/data.h
+.Fn STRUCTS_DATA_TYPE charset mtype
+.Fn STRUCTS_FIXEDDATA_TYPE length
+.Vt extern const struct structs_type structs_type_data ;
+.Vt extern const struct structs_type structs_type_hexdata ;
+.Sh DESCRIPTION
+The
+.Fn STRUCTS_DATA_TYPE
+and
+.Fn STRUCTS_FIXEDDATA_TYPE
+macros define a
+.Xr structs 3
+type (i.e., a
+.Dv "struct structs_type" )
+for describing variable and fixed length binary data, respectively.
+.Pp
+For
+.Fn STRUCTS_DATA_TYPE ,
+the described data structure must be a
+.Dv "struct structs_data" :
+.Pp
+.Bd -literal -offset 3n
+    struct structs_data {
+	u_int   length;       /* number of bytes */
+	u_char  *data;        /* bytes */
+    };
+.Ed
+.Pp
+The
+.Fa length
+field contains the number of bytes in the sequence.
+The data itself is pointed to by
+.Fa data .
+.Fa mtype
+is the
+.Xr typed_mem 3
+type used to dynamically allocate the buffer pointed to by
+.Fa data .
+The ASCII form of the data is a base-64 encoding using the character
+set specified by
+.Fa charset ,
+or the default charset if
+.Fa charset
+is
+.Dv NULL .
+See
+.Xr base64 3
+for the definition of a valid character set.
+As a special case, if
+.Fa charset
+is the empty string, then a straight hex encoding will be used.
+This results in a longer but more human readable encoding.
+.Pp
+.Fn STRUCTS_FIXEDDATA_TYPE
+defines a structs type for a binary sequence having fixed length
+.Fa length .
+The described data structure is an array of
+.Fa length
+.Li "u_char" .
+The ASCII form is a straight hexadecimal encoding.
+.Pp
+Two variable length types are predefined.
+.Nm structs_type_data
+uses the default RFC 2045 character set and
+.Nm structs_type_hexdata
+uses hexadecimal encoding for the ASCII expression.
+Both of these types use the
+.Xr typed_mem 3
+type
+.Dv STRUCTS_DATA_MEMTYPE ,
+defined in the header file.
+.Sh SEE ALSO
+.Xr base64 3 ,
+.Xr libpdel 3 ,
+.Xr structs 3 ,
+.Xr structs_type 3 ,
+.Xr typed_mem 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

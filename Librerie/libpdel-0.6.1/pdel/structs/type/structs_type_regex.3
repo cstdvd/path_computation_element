@@ -1,0 +1,80 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: structs_type_regex.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRUCTS_TYPE_REGEX 3
+.Os
+.Sh NAME
+.Nm structs_type_regex
+.Nd structs type for regular expressions
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In regex.h
+.In pdel/structs/structs.h
+.In pdel/structs/type/regex.h
+.Fn STRUCTS_REGEX_TYPE mtype flags
+.Vt extern const struct structs_type structs_type_regex ;
+.Vt extern const struct structs_type structs_type_regex_icase ;
+.Sh DESCRIPTION
+The
+.Fn STRUCTS_REGEX_TYPE
+macro defines a
+.Xr structs 3
+type (i.e., a
+.Dv "struct structs_type" )
+for describing regular expressions.
+The data structure described by this type is a
+.Li "struct structs_regex" :
+.Pp
+.Bd -literal -compact -offset 3n
+struct structs_regex {
+    const char  *pat;       /* ascii pattern */
+    regex_t     reg;        /* compiled pattern */
+};
+.Ed
+.Pp
+.Fa pat
+points to the ASCII form of the regular expression pattern, which is
+stored in a buffer allocated using
+.Xr typed_mem 3
+type
+.Fa mtype .
+.Fa reg
+is the compiled form of the pattern.
+.Pp
+The
+.Fa flags
+parameter is passed to
+.Xr regcomp 3 .
+.Pp
+The default value for this type is the pattern represented by
+the empty string.
+.Pp
+Two pre-defined types are included.
+.Nm structs_type_regex
+is defined with memory type
+.Dv STRUCTS_REGEX_MTYPE
+and flags
+.Dv REG_EXTENDED.
+.Pp
+.Nm structs_type_regex_icase
+is defined with memory type
+.Dv STRUCTS_REGEX_MTYPE
+and flags
+.Li "REG_EXTENDED | REG_ICASE" .
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr regex 3 ,
+.Xr structs 3 ,
+.Xr structs_type 3 ,
+.Xr typed_mem 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

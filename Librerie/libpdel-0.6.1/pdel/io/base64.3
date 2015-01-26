@@ -1,0 +1,103 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: base64.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt BASE64 3
+.Os
+.Sh NAME
+.Nm b64_encoder_create ,
+.Nm b64_decoder_create
+.Nd base-64 encoder and decoder
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In pdel/io/filter.h
+.In pdel/io/base64.h
+.Ft "struct filter *"
+.Fn b64_encoder_create "const char *charset"
+.Ft "struct filter *"
+.Fn b64_decoder_create "const char *charset" "int strict"
+.Vt extern const char "b64_rfc2045_charset[]" ;
+.Sh DESCRIPTION
+These routines create filter objects (see
+.Xr filter 3)
+that encode and decode binary data using base-64 encoding.
+.Pp
+Both functions take a
+.Fa charset
+argument.
+If equal to
+.Dv NULL ,
+then the default (RFC 2045) character set is used.
+Otherwise,
+.Fa charset
+must point to a string with 65 unique characters.
+The first 64 are used to encode the data, while the last character is used
+as a pad character when the data length is not a multiple of three.
+.Pp
+.Fn b64_encoder_create
+returns a new encoding filter.
+For every three bytes input to the filter, four bytes from the chosen
+character set will be output.
+If the input length is not a multiple of three, then one or two pad
+characters will be added at the end of the output, so that the output
+length of the filter is always a multiple of four.
+.Pp
+.Fn b64_decoder_create
+returns a new decoding filter.
+Every four bytes input to the filter are decoded into up to three bytes
+of output.
+If
+.Fa strict
+is non-zero, then any malformed input causes an internal error to be
+generated in the filter, with
+.Va errno
+set to
+.Er EINVAL.
+Malformed input is any input character not from the chosen character set.
+In any case, the pad character is always ignored.
+If
+.Fa strict
+is zero, then any unrecognized characters are simply ignored, rather than
+causing an error.
+.Pp
+.Fn b64_encoder_create
+always generates strings that are accepted by
+.Fn b64_decoder_create
+in strict mode, when created with the same character set.
+.Pp
+The RFC 2045 character set is avilable in
+.Va b64_rfc2045_charset .
+.Sh RETURN VALUES
+If there was a system error,
+.Fn b64_encoder_create
+and
+.Fn b64_encoder_create
+return
+.Dv NULL
+with
+.Va errno
+set to the appropriate value.
+If an invalid
+.Fa charset
+is passed,
+.Va errno
+will be set to
+.Er EINVAL.
+.Sh SEE ALSO
+.Xr filter 3 ,
+.Xr libpdel 3
+.Rs
+.%A N. Freed
+.%A N. Borenstein
+.%T "Multipurpose Internet Mail Extensions (MIME) Part One: Format of Internet Message Bodies"
+.%O RFC 2045
+.Re
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

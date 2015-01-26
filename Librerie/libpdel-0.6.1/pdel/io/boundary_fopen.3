@@ -1,0 +1,79 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: boundary_fopen.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt BOUNDARY_FOPEN 3
+.Os
+.Sh NAME
+.Nm boundary_fopen
+.Nd read from a stream until a boundary string is matched
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In stdio.h
+.In pdel/io/boundary_fp.h
+.Ft "FILE *"
+.Fn boundary_fopen "FILE *fp" "const char *boundary" "int closeit"
+.Sh DESCRIPTION
+.Fn boundary_fopen
+creates a new read-only stream that reads data from the underlying stream
+.Fa fp
+until the
+.Fa boundary
+string is encountered, after which
+.Dv EOF
+is returned.
+If the boundary string does not appear in the underlying stream input,
+the entire input is passed through unaltered.
+.Pp
+When the boundary string appears, the last character readable from the
+newly created boundary stream will be the character just before the first
+character of the boundary string. 
+Therefore, the boundary string itself does not appear in the input
+from the boundary stream.
+In no case are any characters beyond the last character of the boundary
+string read out from the underlying stream, i.e.,
+the last character read from the underlying stream will be
+the last character of the boundary string.
+.Pp
+The boundary matching algorithm runs in linear time.
+However, the
+.Fa boundary
+string is limited to 255 characters in length (not counting the
+terminating '\\0' byte).
+.Pp
+.Xr fclose 3
+should be used to close the returned stream.
+The
+.Fa closeit
+parameter determines whether the underlying stream
+.Fa fp
+is also closed when the boundary stream is closed.
+.Pp
+Boundary streams are useful for online parsing of multipart
+MIME document body parts as defined in RFC 2046.
+.Sh RETURN VALUES
+.Fn boundary_fopen
+returns
+.Dv NULL
+to indicate an error, with
+.Va errno
+set appropriately.
+.Sh SEE ALSO
+.Xr count_fopen 3 ,
+.Xr string_fp 3 ,
+.Xr libpdel 3
+.Rs
+.%A N. Freed
+.%A N. Borenstein
+.%T "Multipurpose Internet Mail Extensions (MIME) Part Two: Media Types"
+.%O RFC 2046
+.Re
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

@@ -1,0 +1,381 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: structs_xmlrpc.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRUCTS_XMLRPC 3
+.Os
+.Sh NAME
+.Nm structs_xmlrpc
+.Nd structs support for XML-RPC
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In pdel/structs/structs.h
+.In pdel/structs/type/array.h
+.In pdel/structs/type/union.h
+.In pdel/structs/xmlrpc.h
+.Ft int
+.Fn structs_struct2xmlrpc "const struct structs_type *type" "const void *data" "const char *sname" "const struct structs_type *xtype" "void *xdata" "const char *xname"
+.Ft int
+.Fn structs_xmlrpc2struct "const struct structs_type *xtype" "const void *xdata" "const char *xname" "const struct structs_type *type" "void *data" "const char *sname" "char *ebuf" "size_t emax"
+.Ft "struct xmlrpc_request *"
+.Fn structs_xmlrpc_build_request "const char *mtype" "const char *methodName" "u_int nparams" "const struct structs_type **types" "const void **params"
+.Ft "struct xmlrpc_response_union *"
+.Fn structs_xmlrpc_build_response "const char *mtype" "const struct structs_type *type" "const void *data"
+.Ft "struct xmlrpc_response_union *"
+.Fn structs_xmlrpc_build_fault_response "const char *mtype" "const struct xmlrpc_compact_fault *fault"
+.Vt extern const struct structs_type structs_type_xmlrpc_value ;
+.Vt extern const struct structs_type structs_type_xmlrpc_array ;
+.Vt extern const struct structs_type structs_type_xmlrpc_member ;
+.Vt extern const struct structs_type structs_type_xmlrpc_struct ;
+.Vt extern const struct structs_type structs_type_xmlrpc_request ;
+.Vt extern const struct structs_type structs_type_xmlrpc_response ;
+.Vt extern const struct structs_type structs_type_xmlrpc_fault ;
+.Vt extern const struct structs_type structs_type_xmlrpc_compact_fault ;
+.Sh DESCRIPTION
+These functions and
+.Xr structs 3
+types provide support for XML-RPC, i.e.,
+conversion between XML-RPC values and native C data types.
+.\"
+.Ss Compact and Exploded Types
+.\"
+For any XML-RPC data structure, there are two
+.Xr structs 3
+types that describe it: a
+.Dq compact
+type and an
+.Dq exploded
+type.
+Applications usually work with compact (or native C) types, i.e., where
+XML-RPC i32's are represented by C int32_t's, XML-RPC struct's are
+represented by C structures, and so on.
+In order to convert between native data structures and XML-RPC, intermediate
+.Dq exploded
+types are used.
+This man page describes
+.Xr structs 3
+types for the exploded XML-RPC data structures and functions to convert
+between the compact and exploded forms.
+.Pp
+That is, XML-RPC is just a special case of
+.Xr structs 3
+types converted into XML with lots of extra nesting so that a fixed set
+of XML tags may be used.
+The exploded types are simply the
+.Xr structs 3
+types that include the extra nesting so that when they are converted
+to XML in the normal fashion (see
+.Xr structs_xml_output 3) ,
+the result is a well-formed XML-RPC request or response.
+.Pp
+The following types data structures are defined in the header file
+.Li "<pdel/structs/xmlrpc.h>" :
+.Pp
+.Fa structs_type_xmlrpc_value
+is a
+.Xr structs 3
+type representing an exploded XML-RPC value, i.e., a
+.Li "struct xmlrpc_value_union" .
+.Pp
+.Fa structs_type_xmlrpc_array
+is a
+.Xr structs 3
+type representing an exploded XML-RPC array, i.e., a
+.Li "struct xmlrpc_array" .
+.Pp
+.Fa structs_type_xmlrpc_member
+is a
+.Xr structs 3
+type representing an exploded XML-RPC structure member, i.e., a
+.Li "struct xmlrpc_member" .
+.Pp
+.Fa structs_type_xmlrpc_struct
+is a
+.Xr structs 3
+type representing an exploded XML-RPC structure, i.e., a
+.Li "struct xmlrpc_struct" .
+.Pp
+.Fa structs_type_xmlrpc_request
+is a
+.Xr structs 3
+type representing an exploded XML-RPC request, i.e., a
+.Li "struct xmlrpc_request" .
+.Pp
+.Fa structs_type_xmlrpc_response
+is a
+.Xr structs 3
+type representing an exploded XML-RPC response, i.e., a
+.Li "struct xmlrpc_response_union" .
+.Pp
+.Fa structs_type_xmlrpc_fault
+is a
+.Xr structs 3
+type representing an exploded XML-RPC fault, i.e., a
+.Li "struct xmlrpc_fault" .
+.Pp
+.Fa structs_type_xmlrpc_compact_fault
+is a
+.Xr structs 3
+type representing an XML-RPC fault in a compact form, i.e., a
+.Li "struct xmlrpc_compact_fault" :
+.Bd -literal -offset 3n
+struct xmlrpc_compact_fault {
+    int32_t     faultCode;      /* XML-RPC fault code */
+    char        *faultString;   /* XML-RPC fault string */
+};
+.Ed
+.\"
+.Ss Conversion Routines
+.\"
+.Fn structs_struct2xmlrpc
+converts an arbitrary compact
+.Xr structs 3
+instance into an
+.Dq exploded
+XML-RPC value.
+The original instance should be pointed to by
+.Fa data
+and have
+.Xr structs 3
+type
+.Fa type ,
+while the XML-RPC instance should be pointed to by
+.Fa xdata
+and have
+.Xr structs 3
+type
+.Fa xtype .
+.Fa sname
+and
+.Fa xname
+may be non-
+.Dv NULL
+to name specific sub-fields of
+.Fa data
+and
+.Fa xdata ,
+respectively, to convert.
+The
+.Fa xdata
+instance must already be initialized, and the sub-field of
+.Fa xdata
+specified by
+.Fa xname
+must have type
+.Fa structs_type_xmlrpc_value ,
+i.e., it must be a
+.Li "struct xmlrpc_value_union" .
+.Pp
+The following primitive
+.Xr structs 3
+types are specially recognized by
+.Fn structs_struct2xmlrpc :
+.Bl -tag -width "xxxxx" -offset indent
+.It Xo
+.Va structs_type_int32 ,
+and
+.Va structs_type_int
+when
+.Li "sizeof(int) == 4"
+.Xc
+Converted to <i4>.
+.It Xo
+.Va structs_type_boolean
+and all variants
+.Xc
+Converted to <boolean>.
+.It Va structs_type_float
+Converted to <double>.
+.It Va structs_type_double
+Converted to <double>.
+.It Va structs_type_time_iso8601
+Converted to <dateTime.iso8601>.
+.It Xo
+.Va structs_type_data
+or any variant using the default character set
+.Xc
+Converted to <base64>.
+.It Xo
+Variable and fixed length array types
+.Xc
+Converted to <array>.
+.It Xo
+Structure types
+.Xc
+Converted to <struct>.
+.It Xo
+Union types
+.Xc
+Converted to <struct>.
+.El
+.Pp
+All other primitive types are converted to XML-RPC <string>'s.
+.Pp
+.Fn structs_xmlrpc2struct
+converts an XML-RPC value back into a
+.Dq compact
+data structure, essentially the reverse of
+.Fn structs_struct2xmlrpc .
+As before,
+.Fa xname ,
+.Fa xdata ,
+and
+.Fa xtype
+describe the XML-RPC value and
+.Fa sname ,
+.Fa data ,
+and
+.Fa type
+describe the normal, native instance.
+The
+.Fa data
+instance must already be initialized.
+The sub-field of
+.Fa xdata
+specified by
+.Fa xname
+must have type
+.Fa structs_type_xmlrpc_value ,
+i.e., it must be a
+.Li "struct xmlrpc_value_union" .
+In addition, an error buffer pointed to by
+.Fa ebuf
+having size
+.Fa emax
+may be provided; if so, any errors from the decoding will be written into it.
+.Pp
+Scalar XML-RPC values are converted into primitive types by simply calling
+.Xr structs_set_string 3 .
+There is no checking that the XML-RPC tag is consistent with the
+primitive structs type; i.e., if the primitive type successfully parses
+the string, then it's assumed to be OK.
+.Pp
+Array XML-RPC values are converted into array types.
+Structure XML-RPC values are converted into structure types or union types,
+depending on the destination type provided.
+In the union case, the last field specified in the XML-RPC structure is
+chosen for the union.
+Other fields specified must be valid for the union, but are otherwise ignored.
+.\"
+.Ss XML-RPC Requests and Responses
+.\"
+.Fn structs_xmlrpc_build_request
+creates an XML-RPC request instance from native,
+.Dq compact
+parameter data structures.
+.Fa methodName
+is the XML-RPC request method name.
+There will be
+.Fa nparams
+parameters in the request;
+.Fa types
+must point to an array of
+.Fa nparams
+.Xr structs 3
+parameter types and
+.Fa params
+an array of
+.Fa nparams
+parameter values having the corresponding types.
+.Pp
+To build the request directly out of
+.Dq exploded
+XML-RPC parameter values, set
+.Fa types
+to
+.Dv NULL .
+Then it will be assumed that each parameter in the
+.Fa params
+array is an instance of
+.Fa structs_type_xmlrpc_value ,
+i.e., a
+.Li "struct xmlrpc_value_union" .
+.Pp
+If successful,
+.Fn structs_xmlrpc_build_request
+returns an instance of type
+.Fa structs_type_xmlrpc_request ,
+i.e., a
+.Li "struct xmlrpc_request" ,
+in a memory block allocated with
+.Xr typed_mem
+type
+.Fa mtype ,
+which the caller is responsible for unintializing and freeing.
+.Pp
+.Fn structs_xmlrpc_build_response
+creates an XML-RPC response.
+The response data structure (i.e., the XML-RPC return value)
+pointed to by
+.Fa data
+should be
+.Dq compact
+and have
+.Xr structs 3
+type
+.Fa type .
+.Pp
+To directly send an
+.Dq exploded
+XML-RPC return value, set
+.Fa type
+to
+.Dv NULL .
+Then it will be assumed that
+.Fa data
+points to an instance of
+.Fa structs_type_xmlrpc_value ,
+i.e., a
+.Li "struct xmlrpc_value_union" .
+.Pp
+If successful,
+.Fn structs_xmlrpc_build_response
+returns an instance of type
+.Fa structs_type_xmlrpc_response ,
+i.e., a
+.Li "struct xmlrpc_response_union" ,
+in a memory block allocated with
+.Xr typed_mem
+type
+.Fa mtype ,
+which the caller is responsible for unintializing and freeing.
+.Pp
+.Fn structs_xmlrpc_build_fault_response
+builds an XML-RPC fault response.
+If successful, it returns an instance of
+.Fa structs_type_xmlrpc_response ,
+i.e., a
+.Li "struct xmlrpc_response_union" ,
+in a memory block allocated with
+.Xr typed_mem
+type
+.Fa mtype ,
+which the caller is responsible for unintializing and freeing.
+.Sh RETURN VALUES
+The above functions indicate an error by returning either -1 or
+.Dv NULL
+and setting
+.Va errno
+to an appropriate value.
+.Sh SEE ALSO
+.Xr http_servlet_xmlrpc 3 ,
+.Xr http_xml 3 ,
+.Xr libpdel 3 ,
+.Xr structs 3 ,
+.Xr structs_type 3 ,
+.Xr structs_xml_input 3 ,
+.Xr typed_mem 3
+.Rs
+.%T "XML-RPC Home Page"
+.%O "http://www.xmlrpc.org/"
+.Re
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

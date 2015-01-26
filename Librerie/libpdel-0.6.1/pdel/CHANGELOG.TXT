@@ -1,0 +1,172 @@
+changes since release 0.6.0 for release 0.6.1
+---------------------------------------------
+
+- Fixes to build warning free on Linux and FreeBSD
+- Change regex to use system regex on Linux 2.6/glibc 2.5
+	- Fixes broken compile
+- Linux 2.4 is deprecated.  Should work but no access to test platform.
+
+Changes since release 0.5.3 for release 0.6.0
+---------------------------------------------
+
+- Actually allow a NULL logger to be passed to http_server_start().
+- Fix bug in http_servlet_xmlrpc man page describing how to return
+  XML-RPC faults and add sample code to the test program.
+- Added http_xml_send_xmlrpc2().
+- Added structs_structs2xmlrpcs() for multi-item encode.
+- Merge current FreeBSD and Linux build fixes
+- Fix paction/pevent races (thanks Alexander Motin)
+- Substantial portability refactoring
+- Refactor GNUmakefile support
+- Windows Support
+	- See README.Win32 for details
+	- Cygwin/gcc
+	- Win32 (XP/Vista with Visual Studio 2003/2005 or MSYS/MinGW/gcc)
+
+Changes since release 0.5.2
+---------------------------
+
+- Fix use-after-free bug in ppp_pptp_server_new_peer() in the failure case.
+- Fix assertion failure in an error case when reading from the ng_ppp node.
+
+Changes since release 0.5.1
+---------------------------
+
+- Bug segfault fix in PPP stack.
+
+Changes since release 0.5.0
+---------------------------
+
+- Fixes for compiler warnings and errors on non-x86 architectures.
+
+Changes since release 0.3.6
+---------------------------
+
+- PPP library now included. THANKS TO: Vernier Networks.
+- Some fixes to mutex debugging when compiled with PDEL_DEBUG.
+- Fixed a potential core dump in structs_type_boolean.
+- Fixed broken support for case-insensitive flag in structs_type_id.
+- Fixed pevent_ctx_create(): thread attributes were being ignored
+- Other minor fixes
+
+Changes since release 0.3.5
+---------------------------
+
+- Fix crash in http_xml_send() when the connection attempt fails.
+- Fix bug in tcp_server_start() where only the first connection
+  would be accepted (i.e., the new connection event was not recurring)
+- Fix bug in tcp_connection_get_peer() where the peer's address
+  was only being partially copied.
+- Fix bug in alog() where errno was being modified
+- Fix obsolete call to _thread_sys_write() when built with PDEL_DEBUG
+- Update FreeBSD port files for new port inline comment Makefile format
+
+Changes since release 0.3.4
+---------------------------
+
+- Fixed some build issues on non-FreeBSD platforms.
+
+Changes since release 0.3.3
+---------------------------
+
+- Added new structs type 'structs_type_ip6'
+- Fixed lots of compiler warnings, mostly related to casting between
+  int's and pointers and alignment (these only occurred when building
+  on non-i386 platforms).
+- Fix some bugs when handling errors from fread() and fwrite()
+- Simplify logic in http_server code for limiting the number of
+  simultaneous connections
+- Fix bug in http_servlet_xmlrpc(3) where if a field in the response
+  was equal to its default value it would be omitted. Related to this,
+  add a new 'flags' field to 'struct http_servlet_xml_info'.
+- Add support to http_servlet_xmlrpc(3) for handling method names which
+  are not known ahead of time.
+- Change filter(3) read() and write() method to take 'void *' instead
+  of 'char *' arguments. Same thing for filter_read(3), filter_write(3),
+  and filter_process(3).
+- Add support for IFT_L2VLAN type interfaces to ARP code.
+- Fixed crashes in structs_xmlrpc2struct() when target type contained
+  any pointer type or was a union.
+- Added XML <-> XML-RPC conversion to the structs test program.
+- Fixed bug in structs_type_dnsname(3) where it would consider the
+  empty string invalid even though that was the type's default value.
+- Fixed bugs in structs_type_float(3) conversion to and from ASCII.
+- Fixed bug in typed_mem(3) where the returned buffer might not be
+  properly aligned on some architectures.
+- Include the host O/S and architecture in the xmlrpc-test server name.
+- Fixed bugs in handling zero return values from SSL_*() routines.
+- Fixes, improvements, and tweaks to several man pages.
+- Other miscellaneous tweaks.
+
+Changes since release 0.3.2
+---------------------------
+
+- Servlets:
+  - The basicauth, cookieauth, file, xml, and xmlrpc servlets (the ones
+    with callback functions) now all take a void *arg that is passed to the
+    callback and a destructor for 'arg' called when the servlet is destroyed
+  - Reworked security section of cookieauth man page
+  - Fixed bug in file servlet directory redirection where the redirect
+    URL was not being URL-encoded
+  - Redirect servlet: renamed HTTP_SERVLET_REDIRECT_APPEND_QSTRING to
+    HTTP_SERVLET_REDIRECT_APPEND_URL, and added a new type of redirect
+    HTTP_SERVLET_REDIRECT_APPEND_QUERY for just appending the query string.
+- XML-RPC code:
+  - Added support for working with raw, "exploded" XML-RPC types to
+    http_xml_send_xmlrpc(), structs_xmlrpc_build_request(), and
+    structs_xmlrpc_build_response().
+  - Added new function structs_xmlrpc_build_fault_response().
+  - Fixed bug in structs_xmlrpc2struct() where error buffer was not
+    being filled in sometimes when there was an error.
+  - More documentation added to man pages
+  - Other minor fixes & tweaks
+  - Fixed definition of 'xmlrpc_response' vs. 'xmlrpc_response_union'
+  - Test program: three stooges != marx brothers
+- Structs:
+  - Fix bug in structs_find() finding a union field name with a '.' in it
+  - Avoid const field in struct structs_union when compiling with C++
+- Fixed GNUmakefile to make 'cc' a variable
+- Removed unused files net/Makefile and io/Makefile
+- Added net/test subdirectory with test code extracted from source files
+- Added top level README file
+- Prefix a '1' to the PDEL_VERSION to force it to be a decimal value.
+
+Changes since release 0.3.1
+---------------------------
+
+- Added new 'copy' argument to string_buf_input(3)    *** API change ***
+- Changes to tmpl(3):
+  - Added new function tmpl_create_mmap(3); use it in http_servlet_tmpl(3).
+  - Define the function charater '@' as TMPL_FUNCTION_CHARACTER in tmpl.h
+  - Optimize execution time by computing the result of applying the
+    TMPL_ELEM_NL_WHITE flag at parse time instead of execution time.
+  - Corrected the expected output in the tmpl/test directory.
+- Fixed bugs in http_response_guess_mime() MIME type guessing algorithm.
+- Enhancements & fixes to XML-RPC support:
+  - Make public the XML-RPC "exploded" structures and structs types.
+  - http_servlet_xmlrpc(3) handler can now work with "exploded" XML-RPC.
+  - Added xmlrpc_test program that passes http://validator.xmlrpc.org/
+- Enhancements to structs(3):
+  - Union and structure fields may now have '.' character in them.
+  - Add support to structs_xml_input(3) for combined nested tags when
+    the new flag STRUCTS_XML_COMB_TAGS is passed. Add to test program.
+  - Add new flag STRUCTS_XML_SCAN to just scan and not decode the XML.
+  - In structs_xml_input(3), for union fields, assume the default field
+    in case of a missing innermost XML tag.
+- Fixed some compiler warnings generated on FreeBSD-current.
+- Fixed bug where header files were being installed executable.
+- Fixes and clarifications to several man pages.
+- New file "version.h" added.
+
+Changes since release 0.3.0
+---------------------------
+
+- In structs_type_union, we only need to allocate as many bytes as
+  needed for the particular field in use.
+- Fixed alog_facility_type to have a valid default value ("daemon")
+- Remove "chmod 0666" from rc.sslkey script
+- Don't compile -Werror, it breaks on -stable
+- Makefile: rename 'INCS' to 'INCHDRS' to avoid conflict on -stable
+- Included top level COPYRIGHT file
+- Included top level Changes file
+

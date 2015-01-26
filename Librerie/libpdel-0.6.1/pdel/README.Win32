@@ -1,0 +1,207 @@
+
+libpdel - the Packet Design Embedded Library
+
+About libpdel on Win32
+----------------------
+Libpdel is currently supported on Win32 platforms with Cygwin and MinGW/MSYS
+as well as Visual Studio 2003.NET and Visual Studio 2005.  OpenWatcom is 
+desirable but currently an issue due to Pthread-Win32 not being happy under
+Watcom.  Medium term plan is to add a small "PDEL Threads" layer that will
+map to pthreads or Win32 threads and eliminate Pthread-Win32 dependencies 
+completely.
+
+Each environment has a few quirks.
+
+
+Common Win32 Notes
+======================
+
+Dynamic Libraries
+----------------------
+Building libpdel as a DLL is implemented but currently causes faults
+at runtime, possibly due to the need to initalize static data.  It is
+unclear if this will be addressed soon.  In theory the GCC support for
+the static import library should solve this for Cygwin but faults are
+still occuring. If anyone with more DLL saavy than us figures out a
+fix let us know.  See PDEL as a DLL below for more details.
+
+Missing funopen/fopencookie
+---------------------------
+Libpdel makes heavy use of "custom streams" in stdio.  These are
+supported on most Unix platforms using funopen() or fopencookie().
+Cygwin's newlib does not support these (although it could have, newlib
+is very much a standard BSD libc and even has the data structures
+funopen needs, but fails to export needed internal hooks to add it).
+The native Win32 C runtime can't support custom streams at all.  To
+work around this a "Shadow" implementation of stdio is provided
+(borrowed from FreeBSD) and several wrappers.  If using any of these
+routines on these platforms you need to use the pd_xxx functions (ie:
+pd_fprintf()) instead of the standard ones.  These functions can also
+be used with any FILE safely.  Your clue is any header that includes
+pd_stdio.h requires these wrappers.  You can get have all the standard
+stdio functions mapped to the wrappers via #defines by defining
+PD_STDIO_OVERRIDE before pd_stdio.h gets included by anything.
+
+The "private" stdio is slightly incomplete as it was originally intended
+to only support the needed funopen() functionality.  However in the next 
+release this will be fleshed out to be an optional full replacement. 
+
+CYGWIN Notes
+====================== 
+libpdel builds and runs on Cygwin without any significant issues other
+than as noted above.  You need to have the Cygwin versions of libexpat
+and openssl installed and available.
+
+Currently for simplicity under Vista the OS version for purposes of
+the port support is forced from CYGWIN_NT-6.0 to CYGWIN_NT_5.1.
+
+MinGW Notes
+======================
+Building libpdel requires a GNU make, either MSYS or MingGWs.  We have only 
+built libpdel with the MinGW/MSYS combo and not with MinGW itself.  If building
+without MSYS a few Makefile shell escapes to determine the system may have
+to be patched or hardcoded.  In general you need to have Win32 native 
+versions of libexpat, openssl and pthreads libraries installed and available.  
+
+Win32 OpenSSL
+----------------------
+An installer that will install Win32 versions and import libraries
+compatible with GCC, Microsoft Visual C and Borland is available at:
+
+	http://www.slproweb.com/products/Win32OpenSSL.html
+
+These guys have put some work into a painless and functional install, feel
+free to help them out with a donation.  The current Makefile assumes the 
+default install location for these libraries, this is easily adjusted in 
+GNUmakefile.inc if needed.
+
+Win32 Expat
+----------------------
+For libexpat the expat project provides a Win32 installer.  You can 
+download this from the expat sourceforce project page at:
+
+	http://sourceforge.net/projects/expat/
+
+Go to the download tab and select the expat_win32bin.  Again the
+Makefiles assume the standard install locations, this can be tweaked
+in GNUmakefile.inc.  This package does not provide a gcc Win32 import
+library, so the Makefile will generate one on the fly.  You need to
+have the mingw-utils package installed for the pexports tool to be
+available.
+
+Win32 Pthreads
+----------------------
+Finally libpdel uses pthreads.  The GNU pthreads-win32 project
+provides a fairly complete library under LGPL that works for libpdel's
+use.  This libary doesn't have a standard installer or location, so
+the current build simply assumes the libraries are copied to the
+MinGW/lib directory and the includes to the MinGW/include directly or live 
+in the parent directory of the libpdel source tree.
+
+The files can be found/downloaded at:
+
+	http://sourceware.org/pthreads-win32/
+	ftp://sources.redhat.com/pub/pthreads-win32
+
+Beware that existing code that assumes pthread_t is a pointer type 
+may fail, in pthreads-win32 it's a struct.  PDEL adds some convenience 
+functions to help with this in pd_thread.h.
+
+If no copied to the MinGW include/lib dirs the makefiles and project
+files assume that pthreads-win32 is installed under the parent
+directory of containing the pdel tree, ala:
+
+	<SomeDir>
+		libpdel<Name doesn't matter>
+			pdel
+			lws
+		pthread-win32 (Name does matter)
+			lib/<blah>
+			include/<blah>
+			<or>
+			Pre-built.2
+				lib<blah>
+				include<blah>
+			
+
+Visual Studio Notes
+======================
+
+Visual Studio Project Files
+-------------------------------
+A set of solution and project files are proviced for both VS 2003 and 2005.  
+These do build pdel and lws and do not require an intermediate install/copy.  
+Because of the limitations of VS the project files assume that OpenSSL, Expat,
+and pthread-win32 are installed in the same locations as the MinGW notes 
+indicate.
+
+Win32 Visual Studio & C Runtime
+-------------------------------
+To get needed wide charecter functions you need to link with the C++
+runtime library, if building static this is LIBCPMT[D].LIB, if
+building dynamic this is MSVCPRT[D}.LIB.  In practice the Dynamic
+runtime works just fine for either case.  Because other shared libs
+are used the DLL code generation option is still used.  Visual Studio
+2k3 at least picks the C library by default, you may need to add/edit
+this appropriately in the additional dependencies line of each target
+(pdel and lws).  However as distributed the MSVCPRT[D].LIB library is
+selected and works in the general case.
+
+PDEL as a DLL under VS 
+------------------------------- 
+As checked in the project files build libpdel as a static library.  To
+build and use PDEL as a DLL under VS you need the PDEL_SHARED define
+to be set to a non-zero numeric value.  However, with the Microsoft VS
+tool chain this still doesn't do it.
+
+There is a severe and annoying limitation with global static data
+under Win32 and the Microsoft linker.  Global data is resolved by a
+function hook at runtime (called a thunk), so static data initializers
+cannot refer to global data in a DLL.  If you build PDEL as a DLL
+under VS you will get multiple C2099/C4047 errors from the compiler if
+PDEL_SHARED is defined to non-zero:
+
+lws_config.c(555) : error C2099: initializer is not a constant
+lws_config.c(555) : warning C4047: 'initializing' : 'const structs_type *' differs in levels of indirection from 'size_t'
+
+If PDEL_SHARED is not set or is 0 you will link but have numerous
+problems because the global static data will be different between the
+DLL and the executable.  This seems to be a design feature of VS.  In
+C++ this is apparently avoided because the compiler actually emits
+static constructors for the global static data which properly resolve
+the date in the shared PDEL.
+	
+So net-net you are on your own building PDEL as a DLL with the Microsoft
+tool chain.  If you ever make it work you will likely need PDEL_SHARED to 
+be defined to 1.
+
+This also seems to not be an issue with MinGW and other GCC 
+based builds as GCC handles the linking differently by forcing all the
+global static data into the import library to be statically linked.
+
+Windows Vista Notes
+======================
+PDel has been built under Vista on all supported platforms but not
+without pain.  Cygwin and MinGW/MSYS have numerous Vista issues.
+There are a few issues with Visual Studio under Vista but these are well
+covered on the Microsoft website.
+
+Cygwin under Windows Vista
+------------------------------- 
+Cygwin under Windows Vista has a few issues.  Generally post-install you 
+need to do a "rebaseall" from a static shell (ash.exe) to resolve most of
+these.  Additionally there is a bug in the Vista 64 bit 32 bit emulation 
+(that is _not_ in XP or Server 2003 x64) that manifests itself as fork() 
+failing for numerous programs.  This requires a fix incorporated in 
+Cygwin in December requiring a recent snapshort.
+
+MSYS/MinGW under Windows Vista
+------------------------------- 
+MSYS/MinGW suffer primary from a change in behavior that affects the
+access function.  You need a the 3.12 version of the MinGW runtime and 
+a patched gcc and collect2.exe file (available from the MinGW mail lists at
+http://www.nabble.com/MinGW).  This will manifest as an error from GCC 
+about "unable to execute cc1".  Even with these fixes some things will still 
+fail like sh.exe will not execute install.exe, so installs have to be done 
+manually.  The complete fix requires rebuilding all of the MinGW/MSYS files 
+against the updated runtime and headers.

@@ -1,0 +1,55 @@
+@set("page_id", "$Id: servers.tmpl 579 2002-08-21 20:53:54Z archie $")
+@set("page_title", "Servers")
+@set("page_url", "/admin/servers")
+@eval(@readfile("head.tmpl"))
+
+<form method="post" action="server">
+
+@hidden("new", "1")
+
+<table border="0" cellspacing="2" cellpadding="0">
+
+@object_reset("config")
+
+@define("header")
+<tr>
+  <td colspan="3" align="left">
+    <h4><font class="standout">@get("arg1")</font></h4></td>
+</tr>
+@enddef
+
+@header(@get("page_title"))
+
+@loop(@config_get("servers.length"))
+<tr>
+  <td>&nbsp;</td>
+  <td nowrap colspan="2">
+  <a href="server?sid=@loopindex()"><b>@pretty_server(@cat("servers.",
+      @loopindex()))</b></a>
+  </td>
+</tr>
+@endloop
+
+@if(@not(@config_get("servers.length")))
+    <tr>
+      <td>&nbsp;</td>
+      <td nowrap colspan="2"><b>No servers defined.</b></td>
+    </tr>
+@endif
+
+<tr><td colspan="3">&nbsp;</td><td>
+
+<tr>
+  <td colspan="2">&nbsp;</td>
+  <td align="left"><input type="submit" name="button" value="New">
+  &nbsp;&nbsp;<input type="reset" value="Reset">
+  </td>
+</tr>
+
+<tr><td colspan="3">&nbsp;</td><td>
+
+</table>
+
+</form>
+
+@eval(@readfile("foot.tmpl"))

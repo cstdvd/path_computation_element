@@ -1,0 +1,220 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: structs_xml_input.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRUCTS_XML_INPUT 3
+.Os
+.Sh NAME
+.Nm structs_xml_input ,
+.Nm structs_xml_output
+.Nd XML conversion for data structures
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdio.h
+.In pdel/structs/structs.h
+.In pdel/structs/xml.h
+.Ft int
+.Fn structs_xml_input "const struct structs_type *type" "const char *elem_tag" "char **attrp" "const char *attr_type" "FILE *fp" "void *data" "int flags" "structs_xmllog_t *logger"
+.Ft int
+.Fn structs_xml_output "const struct structs_type *type" "const char *elem_tag" "const char *attrs" "const void *data" "FILE *fp" "const char **elems" "int flags"
+.Sh DESCRIPTION
+These routines convert instances of
+.Xr structs 3
+data structures to and from XML.
+.Pp
+.Fn structs_xml_input
+reads an XML document from the stream
+.Fa fp
+and attempts to parse it as an instance of the data structure type
+described by
+.Fa type .
+.Fa data
+must point to a region of memory large enough to hold such an instance.
+.Pp
+The
+.Fa elem_tag
+is the XML document tag expected.
+This is the top-level XML tag and the only tag that may contain attributes.
+If
+.Fa attrp
+is not
+.Dv NULL ,
+then any attributes with this tag are concatenated together
+as name, value pairs with a final terminating '\\0' like so:
+.Pp
+.Bd -literal -compact -offset 3n
+    name1 '\\0' value1 '\\0'
+    name2 '\\0' value2 '\\0'
+    ...
+    nameN '\\0' valueN '\\0'
+    '\\0'
+.Ed
+.Pp
+The concatenated name, value pairs are stored in a buffer allocated with
+.Xr typed_mem 3
+type
+.Fa attr_type ,
+a pointer to which is then stored in
+.Fa "*attrp" .
+The caller is responsible for freeing this memory.
+.Pp
+The
+.Fa logger
+is a pointer to a logging function having this type:
+.Pp
+.Bd -literal -compact -offset 3n
+typedef void structs_xmllog_t(int sev, const char *fmt, ...);
+.Ed
+.Pp
+Here
+.Fa sev
+is a
+.Xr syslog 3
+severity level.
+.Fa logger
+may also take one of the following predefined values:
+.Pp
+.Bd -literal -compact -offset 3n
+STRUCTS_LOGGER_NONE      Discard log output
+STRUCTS_LOGGER_STDERR    Log to standard error
+STRUCTS_LOGGER_ALOG      Log using alog(3)
+.Ed
+.Pp
+The
+.Fa flags
+argument may contain any of the following values OR'd together:
+.Pp
+.Bd -literal -compact -offset 3n
+STRUCTS_XML_UNINIT       The data structure is uninitialized
+STRUCTS_XML_LOOSE        Unknown tags and nested attributes OK
+STRUCTS_XML_SCAN         Don't try to build data structure
+STRUCTS_XML_COMB_TAGS    Allow combined tags
+.Ed
+.Pp
+The
+.Dv STRUCTS_XML_UNINIT
+flag indicates that the region of memory pointed to by
+.Fa data
+is uninitialized and that
+.Fn structs_xml_input
+should initialize it first.
+Otherwise,
+.Fn structs_xml_input
+assumes the data structure is already initialized.
+.Pp
+.Dv STRUCTS_XML_LOOSE
+specifies "loose" parsing: any unrecognized XML tags and nested attributes
+may generate a warning but should otherwise be ignored.
+If this flag is not specified, these will cause a fatal error.
+.Pp
+.Dv STRUCTS_XML_SCAN
+causes the parser scan the XML but not try to decode the data structure.
+The
+.Fa type
+and
+.Fa data
+parameters are ignored;
+however, the other parameters are still used, e.g., the top level
+XML document tag must match and it's still possible to retrieve its
+attributes.
+.Pp
+.Dv STRUCTS_XML_COMB_TAGS
+allows combining of nested XML tags.
+For example, if
+.Dq bar
+is the only XML tag contained in
+.Dq foo ,
+then the input
+.Li "<foo><bar>...</bar></foo>"
+may be abbreviated as
+.Li "<foo.bar>...</foo.bar>" .
+Note this presents a parse ambiguity if there is also
+a structure or union field at the same level that contains the
+.Dq \&.
+character, e.g.
+.Dq foo.bar .
+Such field names always match first when uncombined; they never match
+when combined with other tags.
+.Pp
+All of the fields defined in the data structure need not be present in the
+XML input; missing fields are left unmodified.
+Therefore if the
+.Dv STRUCTS_XML_UNINIT
+flag is not specified, the XML input is
+.Dq overlayed
+on top of the existing data structure.
+.Pp
+.Fn structs_xml_output
+outputs the contents of the data structure having
+.Xr structs 3
+type
+.Fa type
+and pointed to by
+.Fa data
+in XML format to the stream
+.Fa fp .
+The document tag is specified by
+.Fa elem_tag ,
+along with optional attributes specified by a non-
+.Dv NULL
+.Fa attrs
+pointing to the concatenated attributes as described above.
+.Pp
+If only specific sub-fields of the data structure are desired in the
+output, these may be specified with a non-
+.Dv NULL
+.Fa elems ,
+which points to a
+.Dv NULL
+terminated array of sub-field names.
+In this array, the empty string may be used to mean the entire data structure
+(which is equivalent to
+.Fa elems
+being
+.Dv NULL) .
+.Pp
+The
+.Fa flags
+argument may contain any of the following values OR'd together:
+.Pp
+.Bd -literal -compact -offset 3n
+STRUCTS_XML_FULL   Output a sub-field equal to its default value
+.Ed
+.Pp
+By default,
+.Fn structs_xml_output
+will omit outputting any sub-field that is equal to its default value.
+The
+.Dv STRUCTS_XML_FULL
+disables this behavior.
+.Sh RETURN VALUES
+All of the above functions indicate an error condition by returning
+either -1 or
+.Dv NULL
+and setting
+.Va errno
+to an appropriate value.
+.Pp
+Whenever there is an error, no partial work is done: the state of
+the parameters has not changed, and nothing has been allocated or freed.
+.Sh SEE ALSO
+.Xr http_servlet_xmlrpc 3 ,
+.Xr http_xml 3 ,
+.Xr libpdel 3 ,
+.Xr structs 3 ,
+.Xr structs_xmlrpc 3 ,
+.Xr typed_mem 3
+.Rs
+.%T "Extensible Markup Language (XML) 1.0 (Second Edition)"
+.%O "http://www.w3.org/TR/REC-xml"
+.Re
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

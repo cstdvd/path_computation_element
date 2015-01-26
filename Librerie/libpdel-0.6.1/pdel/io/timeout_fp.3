@@ -1,0 +1,57 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: timeout_fp.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt TIMEOUT_FDOPEN 3
+.Os
+.Sh NAME
+.Nm timeout_fdopen
+.Nd I/O streams with timeouts
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdio.h
+.In pdel/io/timeout_fp.h
+.Ft "FILE *"
+.Fn timeout_fdopen "int fd" "const char *mode" "int timeout"
+.Sh DESCRIPTION
+.Fn timeout_fdopen
+is equivalent to
+.Xr fdopen 3
+with the addition of an enforced timeout on read or write operations on the
+underlying file descriptor
+.Fa fd .
+.Pp
+If any read or write operation blocks for longer than
+.Fa timeout
+seconds, an error is returned with
+.Va errno
+set to
+.Er ETIMEDOUT .
+.Pp
+If
+.Fa timeout
+is zero or negative, no timeout is imposed and the behavior is identical to
+.Xr fdopen 3 .
+.Pp
+.Xr fclose 3
+should be used to close the returned stream.
+.Sh RETURN VALUES
+.Fn timeout_fdopen
+returns
+.Dv NULL
+to indicate an error, with
+.Va errno
+set appropriately.
+.Sh SEE ALSO
+.Xr fdopen 3 ,
+.Xr libpdel 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

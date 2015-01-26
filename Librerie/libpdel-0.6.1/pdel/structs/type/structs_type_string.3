@@ -1,0 +1,89 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: structs_type_string.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRUCTS_TYPE_STRING 3
+.Os
+.Sh NAME
+.Nm structs_type_string ,
+.Nm structs_type_string_null ,
+.Nd structs types for strings
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In pdel/structs/structs.h
+.In pdel/structs/type/string.h
+.Fn STRUCTS_STRING_TYPE mtype asnull
+.Fn STRUCTS_FIXEDSTRING_TYPE bufsize
+.Vt extern const struct structs_type structs_type_string ;
+.Vt extern const struct structs_type structs_type_string_null ;
+.Sh DESCRIPTION
+The
+.Fn STRUCTS_STRING_TYPE
+and
+.Fn STRUCTS_FIXEDSTRING_TYPE
+macros define a
+.Xr structs 3
+type (i.e., a
+.Dv "struct structs_type" )
+for describing variable and bounded length strings, respectively.
+.Pp
+.Fn STRUCTS_STRING_TYPE
+describes a
+.Li "char *"
+data type which points to a string buffer allocated with
+.Xr typed_mem 3
+type
+.Fa mtype .
+If
+.Fa asnull
+is non-zero, then an empty string may be represented as a
+.Dv NULL
+pointer; otherwise, the
+.Li "char *"
+pointer can never be
+.Dv NULL
+(or else the program may core dump) and so the empty string must
+always be represented as a pointer to a zero length string.
+.Pp
+.Fn STRUCTS_FIXEDSTRING_TYPE
+describes an array of
+.Li "char"
+having length
+.Fa bufsize
+in which a string having length at most
+.Fa bufsize
+- 1 is stored.
+The string is always terminated with a '\\0' byte.
+.Pp
+The
+.Xr structs 3
+library supplies two pre-defined variable length string types,
+.Nm structs_type_string
+and
+.Nm structs_type_string_null .
+Both types use the
+.Xr typed_mem 3
+type
+.Dv STRUCTS_TYPE_STRING_MTYPE ,
+defined in the header file.
+.Nm structs_type_string
+represents empty strings as pointers to an empty string, while
+.Nm structs_type_string_null
+represents empty strings as
+.Dv NULL
+pointers.
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr structs 3 ,
+.Xr structs_type 3 ,
+.Xr typed_mem 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

@@ -1,0 +1,6 @@
+- Add support for changing UID/GID before running servlets (?)
+- Add support for logging each request (where?)
+- New servlet: virtual host servlet
+- New servlet: wrapper servlet
+
+$Id: TODO 822 2002-10-29 01:39:16Z archie $

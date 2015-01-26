@@ -1,0 +1,77 @@
+.\" $Id: lws.1.in 586 2002-08-21 21:55:52Z archie $
+.\"
+.\" @COPYRIGHT@
+.\"
+.Dd August 19, 2002
+.Dt LWS 1
+.Os
+.Sh NAME
+.Nm lws
+.Nd the lil' web server
+.Sh SYNOPSIS
+.Nm
+.Op Fl D
+.Op Fl d Ar directory
+.Sh DESCRIPTION
+.Nm
+is a lightweight web server which uses
+.Xr pthreads 3
+for multi-tasking and
+.Xr libpdel 3
+for HTTP, HTTPS, and configurable servlet support.
+The server can be configured via a buit-in admin web interface,
+or by manually editing the XML configuration file.
+.Pp
+.Nm
+supports multiple HTTP and HTTPS servers, each containing multiple
+virtual hosts.
+Each virtual host has a configurable list of servlets.
+The supported servlets types are file, redirect, and cookieauth.
+The file servlet includes optional support for
+.Xr tmpl 3
+HTML templates.
+.Pp
+.Nm
+maintains a self-rotating
+.Xr logfile 3
+error log, with optional support for logging via syslog as well.
+.Pp
+.Nm
+is intended to demonstrate features of the
+.Xr libpdel 3
+library, and to be a lightweight web server for simple applications.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl D
+Run in debug mode: don't fork into the background, enable typed memory
+statistics, and make template files directly viewable.
+.It Fl d
+Change into
+.Ar directory
+before starting up.
+If not specified, the default working directory is
+.Pa "@PREFIX@/etc/lws" .
+.El
+.Sh FILES
+.It
+.Bl -tag -width @PREFIX@/etc/lwsXX -compact
+.It Pa @PREFIX@/etc/lws
+Default working directory.
+.It Pa config.xml
+Configuration file.
+.El
+.Sh SEE ALSO
+.Xr http_server 3 ,
+.Xr http_servlet_cookieauth 3 ,
+.Xr http_servlet_file 3 ,
+.Xr http_servlet_redirect 3 ,
+.Xr libpdel 3 ,
+.Xr tmpl 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@packetdesign.com
+.Sh BUGS
+Please report bugs to the author.

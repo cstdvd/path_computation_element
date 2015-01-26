@@ -1,0 +1,93 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: rsa_util_sign.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt RSA_UTIL_SIGN 3
+.Os
+.Sh NAME
+.Nm rsa_util_sign ,
+.Nm rsa_util_verify ,
+.Nm rsa_util_verify_priv
+.Nd RSA digital signature routines
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In pdel/util/rsa_util.h
+.Ft int
+.Fn rsa_util_sign "const char *privkeyfile" "const u_char *md5" "u_char *sig" "size_t siglen"
+.Ft int
+.Fn rsa_util_verify "const char *pubkeyfile" "const u_char *md5" "const u_char *sig" "size_t siglen"
+.Ft int
+.Fn rsa_util_verify_priv "const char *privkeyfile" "const u_char *md5" "const u_char *sig" "size_t siglen"
+.Sh DESCRIPTION
+These routines are convenience wrappers around the OpenSSL crypto library
+for creating and verifying RSA digital signatures.
+They use the
+.Xr md5 3
+hash of the original document for the actual signing operation.
+.Pp
+.Fn rsa_util_sign
+creates a digital signature.
+.Fa privkeyfile
+is the pathname of the private key file (which must be unencrypted).
+.Fa md5
+is the hash of the document to be signed.
+.Fa sig
+points to a buffer of at least 128 bytes.
+.Fa siglen
+is the size of the buffer.
+.Fn rsa_util_sign
+returns the length of the resulting signature, or -1 (with
+.Va errno
+set) if there was an error.
+.Pp
+.Fn rsa_util_verify
+verifies a digital signature.
+.Fa pubkeyfile
+is the pathname of the public key file.
+.Fa md5
+is the hash of the document to be signed.
+.Fa sig
+points to the signature to verify, having length
+.Fa siglen .
+.Fn rsa_util_verify
+returns 1 if the signature is valid, otherwise 0.
+.Pp
+.Fn rsa_util_verify_priv
+functions exactly like
+.Fn rsa_util_verify
+except that the private key file (which also contains the public key)
+is passed as the first argument.
+.Sh EXAMPLES
+To create a new RSA private key:
+.Bd -literal -offset 3n
+openssl genrsa -rand /dev/random -out mykey.key 1024
+
+.Ed
+To view the contents of an RSA private key file:
+.Bd -literal -offset 3n
+openssl rsa -in mykey.key -text -noout
+
+.Ed
+To extract the RSA public key from an RSA private key file:
+.Bd -literal -offset 3n
+openssl rsa -in mykey.key -pubout -out mykey.pub
+
+.Ed
+To view the contents of an RSA public key file:
+.Bd -literal -offset 3n
+openssl rsa -pubin -in mykey.pub -text -noout
+.Ed
+.Sh SEE ALSO
+.Xr openssl 1 ,
+.Xr md5 3 ,
+.Xr libpdel 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<!-- @get("page_id") -->
+<!-- $Id: head.tmpl 547 2002-08-19 20:41:07Z archie $ -->
+@eval(@readfile("macros.tmpl"))
+<head>
+<link rel="stylesheet" type="text/css"
+    href="/admin/stylesheet.css" title="LWS Stylesheet">
+<title>LWS: @get("page_title")</title>
+</head>
+
+<body bgcolor="#ffffff" @get("html_body_extra")>
+
+<table border="0" width="100%" cellspacing="2" cellpadding="0">
+<tr>
+    <td align="left" valign="top" width="20%">
+      <table border="0" cellspacing="0" cellpadding="0">
+      <tr>
+	<td align="left">@hostname()</td>
+	<td>&nbsp;</td>
+      </tr>
+      </table>
+    </td>
+    <td align="center">
+      <img src="/admin/lws.gif">
+      <br>
+      <font size="-1"><em>The Lil' Web Server</em></font>
+      <p class="page-title">
+      <b>@get("page_title")</b></p>
+    </td>
+    <td align="right" valign="top" width="20%">
+      <table border="0" cellspacing="2" cellpadding="0">
+      <tr>
+	<td align="right">Version @version()</td>
+	<td>&nbsp;</td>
+      </tr>
+      </table>
+    </td>
+</tr>
+</table>
+
+<!-- Row of navigation buttons -->
+
+@if(@or(@not(@empty(@admin_authname())), @get("show_nav_buttons")))
+
+<table border="0" cellspacing="3" cellpadding="2" width="100%">
+<tr>
+
+@define("add_button")
+    @set(@cat("link_txt_", @get("i")), @get("arg1"))
+    @set(@cat("link_url_", @get("i")), @cat("/admin/", @get("arg2")))
+    @set("i", @add(@get("i"), "1"))
+@enddef
+
+@define("button")
+    <td class="nav" align="center"><p align="center">
+	<strong><small><a href="@get("arg2")"><font
+	    color="#000000">&nbsp;@get("arg1")&nbsp;</font></a>
+	    </small></strong></td>
+@enddef
+
+@set("i", "0")
+@add_button("Home", "index")
+@add_button("Config", "config")
+@add_button("Servers", "servers")
+@add_button("Properties", "props")
+@add_button("Logs", "logs")
+@if(@debug_level())
+    @add_button("Memory", "mem")
+@endif
+@add_button("Help", @cat("help?page=",
+    @regex_match("([^/]*)$", @get("page_url"), "1")))
+
+@loop("999")
+    @set("url", @get(@cat("link_url_", @loopindex())))
+    @set("txt", @get(@cat("link_txt_", @loopindex())))
+    @if(@empty(@get("url")))
+	    @break
+    @endif
+    @button(@get("txt"), @get("url"))
+@endloop
+
+<td width="99%">&nbsp;</td>
+
+@if(@not(@empty(@admin_authname())))
+    @button("Logout", "logon?action=Logout")
+@endif
+
+</tr>
+</table>
+
+@endif
+
+<hr>
+
+<!-- Main page contents -->
+

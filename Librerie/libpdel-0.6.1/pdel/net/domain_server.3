@@ -1,0 +1,159 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Mark Gooderum <markpdel@jumpweb.com>
+.\"
+.\" $Id: domain_server.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd October 25, 2006
+.Dt DOMAIN_SERVER 3
+.Os
+.Sh NAME
+.Nm domain_server
+.Nd generic DOMAIN server
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In sys/un.h
+.In stdio.h
+.In pdel/net/domain_server.h
+.Ft "struct domain_server *"
+.Fn domain_server_start "struct pevent_ctx *ctx" "void *cookie" "const char *mtype" "struct in_addr ip" "u_int16_t port" "u_int max_conn" "u_int conn_timeout" "domain_setup_t *setup" "domain_handler_t *handler" "domain_teardown_t *teardown"
+.Ft "void"
+.Fn domain_server_stop "struct domain_server **servp"
+.Ft "void *"
+.Fn domain_server_get_cookie "struct domain_server *serv"
+.Ft "struct domain_server *"
+.Fn domain_connection_get_server "struct domain_connection *conn"
+.Ft "void *"
+.Fn domain_connection_get_cookie "struct domain_connection *conn"
+.Ft "int"
+.Fn domain_connection_get_fd "struct domain_connection *conn"
+.Ft "FILE *"
+.Fn domain_connection_get_fp "struct domain_connection *conn"
+.Ft "void"
+.Fn domain_connection_get_peer "struct domain_connection *conn" "struct sockaddr_un *sun"
+.Sh DESCRIPTION
+These functions provide support for implementing DOMAIN servers.
+.Pp
+.Fn domain_server_start
+creates a new DOMAIN server listening for connections on IP address
+.Fa ip
+and port
+.Fa port .
+Memory for the
+.Nm domain_server
+is dynamically allocated with
+.Xr typed_mem 3
+type
+.Fa mtype .
+At most
+.Fa max_conn
+simultaneous connections will be allowed.
+If
+.Fa conn_timeout
+is non-zero, then if an attempt to read from or write to a peer blocks
+for more than
+.Fa conn_timeout
+seconds, the connection will be terminated.
+.Fa ctx
+is a
+.Xr pevent 3
+event context used to listen for incoming connections.
+.Pp
+The
+.Fa setup ,
+.Fa handler ,
+and
+.Fa teardown
+arguments are pointers to functions having these types:
+.Pp
+.Bd -literal -compact -offset 3n
+typedef void *domain_setup_t(struct domain_connection *conn);
+typedef void domain_handler_t(struct domain_connection *conn);
+typedef void domain_teardown_t(struct domain_connection *conn);
+.Ed
+.Pp
+Each connection is represented by a
+.Nm domain_connection
+object.
+For each new connection,
+.Fn setup
+is called to initialize user state for the connection.
+If setup is unsuccessful,
+.Fn setup
+should return
+.Dv NULL
+and set
+.Va errno
+appropriately, and the connection will be closed.
+Otherwise, it should return a non-NULL cookie; this cookie can be
+accessed later in
+.Fn handler
+and
+.Fn teardown
+by calling 
+.Fn domain_connection_get_cookie .
+.Pp
+.Fn handler
+is used to service the connection.
+The thread calling this function may be canceled at any cancellation point;
+therefore,
+.Fn handler
+may need to register cleanup hooks to clean up allocated resources should
+that happen.
+.Pp
+.Fn teardown
+is called when
+.Fn handler
+returns, or the thread is canceled.
+If
+.Fn setup
+returns successfully, 
+.Fn teardown
+is guaranteed to be called exactly once.
+.Pp
+.Fn domain_server_stop
+stops and destroys a
+.Nm domain_server .
+All existing connection threads are canceled and the current thread
+blocks until
+.Fn teardown
+has been called for each connection.
+.Pp
+.Fn domain_connection_get_peer
+retrieves the peer's address.
+.Pp
+.Fn domain_connection_get_server
+returns the
+.Nm domain_server
+object associated with the connection
+.Fa conn .
+.Pp
+.Fn domain_connection_get_fd
+returns the DOMAIN socket associated with the connection.
+.Pp
+.Fn domain_connection_get_fp
+returns a stream opened on top of the socket for use with stream based I/O.
+.Pp
+The user code should
+.Em not
+close either the socket or the stream; these will be closed automatically
+when the connection is terminated.
+.Sh RETURN VALUES
+.Fn domain_server_start
+returns
+.Dv NULL
+to indicate an error, with
+.Va errno
+set appropriately.
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr pevent 3 ,
+.Xr typed_mem 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org
+.An Mark Gooderum Aq markpdel@jumpweb.com

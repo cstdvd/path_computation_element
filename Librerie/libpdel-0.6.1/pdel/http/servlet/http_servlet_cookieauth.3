@@ -1,0 +1,279 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: http_servlet_cookieauth.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt HTTP_SERVLET_COOKIEAUTH 3
+.Os
+.Sh NAME
+.Nm http_servlet_cookieauth
+.Nd HTTP secure cookie authentication servlet
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdio.h
+.In netinet/in.h
+.In openssl/ssl.h
+.In pdel/http/http_defs.h
+.In pdel/http/http_server.h
+.In pdel/http/servlet/cookieauth.h
+.Ft "struct http_servlet *"
+.Fn http_servlet_cookieauth_create "const char *redirect" "int append" "http_servlet_cookieauth_reqd_t *authreqd" "void *arg" "void (*destroy)(void *)" "const char *privkey" "const void *id" "size_t idlen" "const char *cookiename"
+.Ft int
+.Fn http_servlet_cookieauth_login "struct http_response *resp" "const char *privkey" "const char *username" "u_int max_linger" "time_t expire" "int session_only" "const u_char *id" "size_t idlen" "const char *cookiename" "const char *path" "const char *domain" "int secure"
+.Ft int
+.Fn http_servlet_cookieauth_logout "const char *cookiename" "const char *path" "const char *domain" "struct http_response *resp"
+.Ft "char *"
+.Fn http_servlet_cookieauth_user "const char *privkey" "const void *id" "size_t idlen" "const char *cookiename" "struct http_request *req" "const char *mtype"
+.Sh DESCRIPTION
+.Fn http_servlet_cookieauth_create
+creates a new servlet that enforces client authentication using
+public key cryptography and HTTP cookies.
+Any requests that fail to present a valid cookie are redirected to
+a login page.
+The servlet should be registered with a lower order than the other
+servlets that it protects, so that it executes first.
+.Pp
+.Fa redirect
+and
+.Fa append
+are used when redirecting a request, and are the same as the arguments to
+.Xr http_servlet_redirect_create 3 .
+.Pp
+.Fa authreqd
+is invoked for every request and is a pointer to a function of this type:
+.Pp
+.Bd -literal -compact -offset 3n
+typedef int http_servlet_cookieauth_reqd_t(void *arg,
+              struct http_request *req);
+.Ed
+.Pp
+The
+.Fa arg
+is the same value supplied to
+.Fn http_servlet_cookieauth_create .
+.Fn authreqd
+should return a non-zero value if the request requires a valid login cookie
+to proceed.
+If
+.Fn authreqd
+returns zero, no authentication will be required.
+Typically this is used to make an exception for the login page, etc.
+.Pp
+.Fa privkey
+is a pointer to a PEM-encoded RSA private key.
+If the HTTP server supports SSL, the server private key may be used
+for convenience (though this slightly weakens overall security).
+.Pp
+.Fa id
+points to arbitrary binary data having length
+.Fa idlen
+that uniquely identifies the authenticated resource.
+Only cookies generated with the same identity and signed with the same
+RSA private key will satisfy this servlet (see
+.Fn http_servlet_cookieauth_login
+below).
+The identity information should not be too long, to avoid overflowing
+the client's 4K cookie buffer.
+.Pp
+The
+.Fa cookiename
+specifies the name to use for the cookie; multiple cookies with
+different names may be used simultaneously.
+.Pp
+When the servlet is destroyed, if
+.Fa destroy
+is not
+.Dv NULL ,
+it will be invoked with
+.Fa arg
+as its parameter.
+.Pp
+.Fn http_servlet_cookieauth_login
+causes a cookie to be generated and passed to the client via
+.Fa resp .
+When the client includes this cookie in a subsequent HTTP request,
+the servlet will allow the request to proceed.
+The
+.Fa privkey ,
+.Fa id ,
+and
+.Fa idlen
+arguments must match the same arguments to
+.Fn http_servlet_cookieauth_create .
+.Pp
+.Fa username
+is an arbirary string that may be retrieved in a subsequent request by
+.Fn http_servlet_cookieauth_user
+(see below).
+.Pp
+.Fa max_linger ,
+if non-zero, specifies a maximum time in seconds between requests before
+the cookie becomes invalid.
+This means each request will cause a new cookie to be generated.
+If an otherwise valid cookie is received but it was generated more than
+.Fa max_linger
+seconds ago, it is rejected.
+.Pp
+.Fa expire
+specifies an absolute time at which the cookie should expire.
+Cookies presented beyond their expiration time (which should only be sent
+if the client is broken, malicious, or not synchronized) will be rejected.
+.Pp
+.Fa session_only
+specifies that the client should be instructed to discard the cookie
+when the client's session terminates.
+Implementation of this feature is client-dependent.
+.Pp
+.Fa path
+and
+.Fa domain
+may be
+.Dv NULL
+to use the default, which means the client should send the cookie with
+all requests to this web server.
+Otherwise, see
+.Li "http://www.netscape.com/newsref/std/cookie_spec.html"
+for a description.
+.Pp
+The
+.Fa secure
+flag indicates to the client that this cookie should only be sent over
+an HTTPS (i.e., encrypted) connection.
+Implementation of this feature is client-dependent.
+.Pp
+.Fn http_servlet_cookieauth_logout
+invalidates the client cookie by sending the client an invalid cookie
+which should overwrite the valid one.
+Correct implementation of this feature is client-dependent.
+Note also that it's possible (though unlikely) that this function may
+return an error, in which case the invalid cookie was not sent.
+.Pp
+.Fn http_servlet_cookieauth_user
+retrieves the
+.Fa username
+argument previously passed to
+.Fn http_servlet_cookieauth_login
+from a valid cookie included with the HTTP request
+.Fa req .
+The string is dynamically allocated with
+.Xr typed_mem 3
+type
+.Fa mtype
+and must be eventually freed by the caller.
+The identity specified by
+.Fa id
+and
+.Fa idlen
+must be the same as when the cookie was created.
+If
+.Fa req
+does not contain a valid cookie,
+.Dv NULL
+is returned.
+.Pp
+Note that it is not necessary to create a servlet in order to use the
+.Fn http_servlet_cookieauth_login ,
+.Fn http_servlet_cookieauth_logout ,
+and
+.Fn http_servlet_cookieauth_user
+functions.
+.Sh SECURITY NOTES
+Because public key cryptography is used, as long as the RSA private key
+is kept secret then there is no known way for an attacker to create a
+.Em new
+cookie that appears valid to this servlet.
+However, if an attacker somehow acquires an existing cookie before its
+expiration time, it can be presented by the hacker and will fool this
+servlet into believing that the attacker had previously authenticated.
+.Pp
+Also, while the information in the cookie includes a secure digital
+signature that is used to validate the cookie, the cookie itself is
+.Em not
+encrypted.
+In particular, the
+.Fa username
+will travel across the HTTP connection (and be stored on the browser's
+computer) unprotected.
+.Pp
+For these reasons,
+.Sy "this servlet should only be used with SSL web servers" .
+.Pp
+Creation of the identity must be done carefully to avoid security holes.
+The important point is to avoid using the same identity and private key
+to secure two things that should be considered different from an
+authentication point of view.
+Therefore, any information which makes the identity unique to the
+particular resource being protected is good.
+.Pp
+A common pitfall is creating an identity by concatenating strings
+without inserting a separator character that does not appear in
+the strings. E.g., the concatenation of
+.Dq abc
+and
+.Dq def
+is the same as the concatenation of
+.Dq ab
+and
+.Dq cdef.
+However,
+.Dq abc:def
+is different from
+.Dq ab:cdef .
+.Pp
+Hashing the identity components together is a good way to limit
+.Fa idlen
+and therefore the size of the cookie.
+However, if hashing is done a secure hash function such
+as MD5 or SHA-1 should be used.
+.Sh RETURN VALUES
+.Fn http_servlet_cookieauth_create ,
+.Fn http_servlet_cookieauth_login ,
+.Fn http_servlet_cookieauth_logout ,
+and
+.Fn http_servlet_cookieauth_user
+return
+.Dv NULL
+or -1 and set
+.Va errno
+to an appropriate value to indicate failure.
+.Pp
+The
+.Va errno
+value
+.Er EACCES
+is used to indicate that no valid cookie was found.
+.Sh SEE ALSO
+.Xr http_request 3 ,
+.Xr http_response 3 ,
+.Xr http_server 3 ,
+.Xr http_servlet 3 ,
+.Xr http_servlet_basicauth 3 ,
+.Xr http_servlet_redirect 3 ,
+.Xr libpdel 3 ,
+.Xr md5 3 ,
+.Xr sha 3 ,
+.Xr typed_mem 3
+.Rs
+.%T "Persistent Client State HTTP Cookies"
+.%O "http://www.netscape.com/newsref/std/cookie_spec.html"
+.Re
+.Rs
+.%A D. Kristol
+.%A L. Montulli
+.%T "HTTP State Management Mechanism"
+.%O RFC 2109
+.Re
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org
+.Sh BUGS
+The client must support HTTP cookies for any of this to work.
+.Pp
+Only the original Netscape cookie spec is supported;
+RFC 2109 support should be added.

@@ -1,0 +1,42 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: structs_type_null.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRUCTS_TYPE_NULL 3
+.Os
+.Sh NAME
+.Nm structs_type_null
+.Nd non-instantiable structs type
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In pdel/structs/structs.h
+.In pdel/structs/type/null.h
+.Vt extern const struct structs_type structs_type_null ;
+.Sh DESCRIPTION
+The
+.Nm structs_type_null
+.Xr structs 3
+type is not instantiable.
+All of the
+.Xr structs_type 3
+methods return an error with
+.Va errno
+set to
+.Er ENOTSUPP .
+.Pp
+This type is useful for special situations, such as defining an
+array that must have zero length.
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr structs 3 ,
+.Xr structs_type 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

@@ -1,0 +1,232 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: http_servlet_xml.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt HTTP_SERVLET_XML 3
+.Os
+.Sh NAME
+.Nm http_servlet_xml
+.Nd HTTP servlet for XML requests
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdio.h
+.In netinet/in.h
+.In openssl/ssl.h
+.In pdel/http/http_defs.h
+.In pdel/http/http_server.h
+.In pdel/http/servlet/xml.h
+.Ft "struct http_servlet *"
+.Fn http_servlet_xml_create "const struct http_servlet_xml_info *info" "void *arg" "void (*destroy)(void *)"
+.Sh DESCRIPTION
+.Fn http_servlet_xml_create
+creates a servlet that receives HTTP requests optionally containing XML
+and sends back XML responses.
+The request and response data are automatically converted to and
+from native binary format using the
+.Xr structs 3
+library.
+.Pp
+This servlet is basically acts as glue between the
+.Xr http_servlet 3
+API and the
+.Xr structs_xml_input 3
+and
+.Xr structs_xml_output 3
+library routines.
+The net result is the ability to send and receive arbitrary data
+structures between two machines using XML over HTTP.
+.Pp
+The incoming HTTP request is expected to either be a
+.Dq GET
+or
+.Dq POST ,
+in the latter case with a request body containing XML.
+The incoming content type is ignored.
+The response has content type
+.Dq text/xml
+and contains XML.
+.Pp
+The
+.Fa arg
+is an opaque user cookie.
+When the servlet is destroyed, if
+.Fa destroy
+is not
+.Dv NULL ,
+it will be invoked with
+.Fa arg
+as its parameter.
+.Pp
+.Fa info
+is a pointer to a
+.Li "struct http_servlet_xml_info" :
+.Pp
+.Bd -literal -compact -offset 3n
+typedef void *http_servlet_xml_handler_t(void *arg,
+                struct http_request *req, const void *payload,
+                const char *pattrs, char **rattrsp, const char *mtype);
+
+struct http_servlet_xml_info {
+    http_servlet_xml_handler_t  *handler;       /* user handler */
+    const char                  *ptag;          /* payload doc elem */
+    const struct structs_type   *ptype;         /* payload type */
+    const char                  *rtag;          /* reply doc elem */
+    const struct structs_type   *rtype;         /* reply type */
+    u_char                      allow_post;     /* allow POST */
+    u_char                      allow_get;      /* allow GET */
+    http_logger_t               *logger;        /* loggging function */
+    int                         flags;          /* output flags */
+};
+.Ed
+.Pp
+The
+.Fa handler
+is the user routine invoked for each HTTP request (see below).
+.Fa ptag
+is the XML document tag for incoming requests.
+.Fa ptype
+is the
+.Xr structs 3
+type for the payload data.
+Incoming requests that don't match
+.Fa ptag
+and
+.Fa ptype
+are rejected.
+.Pp
+Similarly,
+.Fa rtag
+is the XML document tag for responses and
+.Fa rtype
+is the
+.Xr structs 3
+type for the data returned by
+.Fn handler .
+.Pp
+The
+.Fa allow_post
+and
+.Fa allow_get
+flags select which of
+.Dq GET
+and/or
+.Dq POST
+queries are allowed.
+If
+.Fa allow_post
+is zero, then
+.Fa ptag
+and
+.Fa ptype
+are ignored.
+.Pp
+The
+.Fa logger
+is a logging function whose type is defined in
+.Xr http_server 3 .
+.Pp
+.Fa flags
+controls how XML responses are generated; this value is passed unaltered to
+.Xr structs_xml_output 3 .
+.Pp
+When
+.Fn handler
+is invoked,
+.Fa arg
+is the opqaue cookie supplied to
+.Fn http_servlet_xml_create ,
+and
+.Fa req
+is the
+.Xr http_request 3
+object.
+.Fa payload
+and
+.Fa pattrs
+will be
+.Dv NULL
+for a
+.Dq GET
+request, otherwise
+.Fa payload
+will point to the received data in native binary format.
+.Fn handler
+should not free this data.
+.Pp
+.Fa pattrs ,
+if not
+.Dv NULL ,
+points to the top level XML attributes in the request.
+The attributes are stored as a single sequence of concatenated pairs:
+name, '\\0', value, '\\0', name, '\\0', value, etc., terminated with a
+final (extra) '\\0'.
+.Pp
+If top level XML attributes are desired in the response,
+.Fa "*rattrsp"
+should be set to a similarly concatenated list of name, value pairs
+allocated with
+.Xr typed_mem 3
+type
+.Fa mtype .
+.Pp
+.Fn handler
+should return a pointer to the reply data in native binary format,
+in a region of memory allocated with
+.Xr typed_mem 3
+type
+.Fa mtype .
+If there was an error,
+.Fn handler
+should return
+.Dv NULL
+and set
+.Va errno
+appropriately.
+.Pp
+Since it's running as a servlet, the thread executing
+.Fn handler
+may be canceled at any cancellation point.
+.Fn handler
+should be written so as to not leak resources if this happens.
+.Sh RETURN VALUES
+On failure,
+.Fn http_servlet_xml_create
+returns
+.Dv NULL
+and sets
+.Va errno
+to an appropriate value.
+.Sh SEE ALSO
+.Xr http_request 3 ,
+.Xr http_response 3 ,
+.Xr http_server 3 ,
+.Xr http_servlet 3 ,
+.Xr http_servlet_xmlrpc 3 ,
+.Xr http_xml 3 ,
+.Xr libpdel 3 ,
+.Xr structs 3 ,
+.Xr typed_mem 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org
+.Sh BUGS
+.Fn http_servlet_xml_create
+copies all information in
+.Fa info
+except the
+.Xr structs 3
+types pointed to by
+.Fa ptype
+and
+.Fa rtype ,
+so these must remain valid for the lifetime of the servlet.
+Typically
+.Xr structs 3
+types are stored in static variables, so this is not usually a problem.

@@ -1,0 +1,37 @@
+LWS - The Lil' Web Server
+
+About LWS
+---------
+
+LWS is a lightweight web server which uses pthreads(3) for multi-tasking
+and libpdel(3) for HTTP, HTTPS, and configurable servlet support.  The
+server can be configured via a buit-in admin web interface, or by manu-
+ally editing the XML configuration file.
+
+LWS supports multiple HTTP and HTTPS servers, each containing multiple
+virtual hosts.  Each virtual host has a configurable list of servlets.
+The supported servlets types are file, redirect, and cookieauth.  The
+file servlet includes optional support for tmpl(3) HTML templates.
+
+LWS maintains a self-rotating logfile(3) error log, with optional support
+for logging via syslog as well.
+
+LWS is intended to demonstrate features of the libpdel(3) library, and to
+be a lightweight web server for simple applications.
+
+This server has been tested on FreeBSD and RedHat Linux 7.3.
+Other versions of Linux and other operating systems are not tested.
+
+Note: this is still considered 'alpha' code until the version number
+reaches "1.0.0". Please consult the "Changes" for a list of changes.
+
+Installing LWS
+--------------
+
+0. Install the 'libpdel' library (FreeBSD: /usr/ports/devel/libpdel)
+1. Type 'make' to build the LWS web server
+2. Become root
+3. Type 'make install' to install the LWS web server and admin UI
+4. Type 'lws' to start the server
+5. Surf to http://your.host.name/
+

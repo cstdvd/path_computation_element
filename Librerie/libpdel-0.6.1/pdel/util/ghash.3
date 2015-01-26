@@ -1,0 +1,265 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: ghash.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt GHASH 3
+.Os
+.Sh NAME
+.Nm ghash
+.Nd generic hash table library
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In pdel/util/ghash.h
+.Ft "struct ghash *"
+.Fn ghash_create "void *arg" "u_int isize" "u_int maxload" "const char *mtype" "ghash_hash_t *hash" "ghash_equal_t *equal" "ghash_add_t *add" "ghash_del_t *del"
+.Ft void
+.Fn ghash_destroy "struct ghash **gp"
+.Ft void
+.Fn ghash_arg "struct ghash *g"
+.Ft "void *"
+.Fn ghash_get "struct ghash *g" "const void *item"
+.Ft int
+.Fn ghash_put "struct ghash *g" "const void *item"
+.Ft int
+.Fn ghash_remove "struct ghash *g" "const void *item"
+.Ft u_int
+.Fn ghash_size "struct ghash *g"
+.Ft int
+.Fn ghash_dump "struct ghash *g" "void ***listp" "const char *mtype"
+.Ft void
+.Fn ghash_walk_init "struct ghash *g" "struct ghash_walk *walk"
+.Ft "void *"
+.Fn ghash_walk_next "struct ghash *g" "struct ghash_walk *walk"
+.Ft "struct ghash_iter *"
+.Fn ghash_iter_create "struct ghash *g"
+.Ft void
+.Fn ghash_iter_destroy "struct ghash_iter **iterp"
+.Ft int
+.Fn ghash_iter_has_next "struct ghash_iter *iter"
+.Ft "void *"
+.Fn ghash_iter_next "struct ghash_iter *iter"
+.Ft int
+.Fn ghash_iter_remove "struct ghash_iter *iter"
+.Sh DESCRIPTION
+The
+.Nm ghash
+functions implement a generic hash table data structure.
+The hash table stores
+.Em items
+of type
+.Ft "void *" .
+The user code supplies callback routines for:
+.Bl -bullet -offset 3n
+.It
+Computing the hash value of an item
+.It
+Comparing two items for equality
+.It
+Housekeeping associated with adding and removing an item
+.El
+.Pp
+.Fn ghash_create
+creates a new hash table.
+The
+.Fa arg
+parameter can be retrieved at any time via
+.Fn ghash_arg
+and is otherwise ignored.
+The initial size of the hash table (in buckets) is determined by
+.Fa isize ,
+or defaults to 31 if
+.Fa isize
+is zero.
+.Fa mtype
+is a typed memory type string (see
+.Xr typed_mem 3 )
+used when allocating memory for the hash table.
+.Pp
+.Fa maxload
+is a maximum load value, measured in percent.
+If the ratio of the number of items in the hash table to the number
+of buckets grows larger than this value, the number of buckets is
+increased.
+For example, if
+.Fa maxload
+is 200, then on average there will never be more than 2 items per bucket.
+If
+.Fa maxload
+is given as zero, the default value of 75% is used.
+.Pp
+The
+.Fa hash ,
+.Fa equal ,
+.Fa add ,
+and
+.Fa del
+parameters are pointers to user-supplied callback functions having
+the following types:
+.Bd -literal -offset 3n
+typedef int       ghash_equal_t(struct ghash *g,
+                      const void *item1, const void *item2);
+typedef u_int32_t ghash_hash_t(struct ghash *g, const void *item);
+typedef void      ghash_add_t(struct ghash *g, void *item);
+typedef void      ghash_del_t(struct ghash *g, void *item);
+
+.Ed
+The
+.Fa equal
+function should return 1 if the items are equal, otherwise 0.
+The
+.Fa hash
+function should return the item's 32-bit hash value.
+Note that
+.Fa equal
+and
+.Fa hash
+must be consistent, i.e., two items that are equal must
+have the same hash value.
+If
+.Fa equal
+and
+.Fa hash
+are
+.Dv NULL ,
+the item pointers themselves are compared and hashed;
+in effect, the hash table behaves like a set of pointers.
+.Pp
+The
+.Fa add
+and
+.Fa del
+routines, if not
+.Dv NULL ,
+will be called whenever an item is added to, or removed from, the hash table.
+For example, if
+.Fn ghash_put
+causes a new item to replace an old item, there will be a call to the
+.Fa del
+function for the old item, followed by a call to the
+.Fa add
+function for the new item.
+These callbacks are typically used to increase and decrease reference counts.
+.Pp
+.Fn ghash_destroy
+destroys a hash table and free's all associated memory.
+If any items remain in the hash table, the
+.Fa del
+callback will be invoked once for each item.
+Note that this function takes a pointer to a pointer to a hash table.
+Upon return, the pointer to the hash table will be set to
+.Dv NULL .
+If it is already equal to
+.Dv NULL ,
+.Fn ghash_destroy
+does nothing.
+.Pp
+.Fn ghash_get
+retrieves an item previously stored in the hash table, or else returns
+.Dv NULL
+if the item is not found.
+.Pp
+.Fn ghash_put
+adds an item to the hash table, replacing any item that is equal to it
+(as determined by the
+.Fa equal
+callback).
+.Dv NULL
+is an invalid item and may not be stored in a hash table.
+.Pp
+.Fn ghash_remove
+removes an item from the hash table.
+If the item does not exist, nothing happens.
+.Pp
+.Fn ghash_size
+returns the number of items in the hash table.
+.Pp
+.Fn ghash_dump
+generates an array of all the items in the hash table.
+A pointer to the array is stored in
+.Fa "*listp" .
+The array is allocated with memory type
+.Fa mtype .
+The caller must eventually free the array, also using
+.Fa mtype .
+.Pp
+.Fn ghash_walk_init
+and
+.Fn ghash_walk_next
+are used to traverse all items in the hash table consecutively.
+First,
+.Fn ghash_walk_init
+is called with a pointer to the caller-supplied
+.Dv "struct ghash_walk" .
+Then, each invocation of
+.Fn ghash_walk_next
+returns the next item in the hash table, or
+.Dv NULL
+if no more items remain.
+.Pp
+Another way to traverse all hash table elements is using a
+.Dv "struct ghash_iter" ,
+which acts as an iterator object.
+.Fn ghash_iter_create
+returns such a structure.
+.Fn ghash_iter_has_next
+returns non-zero if there are items remaining.
+Each invocation of
+.Fn ghash_iter_next
+returns the next item.
+.Fn ghash_iter_remove
+removes item the most recently returned by
+.Fn ghash_iter_next .
+.Fn ghash_iter_destroy
+destroys the iterator.
+Note: all associated iterators must be destroyed before calling
+.Fn ghash_destroy .
+.Sh RETURN VALUES
+.Fn ghash_put
+returns 0 if the item is new, or 1 if the item replaced an existing item.
+.Fn ghash_remove
+returns 0 if the item was not found, or 1 if the item was found and removed.
+.Fn ghash_dump
+returns the number of items in the generated array.
+.Fn ghash_create ,
+.Fn ghash_put ,
+.Fn ghash_dump ,
+and
+.Fn ghash_iter_create
+return -1 or
+.Dv NULL
+to indicate an error;
+.Va errno
+will be set to the appropriate value.
+.Sh IMPLEMENTATION NOTES
+The
+.Nm ghash
+library is designed to gracefully handle buggy code.
+For example, a reentrant call to
+.Fn ghash_put
+from within the
+.Fa add
+callback function called as a result of a previous call to
+.Fn ghash_put
+will return an error with
+.Va errno
+set to
+.Er EBUSY .
+Similarly, if the hash table is modified in the middle of a traversal,
+.Fn ghash_walk_next
+or
+.Fn ghash_iter_next
+will return an error.
+.Sh SEE ALSO
+.Xr gtree 3 ,
+.Xr libpdel 3 ,
+.Xr typed_mem 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

@@ -1,0 +1,250 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: http_server.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt HTTP_SERVER 3
+.Os
+.Sh NAME
+.Nm http_server
+.Nd threaded server for HTTP and HTTPS
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdio.h
+.In netinet/in.h
+.In openssl/ssl.h
+.In pdel/http/http_defs.h
+.In pdel/http/http_server.h
+.Ft "struct http_server *"
+.Fn http_server_start "struct pevent_ctx *ctx" "struct in_addr ip" "u_int16_t port" "const struct http_server_ssl *ssl" "const char *server_name" "http_logger_t *logger"
+.Ft void
+.Fn http_server_stop "struct http_server **serverp"
+.Ft int
+.Fn http_server_register_servlet "struct http_server *serv" "struct http_servlet *servlet" "const char *vhost" "const char *urlpat" "int order"
+.Ft void
+.Fn http_server_destroy_servlet "struct http_servlet **servletp"
+.Ft void
+.Fn http_server_set_proxy_handler "struct http_server *serv" "http_proxy_t *handler" "void *arg"
+.Sh DESCRIPTION
+These functions implement a threaded HTTP server supporting SSL and
+user-definable "servlets".
+.Pp
+.Fn http_server_start
+starts a new server listening on IP address
+.Fa ip
+and port
+.Fa port .
+If
+.Fa ip
+is 0.0.0.0 then the server listens on all configured IP addresses.
+If
+.Fa port
+is zero then the default port (either 80 or 443 depending on whether
+SSL is enabled) is used.
+SSL is enabled by supplying a non-NULL pointer
+.Fa ssl
+to this structure:
+.Pp
+.Bd -literal -offset 3n
+struct http_server_ssl {
+    const char   *cert_path;     /* path to certificate file */
+    const char   *pkey_path;     /* path to private key file */
+    const char   *pkey_password; /* private key password, if needed */
+};
+.Ed
+.Pp
+.Fa ctx
+is a
+.Xr pevent 3
+event context with which the server registers to accept incoming connections.
+New connections are allocated individual threads in which to execute.
+The server enforces a hard limit of at most 1024 simultaneous connections,
+refusing to accept any new connections until one or more existing connections
+terminate.
+.Pp
+The
+.Fa server_name
+string is used for the "Server:" HTTP header and typically includes
+the name and version number of the software, e.g.,
+.Dq "MyServer/1.0" .
+.Pp
+The
+.Fa logger ,
+if not
+.Dv NULL,
+specifies a callback for logging:
+.Pp
+.Bd -literal -offset 3n
+typedef void  http_logger_t(int sev, const char *fmt, ...);
+.Ed
+.Pp
+Here
+.Fa sev
+is a
+.Xr syslog 3
+severity level.
+.Pp
+.Fn http_server_stop
+stops a server.
+All registered servlets are destroyed
+(see 
+.Fn http_server_destroy_servlet
+below).
+Upon return, all connection threads are guaranteed to have exited and
+.Fa "*serverp"
+will be set to
+.Dv NULL.
+If
+.Fa "*serverp"
+is already
+.Dv NULL
+when
+.Fn http_server_stop
+is invoked, nothing happens.
+.Pp
+Invoking
+.Fn http_server_stop
+from within a servlet is not supported and will give undefined results.
+.\"
+.Ss Servlets
+.\"
+For anything interesting to happen, one or more
+.Em servlets
+must be registered (see
+.Xr http_servlet 3) .
+Servlets are registered by invoking
+.Fn http_server_register_servlet .
+.Pp
+The
+.Fa vhost
+parameter may be used for virtual hosting.
+If
+.Fa vhost
+is not
+.Dv NULL ,
+it defines a virtual host for the server, and the servlet will only
+be invoked for requests whose Host: header matches
+.Fa vhost .
+If 
+.Fa vhost
+is
+.Dv NULL ,
+the servlet will only be invoked for requests with no Host: header
+or whose host does not match any other virtual host defined for the server
+(i.e., a
+.Dv NULL
+.Fa vhost
+indicates the default virtual host).
+.Pp
+The servlet will be invoked for queries matching
+.Fa urlpat ,
+which is an extended regular expression (see
+.Xr re_format 7) .
+.Pp
+The request URI is URL-decoded before matching begins and
+only the relative part is matched.
+For example, a servlet registered to match the regular expression
+"^/foo bar$" would match "http://server/foo%20bar" and
+"http://server/foo%20bar?field=value" but not
+"http://server/foo%20bar/".
+.Pp
+If two or more servlets match the same request,
+the servlet that was registered with the lowest
+.Fa order
+is chosen.
+If two servlets match and have the same
+.Fa order ,
+the last one registered is chosen.
+.Pp
+The order in which servlets are registered is important, especially with
+authorization servlets, because incoming requests may arrive at any time.
+I.e., authorization servlets should be registered before the servlet(s)
+that they protect.
+.Pp
+.Fn http_server_destroy_servlet
+destroys a servlet, unregistering it as necessary.
+If any instances of the servlet are executing, this function will
+block until they exit.
+Upon return,
+.Fa "*servletp"
+is set to
+.Dv NULL.
+If
+.Fa "*servletp"
+is already
+.Dv NULL
+when
+.Fn http_server_destroy_servlet
+is invoked, nothing happens.
+.\"
+.Ss "Proxy support"
+.\"
+Primitive proxy support is provided by
+.Fn http_server_set_proxy_handler .
+The
+.Fa handler
+is a pointer to a function of this type:
+.Pp
+.Bd -literal -offset 3n
+typedef void http_proxy_t(void *arg, struct http_request *req,
+                 struct http_response *resp);
+.Ed
+.Pp
+The
+.Fa handler
+is invoked with the same
+.Fa arg
+whenever an HTTP proxy request is received.
+To disable proxy support, invoke
+.Fn http_server_set_proxy_handler
+with both arguments equal to
+.Dv NULL.
+.Sh RETURN VALUES
+Upon error,
+.Fn http_server_start
+and
+.Fn http_server_register_servlet
+return
+.Dv NULL
+or -1, respectively, and set
+.Va errno
+to an appropriate value.
+.Sh SEE ALSO
+.Xr http_client 3 ,
+.Xr http_mime 3 ,
+.Xr http_request 3 ,
+.Xr http_response 3 ,
+.Xr http_servlet 3 ,
+.Xr http_xml 3 ,
+.Xr libpdel 3 ,
+.Xr pevent 3 ,
+.Xr syslog 3 ,
+.Xr re_format 7
+.Rs
+.%A R. Fielding
+.%A J. Gettys
+.%A J. Mogul
+.%A H. Frystyk
+.%A L. Masinter
+.%A P. Leach
+.%A T. Berners-Lee
+.%T "Hypertext Transfer Protocol -- HTTP/1.1"
+.%O RFC 2616
+.Re
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org
+.Sh BUGS
+Creating a new thread for each request is somewhat expensive.
+The server should keep a pool of idle threads for faster dispatch
+of incoming connections.
+.Pp
+The maximum number of connections should be configurable.
+.Pp
+The server is probably not fully compliant to the HTTP specification.

@@ -1,0 +1,158 @@
+
+Calling func1: @func1("arg1", "arg two")
+
+Calling func2(3): @func2(@func3())
+
+@set("foo", "bar")
+foo="@get("foo")"
+bar="@get("bar")"
+@set("foo", "blab")
+foo="@get("foo")"
+
+@set("foo", @error_test("this is", "a test"))
+
+HTML Escaping "!@#$%^&*()}{][-|\"';:?></.,~`"  --> @htmlencode("!@#$%^&*()}{][-|\\\"';:?></.,~`")
+
+URL Encoding "!@#$%^&*()}{][-|\"';:?></.,~`"   --> @urlencode("!@#$%^&*()}{][-|\\\"';:?></.,~`")
+
+An at sign looks like this: ``@@''
+
+Should@if(@not(@or("0", "not", "nope", @and("1", "2", "3"))))n't@endif see this.
+Should@if(@and("0", @or("0", "1")))n't@endif see this.
+
+@@and("0", "0") = @and("0", "0")
+@@and("0", "1") = @and("0", "1")
+@@and("1", "0") = @and("1", "0")
+@@and("1", "1") = @and("1", "1")
+@@or("0", "0") = @or("0", "0")
+@@or("0", "1") = @or("0", "1")
+@@or("1", "0") = @or("1", "0")
+@@or("1", "1") = @or("1", "1")
+
+@if(@not(@equal("abc", "def")))Should@else()Should not@endif see this.
+
+@parse error()
+@parseerror(()
+@parseerror(@okfunc(@okfunc(), loopindex()), @bad func())
+@parseerror("bogus string\")
+@parseerror("bogus string
+
+@foo_bar()
+@foobar("abc")
+@janfu("\x41\x42\x43")
+@foobar("123",@janfu("\x41\x42\x43"))
+
+@loop("2")@loop("3")This is iteration @loopindex("1").@eval("@loopindex(\"0\")").
+@endloop
+@endloop
+
+@eval("just some random data here.")
+
+@loop("3")@loopindex()..@endloop..done
+@eval("what follows was @@eval()'d:\nloop: @loop(\"3\")@loopindex()..@endloop..done")
+
+@error("error string")
+
+MARKER C
+
+@if ("0")
+@elif ("2")
+  @loop ("3")
+  @endloop
+@elif ("3")
+@endif
+
+MARKER D
+
+@loop("3")
+@if (@equal(@loopindex(), "0"))
+	First iteration
+@elif (@equal(@loopindex(), "1"))
+	Second iteration
+@elif (@equal(@loopindex(), "2"))
+	Last iteration
+@else
+	Unexpected loopindex ``@loopindex()''
+@endif
+@endloop
+
+MARKER E
+
+This should be "abc": @eval("\"@cat(\"a\\x62c\")\"")
+@if("0") should not see this
+    @if ( @equal( "a", "\x61" ) )
+      1: should not see this
+    @else
+      2: should not see this
+    @endif
+@elif (@equal("abc", @eval("ab\x63")))
+    3: should see this
+    @if (@equal( "a", "\x61" ))
+      4: should see this
+    @else
+      5: should not see this
+    @endif
+@elif (@equal("def", "def"))
+  6: should not see this
+@else
+  7: should not see this
+@endif
+
+
+@ notfunc()
+
+@set("foo", "4")
+@while(@get("foo"))
+	Foo is @get("foo")
+	@if(@equal(@get("foo"), "4"))
+		@set("foo", "3")
+		@continue
+	@endif
+	@if(@equal(@get("foo"), "3"))
+		@set("foo", "2")
+		@continue
+	@endif
+	@if(@equal(@get("foo"), "2"))
+		@set("foo", "1")
+		@break
+	@endif
+	@if(@equal(@get("foo"), "1"))
+		Shouldn't see this
+	@endif
+	@set("foo", "notbar")
+	Shouldn't see this
+@endwhile
+
+@define("dfunc")
+Number of arguments is @get("argc")
+@loop(@get("argc"))Argument #@loopindex() is "@get(@cat("arg", @loopindex()))".
+@endloop
+@enddef
+
+@invoke()
+@set("argc", "1")
+@invoke()
+@set("arg0", "unknown_function")
+@invoke()
+@set("argc", "3")
+@set("arg0", "dfunc")
+@set("arg1", "1st argument")
+@set("arg2", "2nd argument")
+@invoke()
+
+23 / 4 = @div("23", "4")
+123 / 0 = @div("123", "0")
+-12 % 5 = @div("-12", "5")
+
+@dfunc("foo", "bar", "jan")
+
+@eval(@cat("@define(\"dfunc\")Another def'n of @get(\"arg0\")",
+    " (@get(\"argc\") args)\n@enddef"))
+
+@dfunc("foo", "jan")
+
+@define("recursive")@recursive(@get("arg1"), @get("arg2"))@enddef
+@recursive("foo", "bar")
+
+last line
+

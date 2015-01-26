@@ -1,0 +1,77 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: http_servlet_redirect.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt HTTP_SERVLET_REDIRECT 3
+.Os
+.Sh NAME
+.Nm http_servlet_redirect
+.Nd HTTP redirect servlet
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdio.h
+.In netinet/in.h
+.In openssl/ssl.h
+.In pdel/http/http_defs.h
+.In pdel/http/http_server.h
+.In pdel/http/servlet/redirect.h
+.Ft "struct http_servlet *"
+.Fn http_servlet_redirect_create "const char *url" "int append_url"
+.Sh DESCRIPTION
+.Fn http_servlet_redirect_create
+creates a new servlet that responds to all queries with an HTTP
+"302 Found" status code and supplies the new redirect URL
+.Fa url
+in the "Location" header.
+This causes the client to retry the transaction at the new URL.
+.Pp
+The
+.Fa append_url
+argument determines whether and how the originally requested URL is
+included in the redirect URL and may equal one of the following:
+.Bl -tag -width 2n -offset 3n
+.It Dv HTTP_SERVLET_REDIRECT_NO_APPEND
+.Fa url
+is always returned unmodified;
+the originally requested URL is discarded.
+.It Dv HTTP_SERVLET_REDIRECT_APPEND_QUERY
+The query string component of the originally requested URL is appended to
+.Fa url
+as additional query string argument(s).
+.It Dv HTTP_SERVLET_REDIRECT_APPEND_URI
+This causes the path and query string components of the originally
+requested URL (i.e., the URI) to be appended to
+.Fa url ,
+in effect mapping the original URL into the corresponding "subdirectory" of
+.Fa url .
+.It Dv HTTP_SERVLET_REDIRECT_APPEND_URL
+The originally requested URL is URL-encoded and appended as an additional
+query string argument to the redirect URL
+.Fa url .
+This is useful for example when redirecting to a login page that will
+redirect back to the originally requested URL after a successful login.
+.El
+.Sh RETURN VALUES
+On failure,
+.Fn http_servlet_redirect_create
+returns
+.Dv NULL
+and sets
+.Va errno
+to an appropriate value.
+.Sh SEE ALSO
+.Xr http_request 3 ,
+.Xr http_response 3 ,
+.Xr http_server 3 ,
+.Xr http_servlet 3 ,
+.Xr libpdel 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

@@ -1,0 +1,228 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- $Id: default-config.xml 602 2002-08-22 04:47:58Z archie $ -->
+<config version="0">
+
+    <!--
+	Default PID file
+    -->
+    <pidfile>/var/run/lws.pid</pidfile>
+
+    <!--
+	Default error log configuration
+    -->
+    <error_log>
+	<path>lws.logfile</path>
+	<min_severity>info</min_severity>
+	<histlen>5000</histlen>
+    </error_log>
+
+    <!--
+	Define the list of HTTP servers. We have two servers, one
+	is HTTP on port 80 and the other is SSL (HTTPS) on port 443.
+	The port 80 server just serves the docroot hierarchy, while
+	the port 443 server also serves the admin interface.
+
+	The docroot hierarchy does not allow templates, except for
+	the top page docroot/index.tmpl.
+    -->
+    <servers>
+
+	<!--
+	    The first HTTPS server, listening on port 443
+	-->
+	<server>
+
+	    <!--
+		Set IP, port, and SSL configuration
+	    -->
+	    <ip>0.0.0.0</ip>
+	    <port>443</port>
+	    <ssl>
+		<enabled>True</enabled>
+		<private_key>bogus-ssl.key</private_key>
+		<certificate>bogus-ssl.crt</certificate>
+	    </ssl>
+
+	    <!--
+		Define virtual hosts running on this server
+	    -->
+	    <virtual_hosts>
+
+		<!--
+		    There is only one virtual host
+		-->
+		<virtual_host>
+
+		    <!--
+			No server name means "catch all" for requests
+			that don't match any named virtual host. No server
+			name also implies being the default virthost.
+		    -->
+		    <server_name></server_name>
+		    <default_virtual_host>True</default_virtual_host>
+
+		    <!--
+			Add some servlets to this virtual host...
+		    -->
+		    <servlets>
+
+			<!--
+			    Two file servlets for 'index.tmpl' and 'lws.gif'.
+			-->
+			<servlet>
+			    <url_pattern>^/index$</url_pattern>
+			    <ordering>-10</ordering>
+			    <info>
+				<file>
+				    <filename>docroot/index.tmpl</filename>
+				    <allow_templates>True</allow_templates>
+				</file>
+			    </info>
+			</servlet>
+			<servlet>
+			    <url_pattern>^/lws\.gif$</url_pattern>
+			    <ordering>-10</ordering>
+			    <info>
+				<file>
+				    <filename>admin/lws.gif</filename>
+				</file>
+			    </info>
+			</servlet>
+
+			<!--
+			    File servlet to serve 'docroot' hierarchy.
+			    No templates are allowed.
+			-->
+			<servlet>
+			    <url_pattern>^/</url_pattern>
+			    <ordering>0</ordering>
+			    <info>
+				<file>
+				    <docroot>docroot</docroot>
+				    <allow_escape>False</allow_escape>
+				    <allow_templates>False</allow_templates>
+				</file>
+			    </info>
+			</servlet>
+
+			<!--
+			    File servlet to serve "/admin" pages.
+			    We enable templates and escaping docroot
+			    via symlinks for this servlet.
+
+			    Note the ordering -50 < 0 so it will take
+			    priority over the previous file servlet,
+			    which will also match requests for "/admin..."
+			-->
+			<servlet>
+			    <url_pattern>^/admin</url_pattern>
+			    <ordering>-50</ordering>
+			    <info>
+				<file>
+				    <docroot>admin</docroot>
+				    <prefix>/admin</prefix>
+				    <allow_escape>True</allow_escape>
+				    <allow_templates>True</allow_templates>
+				</file>
+			    </info>
+			</servlet>
+
+			<!--
+			    Cookieauth servlet to secure "/admin" pages
+			    requring a cookieauth login before access.
+			    Note the ordering must be less that the servlet
+			    that we're protecting!
+
+			    The resource and cookie names must match the
+			    "admin.resource_name" and "admin.cookie_name"
+			    properties for the logon page to work right.
+			-->
+			<servlet>
+			    <url_pattern>^/admin</url_pattern>
+			    <ordering>-100</ordering>
+			    <info>
+				<cookieauth>
+				    <resource_name>LWS Administration</resource_name>
+				    <logon_url>/admin/logon</logon_url>
+				    <cookie_name>lws_admin_auth</cookie_name>
+				    <allow_exceptions>1</allow_exceptions>
+				    <exceptions_pattern>^/admin/(lws.gif|stylesheet.css)$</exceptions_pattern>
+				</cookieauth>
+			    </info>
+			</servlet>
+		    </servlets>
+		</virtual_host>
+	    </virtual_hosts>
+	</server>
+
+	<!--
+	    The second HTTP server, listening on port 80
+	-->
+	<server>
+	    <ip>0.0.0.0</ip>
+	    <port>80</port>
+	    <virtual_hosts>
+		<virtual_host>
+		    <server_name></server_name>
+		    <default_virtual_host>True</default_virtual_host>
+		    <servlets>
+			<servlet>
+			    <url_pattern>^/index$</url_pattern>
+			    <ordering>-10</ordering>
+			    <info>
+				<file>
+				    <filename>docroot/index.tmpl</filename>
+				    <allow_templates>True</allow_templates>
+				</file>
+			    </info>
+			</servlet>
+			<servlet>
+			    <url_pattern>^/lws\.gif$</url_pattern>
+			    <ordering>-10</ordering>
+			    <info>
+				<file>
+				    <filename>admin/lws.gif</filename>
+				</file>
+			    </info>
+			</servlet>
+			<servlet>
+			    <url_pattern>^/</url_pattern>
+			    <info>
+				<file>
+				    <docroot>docroot</docroot>
+				    <allow_escape>False</allow_escape>
+				    <allow_templates>False</allow_templates>
+				</file>
+			    </info>
+			</servlet>
+		    </servlets>
+		</virtual_host>
+	    </virtual_hosts>
+	</server>
+    </servers>
+
+    <!--
+	Store arbitrary <name, value> "properties" pairs here.
+	The "admin.*" ones are reserved for the admin UI.
+    -->
+    <properties>
+	<property>
+	    <name>admin.username</name>
+	    <value>admin</value>
+	</property>
+	<property>
+	    <name>admin.password</name>
+	    <value>$1$DFP6okpG$Ph7zKMV86pDmWhhcE2dx20</value>
+	</property>
+	<property>
+	    <name>admin.resource_name</name>
+	    <value>LWS Administration</value>
+	</property>
+	<property>
+	    <name>admin.cookie_name</name>
+	    <value>lws_admin_auth</value>
+	</property>
+    </properties>
+
+</config>
+

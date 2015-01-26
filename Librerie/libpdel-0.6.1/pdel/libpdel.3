@@ -1,0 +1,266 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: libpdel.3 992 2006-10-26 02:12:34Z mgooderum $
+.\"
+.Dd October 25, 2006
+.Dt LIBPDEL 3
+.Os
+.Sh NAME
+.Nm libpdel
+.Nd multi-purpose C library for embedded applications
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh DESCRIPTION
+The Packet Design Embedded Library (PDEL) is a C library containing
+an assorted collection of code useful for developing embedded
+applications:
+.Pp
+.Bl -dash -compact
+.It
+C data structure run-time introspection library:
+.Xr structs 3
+.Bl -dash -compact
+.It
+Support for automated conversion to/from XML
+.It
+Pre-defined types for most C data structures
+.El
+.It
+Threaded HTTP client/server library:
+.Xr http_server 3
+.Bl -dash -compact
+.It
+SSL support
+.It
+User-definable C "servlets":
+.Xr http_servlet 3
+.It
+Several pre-defined servlets
+.It
+Support for XML/HTTP and XML-RPC:
+.Xr http_xml 3
+.El
+.It
+PPP stack library (FreeBSD only):
+.Xr pdel_ppp 3
+.Bl -dash -compact
+.It
+Netgraph(4) based for kernel data packet handling
+.It
+Servers for PPTP and L2TP
+.El
+.It
+Application configuration framework:
+.Xr app_config 3
+.It
+Heap memory accounting and sanity checking:
+.Xr typed_mem 3
+.It
+File template library:
+.Xr tmpl 3
+.It
+Routines to configure networking interfaces, ARP table,
+and routing table (FreeBSD only):
+.Xr if_util 3 ,
+.Xr route_msg 3 ,
+.Xr uroute 3
+.It
+Logging library:
+.Xr alog 3
+.Bl -dash -compact
+.It
+Automated storage into circular file:
+.Xr logfile 3
+.It
+.Xr syslog 3 
+compatibile
+.El
+.It
+Generic Unix Domain server:
+.Xr domain_server 3
+.It
+Generic TCP server:
+.Xr tcp_server 3
+.It
+Generic hash table implementation:
+.Xr ghash 3
+.It
+Generic balanced tree implementation:
+.Xr gtree 3
+.It
+.Vt "FILE *"
+enhancements:
+.Bl -dash -compact
+.It
+Generic data "filters":
+.Xr filter_fopen 3
+.It
+MIME boundary input streams:
+.Xr boundary_fopen 3
+.It
+Fixed length input streams:
+.Xr count_fopen 3
+.It
+String buffer input/output streams:
+.Xr string_fp 3
+.It
+Timeout streams:
+.Xr timeout_fdopen 3
+.It
+SSL streams:
+.Xr ssl_fp 3
+.El
+.It
+Base-64 encoding/decoding:
+.Xr base64 3
+.It
+Events and actions with automated locking:
+.Xr paction 3 ,
+.Xr pevent 3
+.It
+Generalized per-thread variables:
+.Xr tinfo 3
+.It
+Message ports:
+.Xr mesg_port 3
+.It
+Digital signature creation/verification:
+.Xr rsa_util_sign 3
+.It
+Filesystem mounting/unmounting (FreeBSD only):
+.Xr fs_mount 3
+.It
+String quoting/parsing:
+.Xr string_enquote 3
+.El
+.Pp
+For more details, see the individual man pages referenced above.
+.Sh REQUIREMENTS
+Unlike Java, libraries written in C cannot presume a commonly accepted
+standard for handling certain issues like threading and heap allocation.
+Therefore,
+.Nm libpdel
+makes certain assumptions which user code must follow.
+.Pp
+First, all heap memory in
+.Nm libpdel
+is allocated through the
+.Xr typed_mem 3
+typed memory system.
+Participation by user code in this system is optional, but it
+must be done, or not done, consistently.
+.Pp
+The
+.Nm libpdel
+library assumes that
+.Xr pthread 3
+is used for user-level threading.
+In general,
+.Nm libpdel
+objects are not safe to be called simultaneously from separate threads,
+or re-entrantly from the same thread, except where explicitly documented.
+For example, the application must guarantee serialized access to a
+.Xr ghash 3
+hash table; the hash table itself does not provide this protection.
+.Pp
+Some threads that can end up running user code
+are subject to cancellation at any cancellation point.
+For example, a thread created by an
+.Xr http_server 3
+object to handle an HTTP request will be canceled if the remote client
+closes the TCP connection.
+This implies that any user code which could be running under such a
+thread must register thread cleanup hooks to release any resources
+such as heap memory, mutexes, etc., should the thread be canceled.
+.Pp
+All
+.Nm libpdel
+functions are cancel-safe if the thread has cancel type
+.Dv PTHREAD_CANCEL_DEFERRED ,
+except where noted.
+.Pp
+Because
+.Nm libpdel
+in turn depends on other libraries, programs linking with
+.Nm libpdel
+must also link with these libraries:
+.Pp
+.Bl -dash -compact
+.It
+SSL:
+.Li "-lssl"
+.It
+Cryptography:
+.Li "-lcrypto"
+.It
+Netgraph (FreeBSD only):
+.Li "-lnetgraph"
+.It
+RADIUS (FreeBSD only):
+.Li "-lradius"
+.It
+Expat:
+.Li "-L/usr/local/lib -lexpat"
+.It
+Pthreads:
+.Li "-pthread"
+.Li "(-lpthread"
+on Linux)
+.El
+.Pp
+Expat is available as FreeBSD port "textproc/expat2"
+(see
+.Xr ports 7) .
+.Sh SEE ALSO
+.Xr alog 3 ,
+.Xr app_config 3 ,
+.Xr base64 3 ,
+.Xr boundary_fopen 3 ,
+.Xr count_fopen 3 ,
+.Xr domain_server 3 ,
+.Xr filter_fopen 3 ,
+.Xr fs_mount 3 ,
+.Xr ghash 3 ,
+.Xr gtree 3 ,
+.Xr http_client 3 ,
+.Xr http_server 3 ,
+.Xr if_util 3 ,
+.Xr logfile 3 ,
+.Xr paction 3 ,
+.Xr pdel_ppp 3 ,
+.Xr pevent 3 ,
+.Xr pthread 3 ,
+.Xr route_msg 3 ,
+.Xr rsa_util_sign 3 ,
+.Xr string_enquote 3 ,
+.Xr string_fp 3 ,
+.Xr structs 3 ,
+.Xr tcp_server 3 ,
+.Xr timeout_fdopen 3 ,
+.Xr tinfo 3 ,
+.Xr tmpl 3 ,
+.Xr typed_mem 3 ,
+.Xr uroute 3
+.Rs
+.%Q The Open Group
+.%R "Single UNIX Specification, Version 2"
+.%T "Threads"
+.%O "http://www.opengroup.org/onlinepubs/7908799/xsh/threads.html"
+.Re
+.Rs
+.%A James Clark
+.%T "Expat XML Parser"
+.%O "http://sourceforge.net/projects/expat/"
+.Re
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org
+.An Mark Gooderum Aq markpdel@jumpweb.com
+.Sh BUGS
+Some functionality is only supported under FreeBSD.
+.Pp
+Please report bugs to the author.

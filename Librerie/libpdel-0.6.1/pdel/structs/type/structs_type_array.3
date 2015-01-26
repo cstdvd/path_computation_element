@@ -1,0 +1,215 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: structs_type_array.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRUCTS_TYPE_ARRAY 3
+.Os
+.Sh NAME
+.Nm STRUCTS_ARRAY_TYPE ,
+.Nm STRUCTS_FIXEDARRAY_TYPE
+.Nd structs types for arrays
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In pdel/structs/structs.h
+.In pdel/structs/type/array.h
+.Fn DEFINE_STRUCTS_ARRAY struct_name elem_ctype
+.Fn STRUCTS_ARRAY_TYPE elem_stype mtype xml_tag
+.Fn STRUCTS_FIXEDARRAY_TYPE elem_stype elem_size array_len xml_tag
+.Ft int
+.Fn structs_array_length "const struct structs_type *type" "const char *name" "const void *data"
+.Ft int
+.Fn structs_array_reset "const struct structs_type *type" "const char *name" "void *data"
+.Ft int
+.Fn structs_array_insert "const struct structs_type *type" "const char *name" "u_int index" "void *data"
+.Ft int
+.Fn structs_array_delete "const struct structs_type *type" "const char *name" "u_int index" "void *data"
+.Ft int
+.Fn structs_array_prep "const struct structs_type *type" "const char *name" "void *data"
+.Sh DESCRIPTION
+.Ss Macros
+The
+.Fn STRUCTS_ARRAY_TYPE
+and
+.Fn STRUCTS_FIXEDARRAY_TYPE
+macros define a
+.Xr structs 3
+type (i.e., a
+.Dv "struct structs_type" )
+for describing variable and fixed length arrays, respectively.
+In both macros,
+.Fa elem_stype
+is a pointer to the structs type describing the array elements, and
+.Fa xml_tag
+is an XML tag (ASCII string) used to tag individual array elements
+when the array is expressed in XML.
+.Pp
+For
+.Fn STRUCTS_ARRAY_TYPE ,
+the described data structure must be a
+.Dv "struct structs_array" :
+.Pp
+.Bd -literal -offset 0n
+    struct structs_array {
+	u_int   length;       /* number of elements */
+	void    *elems;       /* elements */
+    };
+.Ed
+.Pp
+The
+.Fa length
+field contains the number of elements in the array.
+The array itself is pointed to by
+.Fa elems ,
+which must be cast to the appropriate type.
+.Fa mtype
+is the
+.Xr typed_mem 3
+type used to dynamically allocate the array.
+.Pp
+The elements of the array are subfields whose names are their index
+in the array.
+For example, if a subfield of a data structure named
+.Dq foo.bar
+has an array type, then the elements of the array are named
+.Dq foo.bar.0,
+.Dq foo.bar.1,
+etc.
+.Pp
+As a special case,
+.Dq foo.bar.length
+is a read-only virtual subfield of type
+.Xr structs_type_uint 3
+that returns the length of the array.
+This
+.Dq length
+field does not appear in the output of
+.Xr structs_xml_output 3
+or
+.Xr structs_traverse 3 .
+.Pp
+To define a structure equivalent to a
+.Li "struct structs_array"
+that declares
+.Fa elems
+to have the correct C type for the array elements, use the
+.Fn DEFINE_STRUCTS_ARRAY
+macro, where
+.Fa struct_name
+is the name of the structure (or empty if no name is desired) and
+.Fa elem_ctype
+is the C type of a single element.
+Then the
+.Fa elems
+field will be declared to have type
+.Fa "elem_ctype *" .
+.Pp
+.Fn STRUCTS_FIXEDARRAY_TYPE
+defines a structs type for an array that has a fixed length specified by
+.Fa array_len .
+The described data structure is simply
+.Fa array_len
+consecutive instances of
+.Fa elem_stype ,
+each of which must have size
+.Fa elem_size .
+In other words,
+.Fa elem_size
+must be equal to
+.Fa "elem_stype->size" .
+.Ss Functions
+The following functions are included to facilitate handling variable
+length arrays.
+In all cases,
+.Fa type
+is the
+.Xr structs 3
+type for the data structure pointed to by
+.Fa data ,
+and
+.Fa name
+indicates the variable length array sub-field of
+.Fa data .
+If
+.Fa name
+is
+.Dv NULL
+or the empty string, then
+.Fa data
+itself is the variable length array.
+.Pp
+.Fn structs_array_length
+returns the length of the array.
+.Pp
+.Fn structs_array_reset
+resets the array to zero length.
+Any existing elements are automatically freed.
+.Pp
+.Fn structs_array_insert
+inserts a new element into the array at position
+.Fa index ,
+which must be between zero and the length of the array, inclusive.
+The new element is automatically initialized to the default value
+for its type.
+.Pp
+.Fn structs_array_delete
+frees and removes the element at position
+.Fa index ,
+which must be greater than or equal to zero and strictly less than the
+length of the array.
+.Pp
+.Fn structs_array_prep
+can be used when filling in an array that is initially empty
+by consecutively setting each element.
+The prefixes of
+.Fa name
+are taken in order from shortest to longest (i.e.,
+.Fa name
+itself).
+For each prefix that corresponds to an array element, the element
+index is examined.
+If the index is less than the length of the array, nothing happens.
+If the index is greater than the length of the array, an error occurs.
+Otherwise, a new element is added to the end of the array.
+Therefore, if
+.Fn structs_array_prep
+is invoked before setting each leaf element (such as returned by
+.Xr structs_traverse 3) ,
+then the extension of any internal arrays will happen automatically.
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr structs 3 ,
+.Xr structs_type 3 ,
+.Xr typed_mem 3
+.Sh EXAMPLES
+.Bd -literal -offset 0n
+
+/* Define my variable length array of IP addresses structure */
+DEFINE_STRUCTS_ARRAY(ip_array, struct in_addr);
+
+/* My variable length array of IP addresses */
+static struct ip_array variable_ip_array;
+
+/* Structs type describing "variable_ip_array": >= 0 IP addresses */
+static const struct structs_type vip_array_type
+    = STRUCTS_ARRAY_TYPE(&structs_type_ip4, "vip_array_memory", "ip");
+
+#define FIXED_ARRAY_LEN  12
+
+/* My fixed length array of IP addresses */
+static struct in_addr fixed_ip_array[FIXED_ARRAY_LEN];
+
+/* Structs type describing "fixed_ip_array": 12 IP addresses */
+static const struct structs_type vip_array_type
+    = STRUCTS_FIXEDARRAY_TYPE(&structs_type_ip4,
+	sizeof(struct in_addr), FIXED_ARRAY_LEN, "ip");
+.Ed
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

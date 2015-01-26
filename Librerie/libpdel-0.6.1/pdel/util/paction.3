@@ -1,0 +1,240 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: paction.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt PACTION 3
+.Os
+.Sh NAME
+.Nm paction
+.Nd actions in a separate thread
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In pthread.h
+.In pdel/util/paction.h
+.Ft int
+.Fn paction_start "struct paction **actionp" "pthread_mutex_t *mutex" "paction_handler_t *handler" "paction_finish_t *finish" "void *arg"
+.Ft void
+.Fn paction_cancel "struct paction **actionp"
+.Sh DESCRIPTION
+These functions provide support for
+.Em actions ,
+which are simply function invocations that happen in separate threads.
+This is just a simplified API for spawning and cancelling threads with
+built-in support for mutex locking and avoiding certain race conditions.
+.Pp
+.Fn paction_start
+creates a new action and stores a pointer to the action, represented by a
+.Li "struct paction" ,
+in
+.Fa "*actionp" .
+The creation of an action results in
+.Fn handler
+being invoked in a new thread.
+.Fn paction_cancel
+cancels an action by canceling its associated thread.
+In any case, when the action has completed,
+.Fn finish
+is invoked.
+If the action was not canceled via
+.Fn paction_cancel ,
+then
+.Fa "*mutex"
+is acquired before
+.Fn finish
+is invoked and released afterward.
+If 
+.Fn paction_cancel
+was called, then the mutex is not acquired for
+.Fn finish .
+The
+.Fa was_canceled
+argument to
+.Fn finish
+reflects this.
+.Pp
+.Fa handler
+and
+.Fa finish
+must be pointers to functions having these types:
+.Pp
+.Bd -literal -compact -offset 3n
+typedef void paction_handler_t(void *arg);
+typedef void paction_finish_t(void *arg, int was_canceled);
+.Ed
+.Pp
+When
+.Fn paction_start
+is invoked,
+.Fa "*actionp"
+must be
+.Dv NULL .
+As long as the action is still in progress (i.e.,
+.Fn finish
+has not yet been invoked),
+.Fa "*actionp"
+will be non-NULL.
+When the action completes or is canceled,
+.Fa "*actionp"
+is set to
+.Dv NULL
+again.
+Therefore,
+.Fa "*actionp"
+must remain valid and unmodified for the duration of the action,
+and can be used as an indicator of whether the action has completed.
+.Pp
+.Fn paction_cancel
+cancels an outstanding action.
+This results in the action thread being canceled at the next
+cancellation point.
+Therefore,
+.Fn handler
+may need to register thread cleanup hooks in order to free
+any allocated resources in the case of cancellation.
+Upon return,
+.Fa "*actionp"
+is set to
+.Dv NULL .
+If
+.Fa "*actionp"
+is already
+.Dv NULL
+when
+.Fn paction_cancel
+is invoked, nothing happens.
+.Pp
+In any case,
+.Fn finish
+is invoked when the action terminates.
+There are two reasons for an action terminating:
+either the action terminated normally, or
+.Fn paction_cancel
+was invoked.
+If the action terminated normally,
+.Fa "*mutex"
+is locked,
+.Fa "*actionp"
+is set to
+.Dv NULL ,
+and
+.Fn finish
+is invoked with
+.Fa was_canceled
+set to zero.
+When
+.Fn finish
+returns
+.Fa *mutex
+is unlocked.
+.Pp
+If the action was canceled by
+.Fn paction_cancel ,
+then neither
+.Fa "mutex"
+nor
+.Fa "actionp"
+are dereferenced;
+.Fn final
+is simply called with
+.Fa was_canceled
+set to non-zero.
+Note that
+.Fa "*actionp"
+will have already been set to
+.Dv NULL
+previously by
+.Fn paction_cancel .
+.Pp
+Cancelling the action thread directly via
+.Xr pthread_cancel 3
+is treated just as if
+.Fn handler
+returned early; i.e., the first case above.
+.\"
+.Ss Synchronization
+.\"
+There are inherent race conditions between an action's
+.Fn finish
+function being invoked and reading the value of
+.Fa "*actionp"
+or canceling the action with
+.Fn paction_cancel .
+The
+.Fa "*mutex"
+should be used to avoid these problems by using it to
+protect
+.Fa "*actionp" .
+.Pp
+The user code should acquire
+.Fa "*mutex"
+before calling
+.Fn paction_start
+or
+.Fn paction_cancel ,
+or before accessing
+.Fa "*actionp" .
+If this protocol is followed, then
+.Fa "*actionp"
+will be non-NULL if and only if the action is still pending, i.e.,
+.Fn finish
+has not yet been invoked.
+In addition, the
+.Fa was_canceled
+argument will always be accurate, i.e., be non-zero if and only if
+.Fn paction_cancel
+was called to cancel the action.
+.Pp
+Finally,
+.Fa "mutex"
+and
+.Fa "actionp"
+will not be dereferenced after a call to
+.Fn paction_cancel ,
+so it is always safe to destroy the memory pointed to by
+.Fa "mutex"
+and
+.Fa "actionp"
+after calling
+.Fn paction_cancel .
+However,
+.Fa arg
+must remain valid until
+.Fn finish
+is invoked, which may occur
+.Em after
+.Fn paction_cancel
+returns; alternatively,
+.Fn finish
+must not dereference
+.Fa arg
+if
+.Fa was_canceled
+is non-zero.
+.Sh RETURN VALUES
+.Fn paction_start
+returns -1 if there is an error, with
+.Va errno
+set appropriately.
+In particular, if
+.Fa "*actionp"
+is not equal to
+.Dv NULL ,
+then
+.Va errno
+will be set to
+.Er EBUSY .
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr pevent 3 ,
+.Xr pthread_cancel 3 ,
+.Xr pthread_create 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

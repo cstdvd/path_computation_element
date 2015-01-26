@@ -1,0 +1,265 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: http_servlet_tmpl.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt HTTP_SERVLET_TMPL 3
+.Os
+.Sh NAME
+.Nm http_servlet_tmpl
+.Nd HTTP servlet for template files
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdio.h
+.In netinet/in.h
+.In openssl/ssl.h
+.In pdel/tmpl/tmpl.h
+.In pdel/http/http_defs.h
+.In pdel/http/http_server.h
+.In pdel/http/servlet/tmpl.h
+.Ft "struct http_servlet *"
+.Fn http_servlet_tmpl_create "struct http_servlet_tmpl_info *info"
+.Vt extern tmpl_handler_t http_servlet_tmpl_func_query ;
+.Vt extern tmpl_handler_t http_servlet_tmpl_func_query_exists ;
+.Vt extern tmpl_handler_t http_servlet_tmpl_func_query_string ;
+.Vt extern tmpl_handler_t http_servlet_tmpl_func_get_header ;
+.Vt extern tmpl_handler_t http_servlet_tmpl_func_set_header ;
+.Vt extern tmpl_handler_t http_servlet_tmpl_func_remove_header ;
+.Vt extern tmpl_handler_t http_servlet_tmpl_func_redirect ;
+.Vt extern tmpl_handler_t http_servlet_tmpl_func_unbuffer ;
+.Sh DESCRIPTION
+.Fn http_servlet_tmpl_create
+creates a new servlet that serves HTTP requests by executing a
+.Xr tmpl 3
+template file.
+The output of the template is sent as the body of the HTTP response.
+By default, the template output is buffered in memory and after
+template execution has finished the HTTP response is sent.
+.Pp
+.Fa info
+is a pointer to a
+.Li "struct http_servlet_tmpl_info" ,
+which contains a
+.Li "struct http_servlet_tmpl_tinfo" :
+.Pp
+.Bd -literal -compact -offset 3n
+/* Function to free user 'arg' */
+typedef void	http_servlet_tmpl_free_t(void *arg);
+
+/* Information required by tmpl(3) library */
+struct http_servlet_tmpl_tinfo {
+    int                      flags;          /* tmpl_execute() flags */
+    const char               *mtype;         /* tmpl string mem type */
+    tmpl_handler_t           *handler;       /* tmpl function handler */
+    tmpl_errfmtr_t           *errfmtr;       /* tmpl error formatter */
+    void                     *arg;           /* opaque argument */
+    http_servlet_tmpl_free_t *freer;         /* destructor for 'arg' */
+};
+
+/* Information required for the tmpl servlet */
+struct http_servlet_tmpl_info {
+    const char               *path;          /* template file */
+    const char               *mime_type;     /* default mime type */
+    const char               *mime_encoding; /* default mime encoding */
+    http_logger_t            *logger;        /* http error logger */
+    struct http_servlet_tmpl_tinfo   tinfo;  /* info for tmpl(3) */
+};
+.Ed
+.Pp
+.Fa path
+is the pathname of the template file.
+The file is parsed when the servlet is first executed, and the parsed
+template is cached for use by subsequent servlet invocations.
+If the file modification timestamp changes, the file is parsed again.
+.Pp
+.Fa mime_type
+and
+.Fa mime_encoding
+specify the default MIME type and encoding for the template output.
+The template itself may change the MIME type however.
+If
+.Fa mime_type
+is
+.Dv NULL ,
+"text/html; charset=iso-8859-1" is used.
+.Pp
+The
+.Fa logger
+is a logging function whose type is defined in
+.Xr http_server 3 .
+.Pp
+The
+.Fa tinfo
+structure provides information required by the
+.Xr tmpl 3
+library in order to create and execute the template.
+The
+.Fa mtype ,
+.Fa handler ,
+and
+.Fa errfmtr
+fields are passed to
+.Fn tmpl_ctx_create ;
+The
+.Fa flags
+field is passed to
+.Fn tmpl_execute .
+.Pp
+The
+.Fa arg
+field is copied into a
+.Li "struct http_servlet_tmpl_arg" ,
+and a pointer to this structure is used as the user cookie field
+.Fa arg
+passed to
+.Fn tmpl_ctx_create :
+.Pp
+.Bd -literal -compact -offset 3n
+struct http_servlet_tmpl_arg {
+    void                     *arg;   /* arg from 'tinfo' */
+    struct http_request      *req;   /* http request */
+    struct http_response     *resp;  /* http response */
+};
+.Ed
+.Pp
+Therefore, by casting the pointer returned from
+.Fn tmpl_ctx_get_arg
+to a
+.Li "struct http_servlet_tmpl_arg *" ,
+.Fn handler
+can access both the original
+.Fa arg
+as well as the HTTP request and response objects.
+.Pp
+For an HTTP POST with MIME type
+.Dq application/x-www-form-urlencoded
+the servlet will automatically read in the URL-encoded name, value pairs,
+making them accessible via
+.Xr http_request_get_value 3
+(see also
+.Fn http_servlet_tmpl_func_query
+below).
+.Pp
+When the servlet is destroyed, if the
+.Fa freer
+field is not
+.Dv NULL ,
+it is invoked to release resources associated with
+.Fa arg .
+.\"
+.Ss Built-in template functions
+.\"
+The
+.Nm http_servlet_tmpl
+servlet includes the following built-in
+.Xr tmpl 3
+user functions.
+These functions all assume the
+.Xr tmpl 3
+user cookie is a
+.Li "struct http_servlet_tmpl_arg *".
+.Pp
+.Bl -hang -offset 3n -width 3n
+.It Fn http_servlet_tmpl_func_query
+This function takes exactly one argument, which is the name of a field
+in an HTML form, and returns the value of that field as submitted by
+the remote client.
+This function works for both GET and POST form submissions.
+If no such field was submitted, the empty string is returned.
+.It Fn http_servlet_tmpl_func_query_exists
+This function takes exactly one argument, which is the name of a field
+in an HTML form, and returns "1" or "0" depending on whether a field
+having that name was submitted by the client.
+.It Fn http_servlet_tmpl_func_query_string
+Takes zero arguments. Returns the HTTP query string.
+.It Fn http_servlet_tmpl_func_get_header
+Takes one argument, and returns the contents of the HTTP header having
+that name.
+.It Fn http_servlet_tmpl_func_set_header
+Takes two arguments, the name of an HTTP header and its value, and
+sets the corresponding HTTP response header.
+This function has no effect if the headers have already been sent.
+.It Fn http_servlet_tmpl_func_remove_header
+Takes one argument, the name of an HTTP header, and removes the
+corresponding HTTP response header.
+This function has no effect if the headers have already been sent.
+.It Fn http_servlet_tmpl_func_redirect
+Takes one argument, which must be a valid URL.
+Forces an HTTP redirect response to the URL.
+This function only works if the servlet has not created any output yet.
+.It Fn http_servlet_tmpl_func_unbuffer
+Takes zero arguments.
+Unbuffers the servlet output, so that the output is written
+directly to the network instead of first into a memory buffer. 
+This is done by calling
+.Xr http_response_send_headers 3
+with a non-zero
+.Fa unbuffer
+argument.
+This function should be called in servlets that produce a high
+volume of output.
+You can't modify the HTTP response headers once this has been called. 
+.El
+.Pp
+The
+.Nm http_servlet_tmpl
+servlet by default buffers the entire template output 
+to facilitate HTTP keep-alive.
+For templates that generate voluminous output, this could consume
+excessive memory.
+The solution is to implement a template function using
+.Fn http_servlet_tmpl_func_unbuffer
+and invoke this function within those templates.
+.Sh IMPLEMENTATION NOTES
+Multiple instances of the same
+.Nm http_servlet_tmpl
+servlet may be executing at the same time.
+Therefore, any user-supplied template functions called must
+be thread-safe.
+.Pp
+Since it's running as a servlet, the thread executing
+.Fn handler
+and
+.Fn errfmtr
+may be canceled at any cancellation point.
+Therefore, these functions should be written so as to not leak
+resources if this happens.
+.Sh RETURN VALUES
+On failure,
+.Fn http_servlet_tmpl_create
+returns
+.Dv NULL
+and sets
+.Va errno
+to an appropriate value.
+.Pp
+The built-in
+.Xr tmpl 3
+user functions return
+.Dv NULL
+with
+.Va errno
+set to
+.Er EINVAL
+if the wrong number of arguments is passed.
+They may also return
+.Dv NULL
+with
+.Va errno
+set as a result of other system errors.
+.Sh SEE ALSO
+.Xr http_request 3 ,
+.Xr http_response 3 ,
+.Xr http_server 3 ,
+.Xr http_servlet 3 ,
+.Xr libpdel 3 ,
+.Xr tmpl 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

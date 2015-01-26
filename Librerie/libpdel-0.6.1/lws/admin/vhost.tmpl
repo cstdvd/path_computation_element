@@ -1,0 +1,109 @@
+@set("page_id", "$Id: vhost.tmpl 579 2002-08-21 20:53:54Z archie $")
+@set("sid", @add(@query("sid"), "0"))
+@set("sid1", @add(@get("sid"), "1"))
+@set("vid", @add(@query("vid"), "0"))
+@set("vid1", @add(@get("vid"), "1"))
+@if(@query("new"))
+	@set("page_title", @cat("Server #",
+		@get("sid1"), ": New Virtual Host"))
+@else
+	@set("page_title", @cat("Server #",
+		@get("sid1"), ": Configure Virtual Host"))
+@endif
+@set("page_url", "/admin/vhost")
+@eval(@readfile("head.tmpl"))
+
+@object_reset("config")
+
+<form method="post" action="doconfig">
+<table border="0" cellspacing="2" cellpadding="0">
+
+@set("vprefix", @cat("servers.", @get("sid"), ".virtual_hosts"))
+@define("prefix")
+	@cat(@get("vprefix"), ".", @get("vid"), ".", @get("arg1"))
+@enddef
+@define("vinfo")
+	@config_get(@prefix(@get("arg1")))
+@enddef
+
+@if(@query("new"))
+	@set("vid", @config_get(@cat(@get("vprefix"), ".length")))
+	@object_array_insert("config", @get("vprefix"), @get("vid"))
+	@hidden("insert:", @cat(@get("vprefix"), ":", @get("vid")))
+@else
+	@hidden("delete:", @cat(@get("vprefix"), ":", @get("vid")))
+@endif
+
+@header(@get("page_title"))
+
+<tr>
+  <td>&nbsp;</td>
+  <td nowrap align="right"><b>Virtual Hostname:&nbsp;&nbsp;</b></td>
+  <td align="left">@config_textinput(@prefix("server_name"), "32", "256")
+	&nbsp;&nbsp;(leave blank to be the default virtual host)</td>
+</tr>
+
+<tr>
+  <td>&nbsp;</td>
+  <td nowrap align="right"><b>Default Virtual Host:&nbsp;&nbsp;</b></td>
+  <td align="left">
+    @config_radio(@prefix("default_virtual_host"), "1")&nbsp;Yes
+    @config_radio(@prefix("default_virtual_host"), "0")&nbsp;No
+  </td>
+</tr>
+
+<tr>
+  <td colspan="2">&nbsp;</td>
+  <td align="left"><input type="submit" name="button" value="Update">
+@if(@not(@query("new")))
+  &nbsp;&nbsp;<input type="submit" name="button" value="Delete">
+@endif
+  &nbsp;&nbsp;<input type="reset" value="Reset">
+  </td>
+</tr>
+
+</table>
+</form>
+
+@if(@not(@query("new")))
+
+<form method="post" action="servlet?sid=@get("sid")&vid=@get("vid")">
+<table border="0" cellspacing="2" cellpadding="0">
+
+@hidden("new", "1")
+
+@header("Servlets")
+
+@loop(@vinfo("servlets.length"))
+<tr>
+  <td>&nbsp;</td>
+  <td nowrap colspan="2">
+  <a href="servlet?sid=@get("sid")&vid=@get("vid")&lid=@loopindex()">@nop()
+      <b>@pretty_servlet(@prefix(@cat("servlets.", @loopindex())))</b></a>
+  </td>
+</tr>
+@endloop
+
+@if(@not(@vinfo("servlets.length")))
+<tr>
+  <td colspan="2">&nbsp;</td>
+  <td><b>No servlets defined.</b></td>
+</tr>
+@endif
+
+<tr><td colspan="3">&nbsp;</td><td>
+
+<tr>
+  <td colspan="2">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+  <td align="left"><input type="submit" name="button" value="New">
+  </td>
+</tr>
+
+<tr><td colspan="3">&nbsp;</td><td>
+
+</table>
+</form>
+
+@endif
+
+@eval(@readfile("foot.tmpl"))

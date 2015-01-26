@@ -1,0 +1,56 @@
+@eval(@readfile("macros.tmpl"))
+@set("page_id", "$Id: index.tmpl 716 2002-09-09 19:27:10Z archie $")
+@set("page_title", "Help Documents")
+@set("page_url", "/admin/help")
+@eval(@readfile("head.tmpl"))
+
+<table border="0" cellspacing="2" cellpadding="0">
+
+<tr>
+  <td>&nbsp;&nbsp;</td>
+  <td>&nbsp;&nbsp;</td>
+</tr>
+
+@header("Documents")
+
+<tr>
+    <td>&nbsp;</td>
+    <td align="left">
+	@coldlink("tmplfunc", "<b>User-Defined Template Function Reference</b>")
+    </td>
+</tr>
+
+<tr><td colspan="2">&nbsp;</td></tr>
+
+@header("Man Pages")
+
+@define("add_manpage")
+	@set(@cat("page_", @get("num_manpages")), @get("arg1"))
+	@set(@cat("name_", @get("num_manpages")), @get("arg2"))
+	@set(@cat("sect_", @get("num_manpages")), @get("arg3"))
+	@set("num_manpages", @add(@get("num_manpages"), "1"))
+@enddef
+
+@set("num_manpages", "0")
+@add_manpage("lws", "LWS web server", "1")
+@add_manpage("libpdel", "The PDEL library", "3")
+@add_manpage("tmpl", "Templates", "3")
+@add_manpage("http_server", "HTTP Server", "3")
+@add_manpage("http_servlet_file", "File servlets", "3")
+@add_manpage("http_servlet_redirect", "Redirect servlets", "3")
+@add_manpage("http_servlet_cookieauth", "Cookie authorization servlets", "3")
+
+@loop(@get("num_manpages"))
+<tr>
+    <td>&nbsp;</td>
+    <td align="left">
+	@coldlink(@cat("manpage?page=", @get(@cat("page_", @loopindex())),
+	    "&section=", @get(@cat("sect_", @loopindex()))),
+	    @cat("<b>", @get(@cat("name_", @loopindex())), "</b>"))
+    </td>
+</tr>
+@endloop
+
+</table>
+
+@eval(@readfile("foot.tmpl"))

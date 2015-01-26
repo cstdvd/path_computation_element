@@ -1,0 +1,11 @@
+
+libpdel - the Packet Design Embedded Library
+
+About libpdel on WinCE
+----------------------
+Libpdel support for WinCE is planned.  The Win32 support has done the bulk 
+of the heavy lifting but some work will need to be done.  Currently WinCE is 
+not supported and unlikely to compile.  Due to limitations in platforms and
+tools it is anticipated that WinCE support will only be for WinCE 5 and 6 
+and only for those platforms supported by Visual Studio 2005.
+

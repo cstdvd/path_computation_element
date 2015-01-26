@@ -1,0 +1,254 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: http_servlet_xmlrpc.3 962 2005-02-03 17:50:03Z archie $
+.\"
+.Dd April 22, 2002
+.Dt HTTP_SERVLET_XMLRPC 3
+.Os
+.Sh NAME
+.Nm http_servlet_xmlrpc
+.Nd HTTP servlet for XML-RPC requests
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdio.h
+.In netinet/in.h
+.In openssl/ssl.h
+.In pdel/http/http_defs.h
+.In pdel/http/http_server.h
+.In pdel/http/servlet/xmlrpc.h
+.Ft "struct http_servlet *"
+.Fn http_servlet_xmlrpc_create "const struct http_servlet_xmlrpc_info *info" "void *arg" "void (*destroy)(void *)"
+.Sh DESCRIPTION
+.Fn http_servlet_xmlrpc_create
+creates a new servlet that handles XML-RPC HTTP requests.
+The request and response data are automatically converted to and
+from native binary format using the
+.Xr structs 3
+library.
+.Pp
+The
+.Fa arg
+is an opaque user cookie.
+When the servlet is destroyed, if
+.Fa destroy
+is not
+.Dv NULL ,
+it will be invoked with
+.Fa arg
+as its parameter.
+.Fa info
+is a pointer to a
+.Li "struct http_servlet_xmlrpc_info" ,
+which contains a pointer to an array of
+.Li "http_servlet_xmlrpc_method"
+structures:
+.Pp
+.Bd -literal -compact -offset 3n
+struct http_servlet_xmlrpc_method {
+    const char                    *name;         /* method name */
+    http_servlet_xmlrpc_handler_t *handler;      /* method handler */
+    const struct structs_type     **ptypes;      /* parameter types */
+    u_int                         min_params;    /* min # params */
+    u_int                         max_params;    /* max # params */
+};
+
+struct http_servlet_xmlrpc_info {
+    const struct http_servlet_xmlrpc_method
+                                  *methods;      /* methods */
+    http_logger_t                 *logger;       /* loggging function */
+};
+.Ed
+.Pp
+The
+.Fa methods
+field points to the method descriptor array, which is terminated
+with an entry having a
+.Dv NULL
+.Fa name .
+.Pp
+The
+.Fa logger
+is a logging function whose type is defined in
+.Xr http_server 3 .
+.Pp
+Each element in the
+.Fa methods
+array describes one supported XML-RPC method:
+.Fa name
+is the method name;
+.Fa min_params
+and
+.Fa max_params
+specify the minimum and maximum number of parameters allowed for the method
+(the servlet itself enforces these limits); and
+.Fa ptypes
+points to an array of
+.Xr structs 3
+types that has length
+.Fa max_params ,
+one for each possible parameter.
+.Pp
+The
+.Fa handler
+is a pointer to the user function that implements the XML-RPC method.
+The function must be of this type:
+.Pp
+.Bd -literal -compact -offset 3n
+typedef void *http_servlet_xmlrpc_handler_t(void *arg,
+               const char *method, struct http_request *req,
+               u_int nparams, const void **params, const char *mtype,
+               const struct structs_type **rtypep, int *faulted)
+.Ed
+.Pp
+The
+.Fa arg
+is the opqaue cookie supplied to
+.Fn http_servlet_xmlrpc_create ;
+.Fa method
+is the XML-RPC method name;
+.Fa req
+is the HTTP request object; and
+.Fa params
+points to an array of
+.Fa nparams
+pointers to the XML-RPC request parameters in native binary format.
+.Fn handler
+should not free the parameters.
+.Pp
+If successful,
+.Fn handler
+should allocate a region of memory with
+.Xr typed_mem 3
+type
+.Fa mtype ,
+initialize it with the response value in native binary format, and
+return a pointer to it.
+The
+.Xr structs 3
+type of the returned memory region must be stored in
+.Fa "*rtypep".
+.Pp
+Since it's running as a servlet, the thread executing
+.Fn handler
+may be canceled at any cancellation point.
+.Fn handler
+should be written so as to not leak resources if this happens.
+.\"
+.Ss Returning Faults
+.\"
+If
+.Fn handler
+wishes to return an XML-RPC fault, it should set
+.Fa "*faulted"
+to one, return a pointer to a
+.Li "struct xmlrpc_compact_fault"
+structure, and set
+.Fa "*rtypep"
+to 
+.Va "&structs_type_xmlrpc_compact_fault" .
+.Pp
+.Fn handler
+may also return
+.Dv NULL
+and set
+.Va errno ,
+in which case an XML-RPC fault will be created using
+.Va errno
+as the fault code and
+.Fn strerror errno
+as the fault string.
+.\"
+.Ss Working With Raw XML-RPC
+.\"
+In some cases, the types of the XML-RPC parameters are not known
+ahead of time, or it may be inconvenient to have to provide a
+.Xr structs 3
+type for the returned value.
+In these situations,
+.Fn handler
+can operate with the XML-RPC parameters and/or response values in their raw,
+.Dq exploded
+forms.
+.Pp
+If
+.Fa ptypes
+is
+.Dv NULL ,
+then all of the parameters passed to
+.Fn handler
+via
+.Fa params
+are instances of the
+.Xr structs 3
+type
+.Va structs_type_xmlrpc_value ,
+i.e., every parameter is a
+.Li "struct xmlrpc_value_union" ,
+defined in
+.Pa "<pdel/structs/xmlrpc.h>" .
+.Pp
+If
+.Fn handler
+returns a non-NULL result but sets
+.Fa "*rtypep"
+to
+.Dv NULL ,
+then the returned result is assumed to be an instance of the
+.Xr structs 3
+type
+.Va structs_type_xmlrpc_value ,
+i.e., a
+.Li "struct xmlrpc_value_union" .
+.Pp
+Finally, if the method names themselves are not known ahead of time, a
+.Fa name
+equal to the empty string will match all method names.
+Such an entry acts as a
+.Dq "catch all"
+and must be last in the
+.Fa methods
+list.
+.Sh RETURN VALUES
+On failure,
+.Fn http_servlet_xmlrpc_create
+returns
+.Dv NULL
+and sets
+.Va errno
+to an appropriate value.
+.Sh SEE ALSO
+.Xr http_request 3 ,
+.Xr http_response 3 ,
+.Xr http_server 3 ,
+.Xr http_servlet 3 ,
+.Xr http_servlet_xml 3 ,
+.Xr http_xml 3 ,
+.Xr libpdel 3 ,
+.Xr structs 3 ,
+.Xr structs_xmlrpc 3 ,
+.Xr typed_mem 3
+.Rs
+.%T "XML-RPC Home Page"
+.%O "http://www.xmlrpc.org/"
+.Re
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org
+.Sh BUGS
+.Fn http_servlet_xmlrpc_create
+copies all information in
+.Fa info
+except each method's parameter
+.Xr structs 3
+types (pointed to by the elements of the
+.Fa ptypes
+array), so these must remain valid for the lifetime of the servlet.
+Typically
+.Xr structs 3
+types are stored in static variables, so this is not usually a problem.

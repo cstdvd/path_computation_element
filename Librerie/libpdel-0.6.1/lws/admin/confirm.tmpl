@@ -1,0 +1,48 @@
+@set("page_id", "$Id: confirm.tmpl 547 2002-08-19 20:41:07Z archie $")
+@set("page_title", @cat("Confirm: ",
+    @query(@cat(@query("button"), "-confirm"))))
+@set("page_url", "/admin/confirm")
+@eval(@readfile("head.tmpl"))
+
+@if(@query_exists("confirm-button"))
+	@if(@equal(@query("confirm-button"), "OK"))
+		@redirect(@query("ok-action"))
+	@else
+		@redirect(@query("cancel-action"))
+	@endif
+	@return
+@endif
+
+<table width="95%" border="0" cellspacing="2" cellpadding="0">
+
+<tr><td colspan="2">&nbsp;</td></tr>
+
+<tr>
+    <td>&nbsp;&nbsp;</td>
+    <td align="left"><h4>@get("page_title")</h4></td>
+</tr>
+
+<tr>
+    <td>&nbsp;</td>
+    <td align="center" width="99%">
+    <p>&nbsp;</p>
+    <center>
+    <b>Are you sure?</b>
+    <form method="post" action="confirm">
+    @hidden("time", @time())
+    @hidden("confirm", @query(@cat(@query("button"), "-confirm")))
+    @hidden("ok-action", @query(@cat(@query("button"), "-ok-action")))
+    @hidden("cancel-action", @query(@cat(@query("button"), "-cancel-action")))
+    <input type="submit" name="confirm-button" value="OK">&nbsp;&nbsp;
+    <input type="submit" name="confirm-button" value="Cancel">&nbsp;&nbsp;
+    </form>
+    </center>
+    </td>
+
+</tr>
+
+<tr><td colspan="2">&nbsp;</td></tr>
+
+</table>
+
+@eval(@readfile("foot.tmpl"))

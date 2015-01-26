@@ -1,0 +1,69 @@
+Descrizione della parte iniziale per l'esportazione e l'importazione di una topologia di rete
+*********************************************************************************************
+
+Ci sono due cartelle: 
+1) GADCRF_project_save_topology;
+2) GADCRF_project_load_topology;
+
+La prima cartella contiene i files e l'eseguibile per esportare la matrice delle adiacenze in XML.
+La seconda cartella contiene i files e l'eseguibile per importare la matrice delle adience da XML (ed eventualmente riesportare in XML).
+I file "header_project.h" e "config_topology.cpp" sono identici, perchè uso le stesse structs e gli stessi metodi.
+Cambia solo il main, che ho voluto tenere separato appunto in due cartelle.
+Ho già compilato ed eseguito i due programmi.
+Da ora in poi dovete soltanto caricare su Eclipse la cartella GADCRF_project_load_topology e lavorare su quella.
+Per quanto riguarda Eclipse... Mi sono smazzata di brutto per cercare di configurarlo e alla fine ci sono riuscita! 
+Per compilarlo potete anche usare il terminale, il comando che dovete dare è il primo.
+
+::: Comandi per compilare da terminale load e save topology :::
+
+gcc load_topology.cc config_topology.cpp -lpdel -lexpat -lpthread -lstdc++
+
+gcc save_topology.cc config_topology.cpp -lpdel -lexpat -lpthread -lstdc++
+
+--------------------------------------------------------------------------
+
+Risoluzione delle dipendenze sulle librerie
+********************************************
+
+Aprite il gestore pacchetti e installate le seguenti librerie:
+libxml2
+libxml++ (io ho la versione libxml++2.6-2)
+libxml++-dev (io ho la versione libxml++2.6-dev)
+libstdc++
+expat
+libexpat1-dev
+libssl
+
+Credete sia finita??? Muhahahah!!! manco per il cazzo...
+
+Vi ho messo due librerie che dovete installare su contiki.
+Copiate le due cartelle expat-2.1.0 e libpdel-0.6.1 nella home. 
+Aprite il terminale e pregate che i comandi non diano errore.
+1) Configurazione expat:
+posizionatevi nella cartella expat-2.1.0 nella home e date i seguenti comandi:
+./configure
+make
+sudo make install
+
+2) Configurazione libpdel:
+posizionatevi nella cartella libpdel-0.6.1 nella home e date i seguenti comandi:
+make
+sudo make install
+
+Nel caso diano errori, sicuramente mancano delle dipendenze. Installatele, fate il make clean e ripetete i comandi.
+
+Se non avete dato fuoco a tutto, potete importare il vostro progetto su Eclipse. (clap clap clap)
+
+-------------------------------------------------------------------------------
+
+Importazione del progetto GADCRF_project_load_topology
+******************************************************
+
+Seguite il pdf che vi ho creato. Sì, sono figa, ho fatto anche questo!
+
+
+
+
+
+
+

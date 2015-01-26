@@ -1,0 +1,101 @@
+<html>
+<!-- $Id: demo.tmpl 462 2002-08-07 00:29:07Z archie $ -->
+<head>
+<title>PDEL HTTP server template demo</title>
+</head>
+<body bgcolor="#ffffff">
+
+<h3>PDEL Template Servlet</h3>
+
+@if(@query("shutdown"))
+	<b>Shutting down...</b>
+	@shutdown()
+	@return
+@endif
+
+<p>
+Welcome <b>@authname()</b>!
+
+<p>
+This servlet is implemented via the http_servlet_tmpl(3) servlet
+using the template file "demo.tmpl". To get to this servlet, you
+must first satisfy the http_servlet_basicauth(3) servlet which requires
+an HTTP "Basic" authentication using username "demo" and password
+"demo".
+
+<p>
+You can edit this file and reload from the browser and it should
+update automatically.
+
+<p>
+You are connecting from IP address <code>@remote_ip()</code>
+and port <code>@remote_port()</code>.
+
+<p>
+The current time now is @htmlencode(@date()).
+
+<p>
+Now I'm going to sleep for one second... some browsers show
+you the partial output, and some don't...
+
+<p>
+@flush()
+@sleep("1")
+
+<p>
+The current time now is @htmlencode(@date()).
+
+<p>
+Press <a href="/logon">HERE</a> to return to the logon page.
+
+<p>
+<b>GET form</b>
+<form method="get" action="/cgi/get?field4=foo&field5=bar">
+<input type=hidden name="field1" value="value1">
+<input type=hidden
+    name="field2" value="Foo Value with %percents% and &amp; ampersand">
+Enter some text:<input type=text name="field3">
+<input type=submit value="Submit">
+</form>
+
+<p>
+<b>POST form</b>
+<form method="post" action="/cgi/post?field4=foo&field5=bar">
+<input type=hidden name="field1" value="value1">
+<input type=hidden
+    name="field2" value="Foo Value with %percents% and &amp; ampersand">
+Enter some text:<input type=text name="field3">
+<input type=submit value="Submit">
+</form>
+
+<p>
+Test of the http_servlet_file(3) servlet: click <a href="/file">HERE</a>
+or <a href="/file/">HERE</a> to view the BIND documentation.
+
+<p>
+To download a large file (/kernel): click <a href="/kernel">HERE</a>.
+
+@if(@not(@equal(@redirect(), "")))
+<p>
+To get redirected to <b>@htmlencode(@redirect())</b>:
+click <a href="/redirect">HERE</a>.
+@endif
+
+<p>
+Test of file upload:
+
+<form method=post enctype="multipart/form-data" action="/cgi/post?file=1">
+
+Enter file name:&nbsp;&nbsp;<input type="file" size=40 name="file">
+
+<br>
+<p>
+<input type="submit" name="button1" value="Upload">
+
+</form>
+
+<p>
+Press <a href="/tmpl?shutdown=1">HERE</a> to shutdown this web server.
+
+</body>
+</html>

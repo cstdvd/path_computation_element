@@ -1,0 +1,87 @@
+@set("page_id", "$Id: mem.tmpl 540 2002-08-18 03:47:42Z archie $")
+@set("page_title", "Memory Usage")
+@set("page_url", "/admin/mem")
+@eval(@readfile("head.tmpl"))
+
+@nop(" Ensure we get fresh statistics each time ")
+@object_reset("memstats")
+
+@define("mem")
+	@object_get("memstats", @get("arg1"))
+@enddef
+
+<table border="0" cellspacing="2" cellpadding="0">
+
+<tr>
+  <td>&nbsp;&nbsp;</td>
+  <td>&nbsp;&nbsp;</td>
+</tr>
+
+<tr>
+    <td>&nbsp;</td>
+    <td colspan="2" align="left"><h4>Memory Usage</h4></td>
+</tr>
+
+@if(@not(@mem("length")))
+
+    <tr>
+	<td colspan="2">&nbsp;</td>
+	<td>
+	<b>No statistics available.</b>
+	<p>
+	To get memory statistics, you must run LWS with the ``-D'' flag.
+	</td>
+    </tr>
+    </table>
+
+    @eval(@readfile("foot.tmpl"))
+
+    @return
+
+@endif
+
+<tr><td colspan="2">&nbsp;</td><td>
+
+<table border="0" cellspacing="0" cellpadding="0">
+
+<tr>
+<td><b>Type</b></td>
+<td align="right"><b>Blocks</b></td>
+<td align="right"><b>Bytes</b></td>
+</tr>
+
+<tr><td colspan="3"><hr></td></tr>
+
+@set("total_bytes", "0")
+@set("total_allocs", "0")
+@set("i", "0")
+@while(@lt(@get("i"), @mem("length")))
+	@set("type", @mem(@cat(@get("i"), ".type")))
+	@set("allocs", @mem(@cat(@get("i"), ".allocs")))
+	@set("bytes", @mem(@cat(@get("i"), ".bytes")))
+	<tr>
+	<td><code>@get("type")</code></td>
+	<td align="right"><code>&nbsp;@get("allocs")&nbsp;</code></td>
+	<td align="right"><code>&nbsp;@get("bytes")&nbsp;</code></td>
+	</tr>
+	@set("total_allocs", @add(@get("total_allocs"), @get("allocs")))
+	@set("total_bytes", @add(@get("total_bytes"), @get("bytes")))
+	@set("i", @add(@get("i"), "1"))
+@endwhile
+
+<tr><td colspan="3"><hr></td></tr>
+<tr>
+<td><b>Total</b></td>
+<td align="right"><code>&nbsp;@get("total_allocs")&nbsp;</code></td>
+<td align="right"><code>&nbsp;@get("total_bytes")&nbsp;</code></td>
+</tr>
+
+</table>
+
+</td></tr>
+
+<tr><td colspan="2">&nbsp;</td></tr>
+
+</table>
+
+@eval(@readfile("foot.tmpl"))

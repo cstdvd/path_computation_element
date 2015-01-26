@@ -1,0 +1,124 @@
+@set("page_id", "$Id: server.tmpl 579 2002-08-21 20:53:54Z archie $")
+@set("sid", @add(@query("sid"), "0"))
+@set("sid1", @add(@get("sid"), "1"))
+@if(@query("new"))
+	@set("page_title", @cat("New Server Configuration"))
+@else
+	@set("page_title", @cat("Server #", @get("sid1"), " Configuration"))
+@endif
+@set("page_url", "/admin/server")
+@eval(@readfile("head.tmpl"))
+
+@object_reset("config")
+
+<form method="post" action="doconfig">
+<table border="0" cellspacing="2" cellpadding="0">
+
+@define("prefix")
+	@cat("servers.", @get("sid"), ".", @get("arg1"))
+@enddef
+@define("sinfo")
+	@config_get(@prefix(@get("arg1")))
+@enddef
+
+@if(@query("new"))
+	@set("sid", @config_get("servers.length"))
+	@object_array_insert("config", "servers", @get("sid"))
+	@hidden("insert:", @cat("servers:", @get("sid")))
+@else
+	@hidden("delete:", @cat("servers:", @get("sid")))
+@endif
+
+@header(@get("page_title"))
+
+<tr>
+  <td>&nbsp;</td>
+  <td nowrap align="right"><b>IP Address:&nbsp;&nbsp;</b></td>
+  <td align="left">@config_textinput_ip(@prefix("ip"))
+    &nbsp;&nbsp;(leave blank to listen on all IP addresses)</td>
+</tr>
+
+<tr>
+  <td>&nbsp;</td>
+  <td nowrap align="right"><b>Port:&nbsp;&nbsp;</b></td>
+  <td align="left">@config_textinput_num(@prefix("port"))</td>
+</tr>
+
+<tr>
+  <td>&nbsp;</td>
+  <td nowrap align="right"><b>Enable SSL:&nbsp;&nbsp;</b></td>
+  <td align="left">
+    @config_radio(@prefix("ssl.enabled"), "1")&nbsp;Yes
+    @config_radio(@prefix("ssl.enabled"), "0")&nbsp;No
+  </td>
+</tr>
+
+<tr>
+  <td>&nbsp;</td>
+  <td nowrap align="right"><b>SSL private key:&nbsp;&nbsp;</b></td>
+  <td align="left">@config_textinput(@prefix("ssl.private_key"),
+      "20", "128")</td>
+</tr>
+
+<tr>
+  <td>&nbsp;</td>
+  <td nowrap align="right"><b>SSL certificate:&nbsp;&nbsp;</b></td>
+  <td align="left">@config_textinput(@prefix("ssl.certificate"),
+      "20", "128")</td>
+</tr>
+
+<tr>
+  <td colspan="2">&nbsp;</td>
+  <td align="left"><input type="submit" name="button" value="Update">
+@if(@not(@query("new")))
+  &nbsp;&nbsp;<input type="submit" name="button" value="Delete">
+@endif
+  &nbsp;&nbsp;<input type="reset" value="Reset">
+  </td>
+</tr>
+
+</table>
+</form>
+
+@if(@not(@query("new")))
+
+<form method="post" action="vhost?sid=@get("sid")">
+<table border="0" cellspacing="2" cellpadding="0">
+
+@hidden("new", "1")
+
+@header(@cat("Server #", @get("sid1"), " Virtual Hosts"))
+
+@loop(@sinfo("virtual_hosts.length"))
+<tr>
+  <td>&nbsp;</td>
+  <td nowrap colspan="2">
+  <a href="vhost?sid=@get("sid")&vid=@loopindex()">@nop()
+    <b>@pretty_vhost(@prefix(@cat("virtual_hosts.", @loopindex())))</b></a>
+  </td>
+</tr>
+@endloop
+
+@if(@not(@sinfo("virtual_hosts.length")))
+<tr>
+  <td colspan="2">&nbsp;</td>
+  <td><b>No virtual hosts defined.</b></td>
+</tr>
+@endif
+
+<tr><td colspan="3">&nbsp;</td><td>
+
+<tr>
+  <td colspan="2">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+  <td align="left"><input type="submit" name="button" value="New">
+  </td>
+</tr>
+
+<tr><td colspan="3">&nbsp;</td><td>
+
+</table>
+</form>
+
+@endif
+
+@eval(@readfile("foot.tmpl"))

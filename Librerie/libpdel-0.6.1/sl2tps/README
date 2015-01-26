@@ -1,0 +1,22 @@
+sl2tps - Simple L2TP Server for FreeBSD
+
+Instructions
+------------
+
+0. Install the 'libpdel' library (FreeBSD: /usr/ports/devel/libpdel)
+	$ cd /usr/ports/net/libpdel
+	$ make
+	$ make install
+1. Build and install the sl2tps server
+	$ cd /usr/ports/net/sl2tps
+	$ make
+	$ make install
+2. Copy the sample config file
+	$ cd /usr/local/etc/sl2tps
+	$ cp config.xml.sample config.xml
+	$ chmod 600 config.xml
+3. Edit your config file
+	$ vi config.xml
+4. Start the server
+	$ /usr/local/bin/sl2tps
+

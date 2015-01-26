@@ -1,0 +1,92 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: structs_type_id.3 958 2004-12-16 16:49:57Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRUCTS_TYPE_ID 3
+.Os
+.Sh NAME
+.Nm structs_type_id
+.Nd structs types for identifiers
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In pdel/structs/structs.h
+.In pdel/structs/type/id.h
+.Fn STRUCTS_ID_TYPE idlist vsize
+.Sh DESCRIPTION
+The
+.Fn STRUCTS_ID_TYPE
+macro defines a
+.Xr structs 3
+type (i.e., a
+.Dv "struct structs_type" )
+for describing an enumeration or identifier list.
+.Pp
+The data structure represented is an integral value that may
+take one of a fixed set of values.
+The possible values are defined by the
+.Fa idlist
+argument, which is a pointer to an array of
+.Li "struct structs_id" :
+.Pp
+.Bd -literal -compact -offset 3n
+struct structs_id {
+    const char  *id;        /* string representation */
+    u_int32_t   value;      /* integer representation */
+    u_int       imatch;     /* case-insensitive matching allowed */
+};
+.Ed
+.Pp
+The
+.Fa id
+points to a unique string representing the value;
+.Fa imatch ,
+determines whether the parsing of the ASCII representation is
+case-insensitive.
+.Fa value
+is the actual integer value.
+The first element in the array used as the default value.
+The array is terminated with an entry having
+.Fa id
+equal to
+.Dv NULL .
+.Pp
+.Fa vsize
+is the size of the integral type used to store the value, which must
+be 1, 2, or 4.
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr structs 3 ,
+.Xr structs_type 3
+.Sh EXAMPLES
+.Bd -literal -offset 0n
+
+/* Set of possible colors */
+enum color {
+	RED,
+	GREEN,
+	BLUE,
+};
+
+/* The current color */
+static enum color current_color;
+
+/* Structs type describing something of type "enum color" */
+static const struct structs_id color_list[] = {
+	{ "red", RED },
+	{ "green", GREEN },
+	{ "blue", BLUE },
+	{ NULL, 0 }
+};
+static const struct structs_type color_type
+	= STRUCTS_ID_TYPE(color_list, sizeof(enum color));
+.Ed
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

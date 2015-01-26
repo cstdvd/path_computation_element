@@ -1,0 +1,121 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: http_mime.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt HTTP_MIME 3
+.Os
+.Sh NAME
+.Nm http_mime
+.Nd multi-part MIME suport
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.\"
+.Sh SYNOPSIS
+.\"
+.In sys/types.h
+.In stdio.h
+.In netinet/in.h
+.In openssl/ssl.h
+.In pdel/http/http_defs.h
+.In pdel/http/http_server.h
+.Ft u_int
+.Fn http_mime_multipart_get_count "struct mime_multipart *mp"
+.Ft "struct mime_part *"
+.Fn http_mime_multipart_get_part "struct mime_multipart *mp" "int index"
+.Ft void
+.Fn http_mime_multipart_free "struct mime_multipart **mpp"
+.Ft "const char *"
+.Fn http_mime_part_get_header "struct mime_part *part" "const char *name"
+.Ft u_int
+.Fn http_mime_part_get_length "struct mime_part *part"
+.Ft "u_char *"
+.Fn http_mime_part_get_data "struct mime_part *part"
+.\"
+.Sh DESCRIPTION
+.\"
+These functions handle multi-part MIME document data as returned by
+.Xr http_request_read_mime_multipart 3 .
+.Pp
+A
+.Li "struct mime_multipart"
+represents an entire multi-part document, while a
+.Li "struct mime_part"
+represents a single part.
+.Pp
+.Fn http_mime_multipart_get_count
+returns the number of parts in
+.Fa mp .
+.Pp
+.Fn http_mime_multipart_get_part
+retrieves the part with index
+.Fa index ,
+which must be less than the value returned by
+.Fn http_mime_multipart_get_count .
+.Pp
+.Fn http_mime_multipart_free
+frees a multi-part document.
+Upon return.
+.Fa "*mpp"
+will be set to
+.Dv NULL.
+If
+.Fa "*mpp"
+is already
+.Dv NULL
+when
+.Fn http_mime_multipart_free
+is invoked, nothing happens.
+.Pp
+.Fn http_mime_part_get_header
+retrieves a header having name
+.Fa name
+associated with the part
+.Fa part .
+.Pp
+.Fn http_mime_part_get_length
+returns the length in bytes of
+.Fa part .
+.Pp
+.Fn http_mime_part_get_data
+returns a pointer to the data of
+.Fa part .
+.Sh RETURN VALUES
+.Fn http_mime_multipart_get_part
+return
+.Dv NULL
+with
+.Va errno
+set to
+.Er EINVAL
+if
+.Fa index
+is out of range.
+.Pp
+.Fn http_mime_part_get_header
+returns
+.Dv NULL
+with
+.Va errno
+set to
+.Er ENOENT
+if the header is not found.
+.Sh SEE ALSO
+.Xr http_client 3 ,
+.Xr http_request 3 ,
+.Xr http_response 3 ,
+.Xr http_server 3 ,
+.Xr libpdel 3
+.Rs
+.%A N. Freed
+.%A N. Borenstein
+.%T "Multipurpose Internet Mail Extensions (MIME) Part Two: Media Types"
+.%O RFC 2046
+.Re
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

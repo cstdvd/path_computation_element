@@ -1,0 +1,64 @@
+.\" $Id: sl2tps.1.in 925 2004-06-20 19:42:46Z archie $
+.\"
+.\" @COPYRIGHT@
+.\"
+.Dd June 20, 2004
+.Dt SL2TPS 1
+.Os
+.Sh NAME
+.Nm sl2tps
+.Nd simple L2TP server
+.Sh SYNOPSIS
+.Nm
+.Op Fl D
+.Op Fl f Ar config.xml
+.Sh DESCRIPTION
+.Nm
+is a simple, statically configured L2TP server basd on
+.Xr libpdel 3 .
+The server is configured by manually editing an XML configuration file.
+.Pp
+.Nm
+supports fixed or dynamically assigned IP address assignments for each user.
+A user may not connect to the server multiple times simultaneously
+(not counting multi-link PPP connections that are part of the same bundle).
+.Pp
+.Nm
+supports 128-bit Microsoft MPPE encryption if requested by the client.
+If the client's assigned IP address matches a local subnet, 
+.Nm
+will automatically proxy-ARP for the remote client.
+.Pp
+Configuration file parameters are documented in the example configuration file
+.Pa "@PREFIX@/etc/sl2tps/config.xml.sample" .
+Refer to that file for specifics about configuration.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl D
+Run in debug mode: don't fork into the background and
+enable typed memory statistics.
+.It Fl f
+Specify a configuration file other than the default,
+.Pa "@PREFIX@/etc/sl2tps/config.xml" .
+.El
+.Sh FILES
+.It
+.Bl -tag -width @PREFIX@/etc/sl2tps/config.xml -compact
+.It Pa @PREFIX@/etc/sl2tps/config.xml
+Default configuration file.
+.El
+.Sh SEE ALSO
+.Xr libpdel 3
+.Rs
+.%A W. Townsley
+.%A A. Valencia
+.%A A. Rubens
+.%A G. Pall
+.%A G. Zorn
+.%A B. Palter
+.%T "Layer Two Tunneling Protocol L2TP"
+.%O RFC 2661
+.Re
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

@@ -1,0 +1,335 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: pevent.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt PEVENT 3
+.Os
+.Sh NAME
+.Nm pevent
+.Nd pthread event library
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In pthread.h
+.In pdel/util/pevent.h
+.Ft "struct pevent_ctx *"
+.Fn pevent_ctx_create "const char *mtype" "const pthread_attr_t *attr"
+.Ft void
+.Fn pevent_ctx_destroy "struct pevent_ctx **ctxp"
+.Ft u_int
+.Fn pevent_ctx_count "struct pevent_ctx *ctx"
+.Ft int
+.Fn pevent_register "struct pevent_ctx *ctx" "struct pevent **peventp" "int flags" "pthread_mutex_t *mutex" "pevent_handler_t *handler" "void *arg" "enum pevent_type type" "..."
+.Ft void
+.Fn pevent_unregister "struct pevent **eventp"
+.Ft void
+.Fn pevent_trigger "struct pevent *event"
+.Ft int
+.Fn pevent_get_info "struct pevent *event" "struct pevent_info *info"
+.Sh DESCRIPTION
+These functions support event-driven programming.
+Event-driven programming is simpler and more efficient than threaded
+programming because only a single thread is created to handle all
+blocking operations, rather than a new thread per operation.
+However, because the thread's stack cannot be used to store information
+between events, each event must be handled to completion, i.e., the
+event handlers must not block before returning.
+.Pp
+Event handlers that block may also be used with these routines, but only
+if a separate thread is spawned for the handler (see below).
+.\"
+.Ss Event contexts
+.\"
+.Fn pevent_ctx_create
+creates a new event context, which is used to register events.
+All events registered with the same event context will be serviced by
+the single thread associated with that event context.
+.Pp
+The scheduling attributes contained in
+.Fa "*attr"
+are used when creating this thread; if
+.Fa attr
+is
+.Dv NULL
+then the default thread attributes are used.
+Since
+.Fn pevent_ctx_create
+makes a copy of these attributes,
+.Fa attr
+may be discarded when
+.Fn pevent_ctx_create
+returns.
+.Pp
+.Fa mtype
+is the
+.Xr typed_mem 3
+memory type used when allocating memory for the event context.
+.Pp
+.Fn pevent_ctx_destroy
+destroys an event context.
+Any events still registered are automatically unregistered.
+Upon return,
+.Fa "*ctxp"
+is set to
+.Dv NULL .
+If
+.Fa "*ctxp"
+is already
+.Dv NULL
+when
+.Fn pevent_ctx_destroy
+is invoked, nothing happens.
+.Pp
+It is safe to call
+.Fn pevent_ctx_destroy
+from within an event handler function.
+.Pp
+.Fn pevent_ctx_count
+returns the number of events currently registered with
+.Fa ctx .
+.\"
+.Ss Events
+.\"
+.Fn pevent_register
+creates a new event and registers it with
+.Fa ctx .
+If successful, zero is returned and a non-
+.Dv NULL
+reference to the event is stored in
+.Fa "*peventp" .
+When
+.Fn pevent_register
+is invoked,
+.Fa "*peventp"
+must be
+.Dv NULL
+or else an error will be returned with
+.Va errno
+set to
+.Er EBUSY .
+If
+.Fn pevent_register
+returns an error,
+.Fa "*peventp"
+will be unmodified.
+.Pp
+.Fa handler
+must point to a function having this type:
+.Bd -literal -offset 3n
+typedef void pevent_handler_t(void *arg);
+.Ed
+.Pp
+When the event occurs,
+.Fa "*peventp"
+is set to
+.Dv NULL
+and then
+.Fn handler arg
+is invoked.
+Therefore,
+.Fa "*peventp"
+is not equal to
+.Dv NULL
+if and only if the event is still pending.
+For this to work,
+.Fa "*peventp"
+must remain valid and unmodified while the event is pending,
+and the user code must initialize
+.Fa peventp
+to
+.Dv NULL
+before the first call to
+.Fn pevent_register .
+.Pp
+The
+.Fa type
+and subsequent argument(s) define the event itself;
+.Fa type
+may have be one of the following values:
+.Bl -tag -offset 3n -width PEVENT_MESG_PORT
+.It Dv PEVENT_READ
+Readable condition on a file descriptor.
+The next argument must have type
+.Li int .
+.It Dv PEVENT_WRITE
+Writable condition on a file descriptor.
+The next argument must have type
+.Li int .
+.It Dv PEVENT_TIME
+Time passage.
+The next argument must have type
+.Li int ,
+and it is the relative time delay in milliseconds.
+Negative delay values are silently converted to zero.
+.It Dv PEVENT_MESG_PORT
+Message(s) available on a message port.
+The next argument must have type
+.Li "struct mesg_port *".
+.It Dv PEVENT_USER
+User-triggered event.
+No further arguments are required.
+.El
+.Pp
+The
+.Fa flags
+parameter may contain any of the following values OR'd together:
+.Pp
+.Bl -tag -offset 3n -width PEVENT_OWN_THREADX
+.It Li PEVENT_RECURRING
+The event is recurring.
+.It Li PEVENT_OWN_THREAD
+Invoke
+.Fn handler
+in a separate thread.
+.El
+.Pp
+.Dv PEVENT_RECURRING
+causes the event to be automatically re-registered just before
+each invocation of
+.Fn handler .
+In particular, this means that
+.Fa "*peventp"
+will not be
+.Dv NULL
+when
+.Fn handler
+is invoked.
+.Pp
+.Dv PEVENT_OWN_THREAD
+causes a new thread to be spawned for each invocation of
+.Fn handler ;
+this thread may block, exit, or be canceled, and is by default not joinable.
+If this flag is not set,
+.Fn handler
+will execute in the event context's main thread, in which case
+.Fn handler
+.Em "must not"
+block or exit and the thread
+.Em "must not"
+be canceled.
+.Pp
+.Fn pevent_unregister
+unregisters the event referenced by
+.Fa "*peventp" .
+Upon return,
+.Fa "*peventp"
+is set to
+.Dv NULL .
+If
+.Fa "*peventp"
+is already
+.Dv NULL
+when
+.Fn pevent_unregister
+is invoked, nothing happens.
+.Pp
+.Fn pevent_trigger
+manually triggers an event, causing its handler to be invoked.
+Although intended for use with
+.Dv PEVENT_USER
+events, it will work with any event.
+The
+.Fa event
+may be
+.Dv NULL ,
+in which case nothing happens.
+.Pp
+.Fn pevent_get_info
+returns the type and parameters associated with
+.Fa event
+by filling in the
+.Li "struct pevent_info"
+structure pointed to by
+.Fa info :
+.Bd -literal -offset 3n
+struct pevent_info {
+    enum pevent_type    type;    /* event type */
+    union {
+        int              fd;       /* file descriptor (READ, WRITE) */
+        int              millis;   /* delay in milliseconds (TIME) */
+        struct mesg_port *port;    /* message port (MESG_PORT) */
+    };                  u;
+};
+.Ed
+.\"
+.Ss Synchronization
+.\"
+.Fn pevent_ctx_count ,
+.Fn pevent_register ,
+.Fn pevent_unregister ,
+.Fn pevent_trigger ,
+and
+.Fn pevent_get_info
+may all safely be called from different threads simultaneously.
+However, there are inherent race conditions between an event's
+.Fn handler
+being invoked and reading the value of
+.Fa "*peventp"
+or unregistering the event with
+.Fn pevent_unregister .
+The
+.Fa mutex
+parameter to
+.Fn pevent_register
+can be used to avoid these problems.
+.Pp
+If a non-
+.Dv NULL
+.Fa mutex
+is provided to
+.Fn pevent_register ,
+then
+.Nm pevent
+will acquire
+.Fa "*mutex"
+just before setting
+.Fa "*pevent"
+to
+.Dv NULL
+and invoking
+.Fn handler ,
+and
+.Fa "*mutex"
+will be automatically released when
+.Fn handler
+returns (or, in the case of
+.Dv PEVENT_OWN_THREAD ,
+the handler thread exits by any means).
+If the user code acquires this mutex before any calls to
+.Fn pevent_register
+or
+.Fn pevent_unregister ,
+or before accessing
+.Fa "*eventp" ,
+then
+.Fa "*eventp"
+will always reflect the 'registered' state of the event and
+.Fn handler
+is guaranteed to never be invoked after
+.Fn pevent_unregister
+returns.
+.Sh RETURN VALUES
+.Fn pevent_ctx_create ,
+.Fn pevent_register ,
+and
+.Fn pevent_get_info
+return
+.Dv NULL
+or -1 to indicate an error,
+with
+.Va errno
+set appropriately.
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr mesg_port 3 ,
+.Xr paction 3 ,
+.Xr pthread 3 ,
+.Xr typed_mem 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

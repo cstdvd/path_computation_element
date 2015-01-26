@@ -1,0 +1,46 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: structs_type_ether.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRUCTS_TYPE_ETHER 3
+.Os
+.Sh NAME
+.Nm structs_type_ether ,
+.Nm structs_type_ether_nocolon
+.Nd structs types for Ethernet addresses
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In pdel/structs/structs.h
+.In pdel/structs/type/ether.h
+.Vt extern const struct structs_type structs_type_ether ;
+.Vt extern const struct structs_type structs_type_ether_nocolon ;
+.Sh DESCRIPTION
+These are
+.Xr structs 3
+types for Ethernet addresses.
+The represented data type is an array of six unsigned characters.
+.Pp
+The
+.Nm structs_type_ether
+and
+.Nm structs_type_ether_nocolon
+types are equivalent except for their ASCII forms.
+.Nm structs_type_ether
+expresses an Ethernet address as six hex bytes (including leading zero
+digits, if any) separated by colon characters, while
+.Nm structs_type_ether_nocolon
+type expresses an Ethernet address as a string of 12 hex digits.
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr structs 3 ,
+.Xr structs_type 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

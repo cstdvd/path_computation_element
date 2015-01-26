@@ -1,0 +1,325 @@
+# $Id: GNUmakefile.in 1037 2006-12-27 17:16:45Z mgooderum $
+
+#
+# Make sure default target is all
+#
+all:	realall
+
+DOTDOT=
+include GNUmakefile.inc
+
+hack_h = $(shell if [ -f $(srcdir)/ports/$(OS)/hacks.h ]; then echo 1 ; else echo 0 ; fi )
+
+ifeq (0, $(hack_h))
+hack_h_arg= 
+else
+hack_h_arg= -include $(srcdir)/ports/$(OS)/hacks.h
+endif
+
+# User switches
+
+DESTDIR =
+
+libbase=	pdel
+slibrary=	lib$(libbase).a 
+
+# Port specific make bits
+
+ifeq ($(OS),CYGWIN_NT-5.1)
+WIN32_SHLIB=1
+WIN32_GCC_SHLIB=1
+DLLROOT=cyg
+endif
+
+ifeq ($(OS),MINGW32_NT-5.1)
+
+WIN32_SHLIB=1
+WIN32_GCC_SHLIB=1
+DLLROOT=
+EXTRALIBDEPS=	expat_implibs
+EXTRALIBDEPS=	openssl_implibs
+
+expat_implibs:	$(expat_implibs)
+
+$(expat_implib): $(expat_libdir)/libexpat.dll 
+	pexports $(expat_libdir)/libexpat.dll > $(objdir)/expat.def
+	dlltool -d $(objdir)/expat.def -l $(objdir)/libexpat.a
+
+$(expat_implibw): $(expat_libdir)/libexpatw.dll 
+	pexports $(expat_libdir)/libexpatw.dll > $(objdir)/expatw.def
+	dlltool -d $(objdir)/expatw.def -l $(objdir)/libexpatw.a
+
+openssl_implibs:	$(openssl_implibs)
+
+$(openssl_implib): $(openssl_libdir)/$(ssl_libbase).a
+	cp $+ $@
+
+$(crypt_implib): $(openssl_libdir)/$(crypto_libbase).a
+	cp $+ $@
+
+endif
+
+ifeq ($(OS),MSVC-WIN32)
+
+WIN32_SHLIB=1
+WIN32_MSVC_SHLIB=1
+DLLROOT=
+#EXTRALIBDEPS=	expat_implibs
+
+endif
+
+ifdef WIN32_GCC_SHLIB
+
+dependency_libargs= -L$(objdir) $(OTHERLIBDIRS) -L$(libdir) -l$(ssl_libbase) -l$(crypto_libbase)  -l$(expat_libbase) $(otherlibs)
+implib=		lib${libbase}$(shlib_major)$(shlib_minor).dll.a
+
+sharedobjargs= -shared
+sharedlibargs= -shared \
+    -Wl,--out-implib=$(objdir)/$(implib) \
+    -Wl,--export-all-symbols \
+    -Wl,--enable-auto-import \
+    -Wl,--whole-archive  $(sobjs)  \
+    -Wl,--no-whole-archive ${dependency_libargs}
+endif
+
+ifdef WIN32_MSVC_SHLIB
+
+compsfx=VC
+
+endif
+
+ifdef WIN32_SHLIB
+DO_SHARED=	1
+
+picargs=	-DPDEL_SHARED=1
+shlib_ext=	dll
+dlibrary=	$(DLLROOT)$(libbase)$(compsfx)$(shlib_major)$(shlib_minor).$(shlib_ext)
+
+else
+
+DO_SHARED=	1
+
+shlib_ext=	so.$(shlib_major).$(shlib_minor)
+dlibrary=	lib$(libbase).$(shlib_ext)
+sharedobjargs= -shared
+sharedlibargs= -shared $(sobjs)
+
+ifeq ($(arch),amd64)
+picargs=	-fPIC
+else
+picargs=	-fpic
+endif
+
+endif
+
+EXTRAINCS=	-I$(srcdir)/ports/$(OS) 
+ifdef WIN32_PORT
+EXTRAINCS+=	-I$(srcdir)/ports/WIN32
+endif
+EXTRAINCS+=	-I$(prefix)/ssl/include -I/usr/kerberos/include  ${OTHERINCDIRS}
+
+#
+# Below here should not need to be edited
+#
+
+SRCS=		@@SRCS@
+SRCDIRS=	@@SRCDIRS@
+INCS=		@@INCS@
+BASEINCS=	@@BASEINCS@
+MAN=		@@MAN@
+MLINKS=		@@MLINKS@
+CFLAGS=		@@CFLAGS@
+SUBDIRS=	@@SUBDIRS@
+
+# Functional add-ons
+
+ifdef MISSING_FUNOPEN
+
+include stdio/Makefile.inc
+SRCS+=		$(STDIO_SRCS)
+SRCDIRS+=	$(STDIO_SRCDIR)
+CFLAGS+=	-I$(STDIO_SRCDIR) -DMISSING_FUNOPEN=1
+
+endif
+
+ifdef NEED_REGEX
+
+include regex/Makefile.inc
+
+SRCS+=		$(REGEX_SRCS)
+SRCDIRS+=	$(REGEX_SRCDIR)
+
+endif
+
+# Compile Rules
+
+VPATH=		$(SRCDIRS) $(PORTSRCDIR)
+
+objs=		$(SRCS:%.c=$(objdir)/%.o)
+sobjs=		$(SRCS:%.c=$(objdir)/%.So)
+
+cman=		$(foreach m,$(MAN),$(m).gz)
+
+# Special .o targets
+structs_xmlrpc.o \
+structs_type_array.o \
+structs_type_data.o : CFLAGS := ${CFLAGS} -fno-strict-aliasing 
+
+ifdef DO_SHARED
+libraries=	$(objdir)/$(slibrary) $(objdir)/$(dlibrary)
+else
+libraries=	$(objdir)/$(slibrary)
+endif
+
+realall:		objdir $(EXTRALIBDEPS) $(libraries) $(cman)
+
+objdir:		$(objdir)
+
+$(objdir):
+	mkdir -p $(objdir)
+
+vpath %.o $(objdir)
+vpath %.So $(objdir)
+vpath %.$(shlib_ext) $(objdir)
+
+%.gz:		%
+	gzip < $+ > $@
+
+$(objdir)/%.o:		%.c
+	$(cc) -c $(OBJOUT) $(CFLAGS) $(DFLAGS) $(hack_h_arg) -I$(srcdir) $(EXTRAINCS) $+ $(PPOUT)
+
+$(objdir)/%.So:		%.c
+	$(cc) -c $(sharedobjargs) $(picargs) $(OBJOUT) $(CFLAGS) $(DFLAGS) $(hack_h_arg) -I$(srcdir) $(EXTRAINCS) $+ $(PPOUT)
+
+$(objdir)/$(slibrary):	$(objs) # $(shared_extra)
+	$(ar) rv $@ $(objs) $(static_extra_objs)
+	$(ranlib) $@
+
+$(objdir)/$(dlibrary):	$(sobjs) $(libs)  $(shared_extra)
+	$(cc) -o $@ $(sharedlibargs)
+
+clean:
+	rm -f $(objs) $(library) $(cman)
+	rm -rf $(objdir)
+
+install:	install-libraries install-header-dirs install-headers install-man
+
+uninstall:	uninstall-libraries uninstall-headers uninstall-man
+
+ifdef DO_SHARED
+IN_SHARED=	$(install) -c $(install_lib_own) -m 555 \
+	    $(objdir)/$(dlibrary) $(DESTDIR)$(slibdir)/$(dlibrary)
+ifdef WIN32_SHLIB
+IN_SHARED2=	$(install) -c $(install_lib_own) -m 755 \
+	    $(objdir)/$(implib) $(DESTDIR)$(libdir)/$(implib)
+endif
+endif
+
+install-libraries:	$(libraries)
+	$(install) -c $(install_lib_own) -m 444 \
+	    $(objdir)/$(slibrary) $(DESTDIR)$(libdir)/$(slibrary)
+	$(IN_SHARED)
+	$(IN_SHARED2)
+
+ifdef DO_SHARED
+UNIN_SHARED=	rm -f $(DESTDIR)$(slibdir)/$(dlibrary)
+endif
+uninstall-libraries:
+	rm -f $(DESTDIR)$(libdir)/$(slibrary)
+	$(UNIN_SHARED)
+
+install-header-dirs:
+	@incdirs=`echo $(INCS) | awk '{for(i=1;i<=NF;i++)print $$i}' \
+	    | grep / | sed 's,^\(.*\)/[^/][^/]*$$,\1,g' | sort -u`; \
+	for dir in $$incdirs; do \
+		if ! [ -d $(DESTDIR)$(includedir)$$dir ]; then \
+			echo $(install) -d $(install_include_own) \
+			    -m 0755 $(DESTDIR)$(includedir)/$$dir; \
+			$(install) -d $(install_include_own) \
+			    -m 0755 $(DESTDIR)$(includedir)/$$dir; \
+		fi; \
+	done
+
+install-headers:
+	@for hdr in $(INCS); do \
+		echo $(install) -c $(install_include_own) -m 444 \
+		    $$hdr $(DESTDIR)$(includedir)/$$hdr; \
+		$(install) -c $(install_include_own) -m 444 \
+		    $$hdr $(DESTDIR)$(includedir)/$$hdr; \
+	done
+	@for hdr in $(BASEINCS); do \
+		echo $(install) -c $(install_include_own) -m 444 \
+		    pdel/$$hdr $(DESTDIR)$(includedir)/$$hdr; \
+		$(install) -c $(install_include_own) -m 444 \
+		    pdel/$$hdr $(DESTDIR)$(includedir)/$$hdr; \
+	done
+
+uninstall-headers:
+	@for hdr in $(INCS); do \
+		echo rm -f $(DESTDIR)$(includedir)/$$hdr; \
+		rm -f $(DESTDIR)$(includedir)/$$hdr; \
+	done
+	@for hdr in $(BASEINCS); do \
+		echo rm -f $(DESTDIR)$(includedir)/pdel/$$hdr; \
+		rm -f $(DESTDIR)$(includedir)/pdel/$$hdr; \
+	done
+
+install-man:	install-manpages install-manlinks
+
+uninstall-man:	uninstall-manpages uninstall-manlinks
+
+install-manpages:	$(cman)
+	@for p in $(MAN); do \
+		section=`echo $$p | sed 's/^[^.]*.//g'`; \
+		f=`basename $$p`; \
+		if [ ! -d $(DESTDIR)$(mandir)/man$$section ]; then \
+			echo $(install) -d $(install_man_own) -m 755 \
+			    $(DESTDIR)$(mandir)/man$$section; \
+			$(install) -d $(install_man_own) -m 755 \
+			    $(DESTDIR)$(mandir)/man$$section; \
+		fi; \
+		echo $(install) -c $(install_man_own) -m 444 \
+		    $$p.gz $(DESTDIR)$(mandir)/man$$section/$$f.gz; \
+		$(install) -c $(install_man_own) -m 444 \
+		    $$p.gz $(DESTDIR)$(mandir)/man$$section/$$f.gz; \
+	done
+
+uninstall-manpages:
+	@for p in $(MAN); do \
+		section=`echo $$p | sed 's/^[^.]*.//g'`; \
+		f=`basename $$p`; \
+		echo rm -f $(DESTDIR)$(mandir)/man$$section/$$f.gz; \
+		rm -f $(DESTDIR)$(mandir)/man$$section/$$f.gz; \
+	done
+
+install-manlinks:
+	@set `echo $(MLINKS) " " | sed 's/\.\([^.]*\) /.\1 \1 /g'`; \
+	while : ; do \
+		case $$# in \
+			0) break;; \
+			[123]) echo "warn: empty MLINK: $$1 $$2 $$3"; break;; \
+		esac; \
+		name=$$1; shift; sect=$$1; shift; \
+		l=$(DESTDIR)$(mandir)/man$$sect/$$name; \
+		name=$$1; shift; sect=$$1; shift; \
+		t=$(DESTDIR)$(mandir)/man$$sect/$$name; \
+		echo $$t.gz -\> $$l.gz; \
+		rm -f $$t $$t.gz; \
+		ln $$l.gz $$t.gz; \
+	done
+
+uninstall-manlinks:
+	@set `echo $(MLINKS) " " | sed 's/\.\([^.]*\) /.\1 \1 /g'`; \
+	while : ; do \
+		case $$# in \
+			0) break;; \
+			[123]) echo "warn: empty MLINK: $$1 $$2 $$3"; break;; \
+		esac; \
+		name=$$1; shift; sect=$$1; shift; \
+		l=$(DESTDIR)$(mandir)/man$$sect/$$name; \
+		name=$$1; shift; sect=$$1; shift; \
+		t=$(DESTDIR)$(mandir)/man$$sect/$$name; \
+		echo rm -f $$t.gz; \
+		rm -f $$t.gz; \
+	done
+

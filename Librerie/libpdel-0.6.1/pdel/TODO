@@ -1,0 +1,13 @@
+$Id: TODO 824 2002-11-11 23:34:23Z archie $
+
+- Add a 'wrapper' servlet that can match with same pattern/order algorithm
+  as the http_server itself.
+
+- Add a 'logger' servlet.
+
+- Fix all man pages to have the proper RETURN VALUES and ERRORS sections.
+
+- Make the structs_find() operations implemented by a type-specific method,
+  instead of having special cases for struct, array, and union everywhere.
+  Need to defined the new method(s) carefully.
+

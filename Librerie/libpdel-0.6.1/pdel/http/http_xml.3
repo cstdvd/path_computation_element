@@ -1,0 +1,246 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: http_xml.3 968 2005-02-14 22:01:23Z archie $
+.\"
+.Dd April 22, 2002
+.Dt HTTP_XML 3
+.Os
+.Sh NAME
+.Nm http_xml_send ,
+.Nm http_xml_send_xmlrpc ,
+.Nd XML and XML-RPC requests over HTTP
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In netinet/in.h
+.In pdel/http/xml.h
+.Ft int
+.Fn http_xml_send "struct http_client *client" "struct in_addr ip" "u_int16_t port" "int https" "const char *urlpath" "const char *username" "const char *password" "const char *ptag" "const char *pattrs" "const struct structs_type *ptype" "const void *payload" "int pflags" "const char *rtag" "char **rattrsp" "const char *rattrs_mtype" "const struct structs_type *rtype" "void *reply" "int rflags" "structs_xmllog_t *rlogger"
+.Ft int
+.Fn http_xml_send_xmlrpc "struct http_client *client" "struct in_addr ip" "u_int16_t port" "int https" "const char *username" "const char *password" "const char *methodName" "u_int nparams" "const struct structs_type **ptypes" "const void **pdatas" "const struct structs_type *rtype" "void *reply" "struct xmlrpc_compact_fault *fault" "structs_xmllog_t *rlogger"
+.Ft int
+.Fn http_xml_send_xmlrpc2 "struct http_client *client" "struct in_addr ip" "u_int16_t port" "int https" "const char *username" "const char *password" "const char *urlpath" "const char *methodName" "u_int nparams" "const struct structs_type **ptypes" "const void **pdatas" "const struct structs_type *rtype" "void *reply" "struct xmlrpc_compact_fault *fault" "structs_xmllog_t *rlogger"
+.Sh DESCRIPTION
+These functions send and receive XML and XML-RPC over HTTP and HTTPS.
+They are convenience wrappers around the
+.Xr http_request 3 ,
+.Xr http_response 3 ,
+.Xr structx_xml_input 3 ,
+.Xr structs_xml_output 3 ,
+and
+.Xr structs_xmlrpc 3
+routines.
+.Pp
+.Fn http_xml_send
+uses
+.Fa client
+to send an HTTP request for the URL path
+.Fa urlpath
+(which must being with a '/') to IP address
+.Fa ip
+and port
+.Fa port .
+If
+.Fa https
+is non-zero, an SSL (HTTPS) request is made.
+The
+.Fa username
+and
+.Fa password
+may be non-
+.Dv NULL
+for "Basic" HTTP authentication.
+.Pp
+The remaining arguments to
+.Fn http_xml_send
+describe the optional XML request payload and the expected XML reply payload.
+.Pp
+To include a payload in the request,
+.Fa payload
+should be non-
+.Dv NULL .
+If so,
+.Fa ptag ,
+.Fa pattrs ,
+.Fa ptype ,
+.Fa payload ,
+and
+.Fa pflags
+are handled exactly like the
+.Fa elem_tag ,
+.Fa attrs ,
+.Fa type ,
+.Fa data ,
+and
+.Fa flags
+parameters (respectively) to the function
+.Xr structs_xml_output 3 .
+The request payload will be sent using an HTTP POST with MIME type "text/xml".
+If
+.Fa payload
+is
+.Dv NULL ,
+an HTTP GET request is sent instead.
+.Pp
+The HTTP response must contain an XML document, which is parsed and
+converted into native binary format.
+The
+.Fa rtag ,
+.Fa rattrsp ,
+.Fa rattrs_mtype ,
+.Fa rtype ,
+.Fa reply ,
+.Fa rflags ,
+and
+.Fa rlogger
+are handled exactly like the
+.Fa elem_tag ,
+.Fa attrp ,
+.Fa attr_type ,
+.Fa type ,
+.Fa data ,
+.Fa flags ,
+and
+.Fa logger
+parameters (respectively) to the function
+.Xr structs_xml_input 3 .
+.Pp
+.Fn http_xml_send_xmlrpc
+sends an XML-RPC request.
+The
+.Fa client ,
+.Fa ip ,
+.Fa port ,
+.Fa https ,
+.Fa username ,
+.Fa password ,
+and
+.Fa rlogger
+parameters are as with
+.Fn http_xml_send .
+The XML-RPC method name is pointed to by
+.Fa methodName .
+.Fa nparams
+XML-RPC request parameters are sent;
+.Fa ptypes
+must point to an array of 
+.Fa nparams
+parameter types and
+.Fa pdatas
+to an array of 
+.Fa nparams
+parameter values having the corresponding types.
+These are
+.Dq compact
+.Xr structs 3
+types that will be automatically expanded into
+.Dq exploded
+XML-RPC types when the actual request is sent (see
+.Xr structs_xmlrpc 3) .
+.Pp
+To send exploded XML-RPC values directly, set
+.Fa ptypes
+to
+.Dv NULL .
+Then it will be assumed that each element in the
+.Fa pdatas
+array is an instance of
+.Xr structs_type_xmlrpc_value 3 ,
+i.e., a
+.Li "struct xmlrpc_value_union" .
+.Pp
+If
+.Fa reply
+is
+.Dv NULL ,
+the reply is ignored.
+Otherwise, the XML-RPC return value must have
+.Dq compact
+type matching
+.Fa rtype
+and
+.Fa reply
+must point to an uninitialized region of memory large enough
+to hold an instance of
+.Fa rtype .
+If the request is successful and no fault is returned,
+.Fn http_send_xmlrpc
+returns zero and
+.Fa reply
+will be initialized with the
+.Dq compacted
+XML-RPC return value.
+If the returned value does not match
+.Fa rtype ,
+then -1 is returned with
+.Va errno
+set appropriately.
+.Pp
+To have the exploded XML-RPC value returned directly, set
+.Fa rtype
+to
+.Dv NULL .
+Then it will be assumed that
+.Fa reply
+points to an uninitialized instance of
+.Xr structs_type_xmlrpc_value 3 ,
+i.e., a
+.Li "struct xmlrpc_value_union" ,
+and the reply will be returned unmodified.
+.Pp
+If an XML-RPC fault is returned, then
+.Fa "*reply"
+remains unmodified and
+.Fn http_xml_send_xmlrpc
+returns -2.
+In addition, if
+.Fa "fault"
+is not
+.Dv NULL ,
+then it is assumed to point to an uninitialized instance of
+.Fa structs_type_xmlrpc_compact_fault ,
+i.e., a
+.Li "struct xmlrpc_compact_fault" .
+The instance will be initialized with the received XML-RPC fault.
+The calling function is responsible for eventually uninitializing it.
+.Pp
+.Fn http_xml_send_xmlrpc2
+is the same as
+.Fn http_xml_send_xmlrpc
+but allows the caller to specify an URL path other than the standard
+.Dq /RPC2 .
+sends an XML-RPC request.
+.Sh RETURN VALUES
+Upon error the above functions return -1 and set
+.Va errno
+to an appropriate value.
+.Pp
+If
+.Fn http_xml_send_xmlrpc
+or
+.Fn http_xml_send_xmlrpc2
+receives an XML-RPC fault from the server,
+-2 is returned.
+.Sh SEE ALSO
+.Xr http_client 3 ,
+.Xr http_request 3 ,
+.Xr http_response 3 ,
+.Xr http_servlet_xml 3 ,
+.Xr http_servlet_xmlrpc 3 ,
+.Xr libpdel 3 ,
+.Xr structs_xml_input 3 ,
+.Xr structs_xmlrpc 3
+.Rs
+.%T "XML-RPC Home Page"
+.%O "http://www.xmlrpc.org/"
+.Re
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org
+.Sh BUGS
+HTTP redirects are not followed; instead they generate an error.

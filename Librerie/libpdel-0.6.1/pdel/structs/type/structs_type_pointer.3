@@ -1,0 +1,51 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: structs_type_pointer.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRUCTS_TYPE_POINTER 3
+.Os
+.Sh NAME
+.Nm structs_type_pointer
+.Nd structs type for pointers
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In pdel/structs/structs.h
+.In pdel/structs/type/pointer.h
+.Fn STRUCTS_POINTER_TYPE reftype mtype
+.Sh DESCRIPTION
+The
+.Fn STRUCTS_POINTER_TYPE
+macro defines a
+.Xr structs 3
+type (i.e., a
+.Dv "struct structs_type" )
+for describing pointers to data structures allocated from heap memory.
+.Fa reftype
+is the structs type describing the pointed-to data structure;
+it must be a pointer to a
+.Dv "struct structs_type" .
+.Fa mtype
+is the
+.Xr typed_mem 3
+type used for allocating instances of the data structure.
+.Pp
+The default value for this type is a pointer to a default
+value data structure.
+.Pp
+It is illegal for a pointer described by this type to be
+.Dv NULL .
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr structs 3 ,
+.Xr structs_type 3 ,
+.Xr typed_mem 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

@@ -1,0 +1,195 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: if_util.3 924 2004-06-20 19:08:32Z archie $
+.\"
+.Dd April 22, 2002
+.Dt IF_UTIL 3
+.Os
+.Sh NAME
+.Nm if_util
+.Nd system networking interface utility routines
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In netinet/in.h
+.In pdel/net/if_util.h
+.Ft int
+.Fn if_get_list "char ***listp" "const char *mtype"
+.Ft int
+.Fn if_get_type "const char *ifname"
+.Ft int
+.Fn if_get_flags "const char *ifname"
+.Ft int
+.Fn if_set_flags "const char *ifname" "int flags"
+.Ft int
+.Fn if_get_mtu "const char *ifname"
+.Ft int
+.Fn if_set_mtu "const char *ifname" "u_int mtu"
+.Ft int
+.Fn if_get_link_addr "const char *ifname" "struct sockaddr_dl **sdlp" "const char *mtype"
+.Ft int
+.Fn if_get_ip_addrs "const char *ifname" "struct in_addr **iplistp" "struct in_addr **nmlistp" "const char *mtype"
+.Ft int
+.Fn if_get_ip_addr "const char *ifname" "struct in_addr *ipp" "struct in_addr *nmp"
+.Ft int
+.Fn if_add_ip_addr "const char *iface" "struct in_addr ip" "struct in_addr mask" "struct in_addr dest"
+.Ft int
+.Fn if_del_ip_addr "const char *iface" "struct in_addr ip" "struct in_addr mask" "struct in_addr dest"
+.Ft int
+.Fn if_get_arp "struct in_addr ip" "u_char *ether"
+.Ft int
+.Fn if_set_arp "struct in_addr ip" "const u_char *ether" "int temp" "int publish"
+.Ft int
+.Fn if_flush_arp "void"
+.Sh DESCRIPTION
+These functions are useful for accessing and configuring system networking
+interfaces, especially for IP networking.
+.Pp
+.Fn if_get_list
+constructs a list of the names of all interfaces present in the system.
+Zero or more strings are allocated and pointed to by the elements of a newly
+allocated array of pointers.
+The length of the array is returned by
+.Fn if_get_list
+and a pointer to the array is stored in
+.Fa "*listp" .
+Each string, as well as the array itself, is allocated with
+.Xr typed_mem 3
+type
+.Fa mtype .
+The caller is responsible for eventually freeing the individual
+strings as well as the array itself.
+.Pp
+.Fn if_get_type
+returns the type of the interface named
+.Fa ifname .
+The interface types are defined in the include file
+.Li "<net/if_types.h>" .
+.Pp
+.Fn if_get_flags
+gets the flags associated with the interface named
+.Fa ifname .
+The interface flags are defined in the include file
+.Li "<net/if.h>" .
+.Pp
+.Fn if_set_flags
+attempts to set the flags associated with the interface named
+.Fa ifname .
+.Pp
+.Fn if_get_mtu
+returns the current MTU associated with the interface named
+.Fa ifname .
+.Pp
+.Fn if_set_mtu
+attempts to set the MTU associated with the interface named
+.Fa ifname .
+.Pp
+.Fn if_get_link_addr
+retrieves the link layer address associated with the interface named
+.Fa ifname ,
+allocates a buffer with
+.Xr typed_mem 3
+type
+.Fa mtype
+to hold it, and stores a pointer to the buffer in
+.Fa "*sdlp" .
+The caller is responsible for eventually freeing the buffer.
+The
+.Li "struct sockaddr_dl"
+type is defined in the include file
+.Li "<net/if_dl.h>" .
+.Pp
+.Fn if_get_ip_addrs
+retrieves the list of all IP addresses (with netmasks) configured on
+the interface named
+.Fa ifname .
+The IP addresses and netmasks are stored in two arrays allocated with
+.Xr typed_mem 3
+type
+.Fa mtype ,
+and pointers to these arrays are stored in
+.Fa "*iplistp"
+and
+.Fa "*nmlistp" ,
+respectively.
+The caller is responsible for eventually freeing the arrays.
+The length of the arrays is returned.
+.Pp
+.Fn if_get_ip_addr
+retrieves the first IP address and netmask configured on
+the interface named
+.Fa ifname
+and stores them in
+.Fa "*ipp"
+and
+.Fa "*nmp" ,
+respectively.
+.Pp
+.Fn if_add_ip_addr
+configures a new IP address on the interface named
+.Fa ifname ,
+using the netmask
+.Fa mask
+and destination
+.Fa dest .
+Existing IP addresses configured on the interface are not removed.
+.Fa dest
+should be 0.0.0.0 for non-point-to-point interfaces.
+.Pp
+.Fn if_del_ip_addr
+removes a configured IP address, netmask, and destination
+from the interface named
+.Fa ifname .
+.Fa dest
+should be 0.0.0.0 for non-point-to-point interfaces.
+.Pp
+.Fn if_get_arp
+retrieves the ARP table entry associated with the IP address
+.Fa ip
+and stores it in the buffer pointed to by
+.Fa ether ,
+which must be at least six bytes long.
+.Pp
+.Fn if_set_arp
+sets an ARP table entry for the IP address
+.Fa ip
+to resolve to the Ethernet address pointed to by
+.Fa ether .
+The
+.Fa temp
+flag indicates a temporary entry.
+The
+.Fa publish
+flag indicates that the local machine should proxy-ARP for this IP address.
+If
+.Fa ether
+is
+.Dv NULL ,
+any matching ARP table entry is cleared.
+The
+.Pp
+.Fn if_flush_arp
+clears the ARP table.
+.Sh RETURN VALUES
+All of the above functions return -1 to indicate an error, with
+.Va errno
+set appropriately.
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr typed_mem 3 ,
+.Xr route_msg 3 ,
+.Xr uroute 3 ,
+.Xr route 4
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org
+.Sh BUGS
+There is no way to retrieve destination addresses configured
+on a point-to-point interface.
+.Pp
+These routines should be less IPv4-centric.

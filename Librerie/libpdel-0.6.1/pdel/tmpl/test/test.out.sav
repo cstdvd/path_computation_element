@@ -1,0 +1,160 @@
+
+Calling func1: [ func1(arg1, arg two) ]
+
+Calling func2(3): [ func2([ func3() ]) ]
+
+
+foo="bar"
+bar=""
+
+foo="blab"
+
+[ ERROR: @error_test(this is, a test): Sample error message here ]
+
+HTML Escaping "!@#$%^&*()}{][-|\"';:?></.,~`"  --> !@#$%^&amp;*()}{][-|\&quot;';:?&gt;&lt;/.,&#126;`
+
+URL Encoding "!@#$%^&*()}{][-|\"';:?></.,~`"   --> !@%23$%25%5e&*()%7d%7b%5d%5b-%7c%5c%22'%3b:%3f%3e%3c%2f.,~%60
+
+An at sign looks like this: ``@''
+
+Should see this.
+Should see this.
+
+@and("0", "0") = 0
+@and("0", "1") = 0
+@and("1", "0") = 0
+@and("1", "1") = 1
+@or("0", "0") = 0
+@or("0", "1") = 1
+@or("1", "0") = 1
+@or("1", "1") = 1
+
+Should see this.
+
+@parse error()
+@parseerror(()
+@parseerror(@okfunc([ ERROR: @okfunc(): unknown template function ], loopindex()), @bad func())
+@parseerror("bogus string\")
+@parseerror("bogus string
+
+[ ERROR: @foo_bar(): unknown template function ]
+[ ERROR: @foobar(abc): unknown template function ]
+[ ERROR: @janfu(ABC): unknown template function ]
+[ ERROR: @janfu(ABC): unknown template function ]
+
+This is iteration 0.0.
+This is iteration 0.1.
+This is iteration 0.2.
+
+This is iteration 1.0.
+This is iteration 1.1.
+This is iteration 1.2.
+
+
+
+just some random data here.
+
+0..1..2....done
+what follows was @eval()'d:
+loop: 0..1..2....done
+
+[ ERROR: error string ]
+
+MARKER C
+
+
+  
+  
+  
+  
+
+
+MARKER D
+
+
+
+	First iteration
+
+
+
+	Second iteration
+
+
+
+	Last iteration
+
+
+
+MARKER E
+
+This should be "abc": "abc"
+
+    3: should see this
+    
+      4: should see this
+    
+
+
+
+@ notfunc()
+
+
+
+	Foo is 4
+	
+		
+		
+	Foo is 3
+	
+	
+		
+		
+	Foo is 2
+	
+	
+	
+		
+		
+
+
+
+[ ERROR: @invoke(): "argc" must be greater than zero ]
+
+[ ERROR: @(): unknown template function ]
+
+[ ERROR: @unknown_function(): unknown template function ]
+
+
+
+
+
+Number of arguments is 3
+Argument #0 is "dfunc".
+Argument #1 is "1st argument".
+Argument #2 is "2nd argument".
+
+
+
+23 / 4 = 5
+123 / 0 = divide by zero
+-12 % 5 = -2
+
+
+Number of arguments is 4
+Argument #0 is "dfunc".
+Argument #1 is "foo".
+Argument #2 is "bar".
+Argument #3 is "jan".
+
+
+
+
+
+Another def'n of dfunc (3 args)
+
+
+
+[ ERROR: too much recursion in template execution ]
+
+last line
+

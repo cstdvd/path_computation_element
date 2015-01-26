@@ -1,0 +1,100 @@
+<html>
+<!-- $Id: logon.tmpl 369 2002-07-10 23:20:24Z archie $ -->
+<head>
+<title>HTTP server demo page</title>
+</head>
+<body bgcolor="#ffffff">
+
+<h3>Authorization</h3>
+
+@if(@equal(@query("button"), ""))
+
+    <form action="/logon">
+
+    <p>
+    This servlet is implemented via the http_servlet_tmpl(3) servlet
+    using the template file "logon.tmpl".
+
+    <p>
+    This logon page also tests the http_servlet_cookieauth(3) servlet.
+
+    <p>
+    @if(@equal(@authname(), ""))
+	You are currently not logged in.
+
+	<p>
+	Enter authorization time:
+	<select name="time">
+	<option value="2">2 seconds</option>
+	<option value="10">10 seconds</option>
+	<option value="60">1 minute</option>
+	<option value="300">5 minutes</option>
+	<option value="3600">1 hour</option>
+	<option value="0" selected>While browser open</option>
+	</select>
+
+	<p>
+	Enter your name here: <input type="text" name="name" size="12">
+
+	<p>
+	Press here to login: <input type="submit" name="button" value="Login">
+
+	@if(@not(@equal(@query_string(), "")))
+		<input type="hidden" name="redirect"
+		    value="@htmlencode(@query_string())">
+	@endif
+
+    @else
+	You currently logged in as "@authname()".
+
+	<p>
+	Click <a href="/">HERE</a> to continue with more servlet demos.
+
+	<p>
+	Click <a href="/logon">HERE</a> to reload this page.
+
+	<p>
+	Press here to logout: <input type="submit" name="button" value="Logout">
+	<input type="hidden" name="name" value="@authname()">
+    @endif
+
+    </form>
+
+@elif(@equal(@query("button"), "Logout"))
+
+    <p>
+    Logging out "@query("name")"...
+
+    <p>
+    @authorize("")
+
+    <p>
+    Click <a href="/logon">HERE</a> to continue.
+
+@else
+
+    <p>
+    Logging you in as "@query("name")"...
+
+    @if(@query("time"))
+	<p>
+	Logon valid for @query("time") seconds.
+    @endif
+
+    <p>
+    @authorize(@query("name"), @query("time"))
+
+    @if(@not(@equal(@query("redirect"), "")))
+	    <p>
+	    Click <a href="@query("redirect")">HERE</a> to continue on to
+	    <b>@htmlencode(@query("redirect"))</b>
+    @else
+	    <p>
+	    Click <a href="/logon">HERE</a> to continue.
+    @endif
+
+
+@endif
+
+</body>
+</html>

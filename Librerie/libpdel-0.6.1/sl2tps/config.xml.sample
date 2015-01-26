@@ -1,0 +1,92 @@
+<?xml version="1.0" standalone="yes"?>
+
+<!-- $Id: config.xml.sample 984 2006-10-18 05:29:37Z mgooderum $ -->
+
+<!--
+	sl2tps example configuration file
+
+	Copy and edit this file according to your local preferences.
+-->
+
+<config version="0">
+
+    <!--
+	Configure PID file. No need to change unless you run multiple servers.
+    -->
+    <pidfile>/var/run/sl2tps.pid</pidfile>
+
+    <!--
+	Configure syslog logging. Where should we log stuff.
+    -->
+    <error_log>
+	<name>sl2tps</name>
+	<facility>daemon</facility>
+	<min_severity>info</min_severity>    <!-- "debug" for more details -->
+	<!--
+	    You can log to a remote syslog server by including this:
+		<remote_server>192.168.200.123</remote_server>
+	-->
+    </error_log>
+
+    <!--
+	Configure bind IP address (if you want to bind to a specific IP),
+	otherwise you can leave this out.
+	    <bind_ip>10.1.1.1</bind_ip>
+    -->
+
+    <!--
+	Configure bind port (if you want to bind to a non-standard UDP port),
+	otherwise you can leave this out.
+	    <bind_port>1234</bind_port>
+    -->
+
+    <!--
+	Configure L2TP tunnel inside IP address - REQUIRED.
+	This is typically the "inside the firewall" IP address
+    -->
+    <inside_ip>192.168.100.1</inside_ip>
+
+    <!--
+	Configure DNS server information to pass to peers if they request it.
+	Windows peers will need this.
+    -->
+    <dns_servers>
+	<ip>192.168.100.10</ip>
+	<ip>192.168.100.20</ip>
+    </dns_servers>
+
+    <!--
+	Configure NBNS server information to pass to Windows peers.
+    -->
+    <nbns_servers>
+	<ip>192.168.100.30</ip>
+	<ip>192.168.100.40</ip>
+    </nbns_servers>
+
+    <!--
+	Configure dynamic IP address range, by giving a start adddress
+	and the number of IP addresses available in the range. Typically
+	these addresses would be on the inside of the firewall.
+    -->
+    <ip_pool_start>192.168.100.100</ip_pool_start>
+    <ip_pool_size>100</ip_pool_size>
+
+    <!--
+	Configure users. Each user has a name and password, plus
+	an optional static IP address assignment. If no static IP
+	address is given, one will be chosen from the dynamic pool.
+    -->
+    <users>
+	<user>
+	    <name>joe</name>
+	    <password>abc123</password>
+	</user>
+	<user>
+	    <name>fred</name>
+	    <password>blahblah</password>
+	    <ip>192.168.200.1</ip>
+	</user>
+    </users>
+
+</config>
+

@@ -1,0 +1,263 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: gtree.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt GTREE 3
+.Os
+.Sh NAME
+.Nm gtree
+.Nd generic balanced tree library
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdio.h
+.In pdel/util/gtree.h
+.Ft "struct gtree *"
+.Fn gtree_create "void *arg" "const char *mtype" "gtree_cmp_t *cmp" "gtree_add_t *add" "gtree_del_t *del" "gtree_print_t print"
+.Ft void
+.Fn gtree_destroy "struct gtree **gp"
+.Ft void
+.Fn gtree_arg "struct gtree *g"
+.Ft "void *"
+.Fn gtree_get "struct gtree *g" "const void *item"
+.Ft int
+.Fn gtree_put "struct gtree *g" "const void *item"
+.Ft int
+.Fn gtree_put_prealloc "struct gtree *g" "const void *item" "void *node"
+.Ft u_int
+.Fn gtree_node_size "void"
+.Ft int
+.Fn gtree_remove "struct gtree *g" "const void *item"
+.Ft u_int
+.Fn gtree_size "struct gtree *g"
+.Ft "void *"
+.Fn gtree_first "struct gtree *g"
+.Ft "void *"
+.Fn gtree_last "struct gtree *g"
+.Ft "void *"
+.Fn gtree_next "struct gtree *g" "const void *item"
+.Ft "void *"
+.Fn gtree_prev "struct gtree *g" "const void *item"
+.Ft int
+.Fn gtree_traverse "struct gtree *g" "int (*handler)(struct gtree *g, void *item)"
+.Ft int
+.Fn gtree_dump "struct gtree *g" "void ***listp" "const char *mtype"
+.Ft void
+.Fn gtree_print "struct gtree *g" "FILE *fp"
+.Sh DESCRIPTION
+The
+.Nm gtree
+functions implement a generic balanced tree data structure.
+A balanced tree stores a sorted set of items of type
+.Ft "void *"
+and guarantees O(log n) search time.
+The user code supplies callback routines for:
+.Bl -bullet -offset 3n
+.It
+Comparing two items
+.It
+Housekeeping associated with adding and removing an item
+.El
+.Pp
+.Fn gtree_create
+creates a new tree.
+The
+.Fa arg
+parameter can be retrieved at any time via
+.Fn gtree_arg
+and is otherwise ignored.
+.Fa mtype
+is a typed memory type string (see
+.Xr typed_mem 3 )
+used when allocating memory for the tree.
+.Pp
+The
+.Fa cmp ,
+.Fa add ,
+.Fa del ,
+and
+.Fa print
+parameters are pointers to user-supplied callback functions having
+the following types:
+.Bd -literal -offset 3n
+typedef int     gtree_cmp_t(struct gtree *g,
+                    const void *item1, const void *item2);
+typedef void    gtree_add_t(struct gtree *g, void *item);
+typedef void    gtree_del_t(struct gtree *g, void *item);
+typedef const   char *gtree_print_t(struct gtree *g, const void *item);
+
+.Ed
+The
+.Fa cmp
+function should return an integer that is negative, zero, or positive
+if the first item is less than, equal to, or greater than the second.
+This function must return values consistent with a total ordering
+of the items.
+If not specified,
+.Dv "item1 - item2"
+is used, i.e., the sorting is based on the pointers themselves.
+.Pp
+The
+.Fa add
+and
+.Fa del
+routines, if not
+.Dv NULL ,
+will be called whenever an item is added to, or removed from, the tree.
+For example, if
+.Fn gtree_put
+causes a new item to replace an old item, there will be a call to the
+.Fa del
+function for the old item, followed by a call to the
+.Fa add
+function for the new item.
+These callbacks are typically used to increase and decrease reference counts.
+.Pp
+The
+.Fa print
+callback (also optional) is used by
+.Fn gtree_print
+to print an item when dumping the contents of the tree for debugging.
+.Pp
+.Fn gtree_destroy
+destroys a tree and free's all associated memory.
+If any items remain in the tree, the
+.Fa del
+callback will be invoked once for each item.
+Note that this function takes a pointer to a pointer to a tree.
+Upon return, the pointer to the tree will be set to
+.Dv NULL .
+If it is already equal to
+.Dv NULL ,
+.Fn gtree_destroy
+does nothing.
+.Pp
+.Fn gtree_get
+retrieves an item previously stored in the tree, or else returns
+.Dv NULL
+if the item is not found.
+.Pp
+.Fn gtree_put
+adds an item to the tree, replacing any item that is equal to it
+(as determined by the
+.Fa cmp
+callback).
+.Dv NULL
+is an invalid item and may not be stored in a tree.
+.Pp
+.Fn gtree_put_prealloc
+is equivalent to
+.Fn gtree_put
+except that the caller pre-allocates the memory necessary to add
+the item to the tree, which guarantees a successful operation.
+.Fa node
+must point to memory allocated with the same
+.Xr typed_mem 3
+memory type as was passed to
+.Fn gtree_new
+and the size of this memory block must be at least as large as the
+size of an internal node, which is returned by
+.Fn gtree_node_size .
+.Pp
+.Fn gtree_remove
+removes an item from the tree.
+If the item does not exist, nothing happens.
+.Pp
+.Fn gtree_size
+returns the number of items in the tree.
+.Pp
+.Fn gtree_first
+and
+.Fn gtree_last
+return the first and last items in the tree, respectively, or
+.Dv NULL
+if the tree is empty.
+.Fn gtree_next
+and
+.Fn gtree_prev
+return the next and previous item in the tree to
+.Fa item ,
+or
+.Dv NULL
+if there are no more items in the tree.
+Traversing the entire tree via
+.Fn gtree_next
+and
+.Fn gtree_prev
+takes O(n log n) time, where n is the number of items in the tree.
+.Pp
+.Fn gtree_traverse
+traverses the items in the tree in order, invoking
+.Fa handler
+with each item.
+If
+.Fa handler
+returns -1, the traversal stops and
+.Fn gtree_traverse
+immediately returns -1 to the caller.
+Otherwise,
+.Fn gtree_traverse
+returns 0 after all items have been traversed.
+Any attempt to modify the tree before
+.Fn gtree_traverse
+returns will return an error.
+.Pp
+.Fn gtree_dump
+generates a sorted array of all the items in the tree.
+A pointer to the array is stored in
+.Fa "*listp" .
+The array is allocated with memory type
+.Fa mtype .
+The caller must eventually free the array, also using
+.Fa mtype .
+.Pp
+.Fn gtree_print
+prints out the tree for debugging purposes.
+.Sh RETURN VALUES
+.Fn gtree_put
+and
+.Fn gtree_put_prealloc
+return 0 if the item is new, or 1 if the item replaced an existing item.
+.Pp
+.Fn gtree_remove
+returns 0 if the item was not found, or 1 if the item was found and removed.
+.Pp
+.Fn gtree_dump
+returns the number of items in the generated array.
+.Pp
+.Fn gtree_create ,
+.Fn gtree_put ,
+and
+.Fn gtree_dump
+return -1 or
+.Dv NULL
+to indicate an error;
+.Va errno
+will be set to the appropriate value.
+.Sh IMPLEMENTATION NOTES
+The
+.Nm gtree
+library is designed to gracefully handle certain bugs in the user code.
+For example, a reentrant call to
+.Fn gtree_put
+from within the
+.Fa add
+callback function called as a result of a previous call to
+.Fn gtree_put
+will return an error with
+.Va errno
+set to
+.Er EBUSY .
+.Sh SEE ALSO
+.Xr ghash 3 ,
+.Xr libpdel 3 ,
+.Xr typed_mem 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

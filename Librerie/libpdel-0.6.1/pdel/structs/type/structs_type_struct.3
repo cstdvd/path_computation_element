@@ -1,0 +1,154 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: structs_type_struct.3 958 2004-12-16 16:49:57Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRUCTS_TYPE_STRUCT 3
+.Os
+.Sh NAME
+.Nm structs_type_struct
+.Nd structs types for C structures
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In stddef.h
+.In pdel/structs/structs.h
+.In pdel/structs/type/struct.h
+.Fn STRUCTS_STRUCT_TYPE struct_name field_list
+.Fn STRUCTS_STRUCT_FIELD struct_name field_name field_type
+.Fn STRUCTS_STRUCT_FIELD2 struct_name field_name display_name field_type
+.Sh DESCRIPTION
+The
+.Fn STRUCTS_STRUCT_TYPE
+macro defines a
+.Xr structs 3
+type (i.e., a
+.Dv "struct structs_type" )
+for describing the C structure
+.Li struct
+.Fa struct_name .
+The
+.Fa field_list
+parameter must point to an array of
+.Li "struct structs_field"
+structures describing the fields:
+.Pp
+.Bd -literal -compact -offset 3n
+/* This structure describes one field in a structure */
+struct structs_field {
+    const char                  *name;      /* field name */
+    const struct structs_type   *type;      /* field type */
+    u_int16_t                   size;       /* field size */
+    u_int16_t                   offset;     /* field offset */
+};
+.Ed
+.Pp
+The fields need not be listed in the array in the same order as they
+are declared in the C structure.
+However, the array must be terminated with
+.Dv STRUCTS_STRUCT_FIELD_END ,
+which is defined as follows:
+.Pp
+.Dl #define STRUCTS_STRUCT_FIELD_END { NULL, NULL, 0, 0 }
+.Pp
+The
+.Fn STRUCTS_STRUCT_FIELD
+macro should be used to define an entry in the field array:
+.Fa field_name
+is the name of the field and
+.Fa field_type
+is a pointer to the
+.Xr structs 3
+type describing the field.
+.Pp
+To define a field and give it a different
+.Xr structs 3
+name than its name in the C structure, use
+.Fn STRUCTS_STRUCT_FIELD2
+with the desired
+.Fa display_name
+in double quotes.
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr structs 3 ,
+.Xr structs_type 3 ,
+.Xr structs_type_union 3
+.Sh EXAMPLES
+The program below prints out the contents (as an ASCII string)
+of the field specified on the command line:
+.Pp
+.Bd -literal -compact -offset 3n
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <err.h>
+
+#include <pdel/structs/structs.h>
+#include <pdel/structs/type/struct.h>
+#include <pdel/structs/type/string.h>
+#include <pdel/structs/type/ip4.h>
+#include <pdel/util/typed_mem.h>
+
+/* My structure */
+struct foobar {
+        char            *name;
+        u_int16_t       index;
+        struct in_addr  ipaddr;
+};
+
+/* Structs type describing a 'struct foobar' */
+static const struct structs_field foobar_fields = {
+        STRUCTS_STRUCT_FIELD(foobar, name, &structs_type_string),
+        STRUCTS_STRUCT_FIELD(foobar, index, &structs_type_uint16),
+        STRUCTS_STRUCT_FIELD(foobar, ipaddr, &structs_type_ip4),
+        STRUCTS_STRUCT_FIELD_END
+};
+static const struct structs_type foobar_type =
+        STRUCTS_STRUCT_TYPE(foobar, &foobar_fields);
+
+int
+main(int argc, char **argv)
+{
+	struct foobar f;
+	const char *fieldname;
+	char *fieldvalue;
+
+	/* Initialize our structure with some contents */
+	if (structs_init(&foobar_type, NULL, &f) == -1)
+		err(1, "structs_init");
+	f.index = 123;
+	(void)inet_aton("12.34.56.78", &f.ipaddr);
+	if (structs_set_string(&foobar_type, "name",
+	    "this is a string", &f, NULL, 0) == -1)
+		err(1, "structs_set_string");
+
+	/* Get the requested field's name from the command line */
+	if (argc != 2)
+		err(1, "usage: getfield <fieldname>");
+	fieldname = argv[1];
+
+	/* Display the requested field's value */
+	if ((fieldvalue = structs_get_string(&foobar_type,
+	    fieldname, &f, TYPED_MEM_TEMP)) == NULL)
+		err(1, "%s", fieldname);
+	printf("The value of field \\"%s\\" is: %s\\n",
+	    fieldname, fieldvalue);
+
+	/* Done, clean up */
+	FREE(TYPED_MEM_TEMP, fieldvalue);
+	structs_free(&foobar_type, NULL, &f);
+	return (0);
+}
+.Ed
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

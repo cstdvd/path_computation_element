@@ -1,0 +1,168 @@
+#!/bin/sh
+
+#
+# @COPYRIGHT@
+#
+# Author: Archie Cobbs <archie@freebsd.org>
+#
+# $Id: rc.sslkey 901 2004-06-02 17:24:39Z archie $
+#
+# This script is used to verify/create keys and certificates for SSL.
+#
+
+# Our OpenSSL config file
+CONFIG_FILE="cert.cfg"
+
+# Our CA key and self-signed cert
+CA_DIR="ca"
+CA_KEY="${CA_DIR}/ca.key"
+CA_CRT="${CA_DIR}/ca.crt"
+
+#
+# Create a new certificate authority if needed
+#
+check_ca()
+{
+	HOSTNAME=`hostname`
+	check_cert "${CA_KEY}" "${CA_CRT}" "${HOSTNAME} Certificate Authority"
+}
+
+#
+# This verifies that we have a valid RSA key pair and creates one if not.
+#
+# Args:
+#	$1	Key file
+#
+check_key()
+{
+	if [ ! -r "${1}" ]; then
+		rm -f "${1}"
+	elif ! openssl rsa -check -in "${1}" -noout >/dev/null 2>&1; then
+		echo rc.sslkey: RSA key is invalid
+		rm -f "${1}"
+	fi
+	if [ ! -r "${1}" ]; then
+		echo rc.sslkey: Generating new RSA key pair for "${1}"
+		openssl genrsa -out "${1}" 1024 \
+		    >/dev/null 2>&1
+	fi
+}
+
+#
+# Sign a public key using our semi-bogus certificate authority
+#
+# Args:
+#	$1	Key file
+#	$2	Certificate file
+#	$3	CN (Common Name, e.g., web site hostname)
+#
+sign_key()
+{
+	CSR="/tmp/csr.$$"
+
+	# Make sure we have a valid certificate authority
+	check_ca
+
+	# Generate a certificate signing request
+	printf '\n\n\n%s\n\n' "${3}" | openssl req -config "${CONFIG_FILE}" \
+	    -new -key "${1}" -out "${CSR}" >/dev/null 2>&1
+
+	# Zero out index in case we need to regenerate a cert
+	cat /dev/null > ${CA_DIR}/index
+
+	# Now sign the key using built-in CA
+	printf 'y\ny\n' | openssl ca -config "${CONFIG_FILE}" \
+	    -extensions x509v3 -in "${CSR}" -out "${2}" >/dev/null 2>&1
+
+	# Done
+	rm -f "${CSR}"
+}
+
+#
+# This verifies that we have a valid certificate and creates one if not.
+#
+# Args:
+#	$1	Key file
+#	$2	Cert file
+#	$3	CN (Common Name, e.g., web site hostname)
+#
+check_cert()
+{
+	# Check private key
+	#
+	check_key $1
+
+	# Verify certificate and delete it if it's not valid
+	#
+	if [ -r "${2}" ]; then
+		DIG1=`openssl rsa -noout -modulus -in "${1}" \
+		    2>/dev/null | openssl md5`
+		DIG2=`openssl x509 -noout -modulus -in "${2}" \
+		    2>/dev/null | openssl md5`
+		if [ "${DIG1}" != "${DIG2}" ]; then \
+			echo rc.sslkey: certificate "${2}" \
+			    does not match key "${1}"
+			rm -f "${2}"
+		elif ! openssl x509 -noout -in "${2}" \
+		    -checkend 43200 >/dev/null 2>&1; then
+			echo rc.sslkey: certificate "${2}" has expired
+			rm -f "${2}"
+		else
+			CCN=`openssl x509 -noout -in "${2}" -subject \
+			    | sed -e 's,^.*CN=,,g' -e 's,/.*$,,g' 2>&1`
+			if [ "${CCN}" != "${3}" ]; then
+				echo rc.sslkey: certificate "${2}" incorrect \
+				    CN: \""${CCN}"\" instead of \""${3}"\"
+				rm -f "${2}"
+			fi
+		fi
+	else
+		rm -f "${2}"
+	fi
+
+	# Create new certificate if none. Handle special case of
+	# self-signing our own cert (to avoid infinite recursion).
+	#
+	if [ ! -r "${2}" -a "${2}" = "${CA_CRT}" -a "${1}" = "${CA_KEY}" ]; then
+		echo rc.sslkey: creating new CA certificate
+		find "${CA_DIR}/certs" -type f -print | xargs rm -f
+		cat /dev/null > "${CA_DIR}/index"
+		echo 01 > "${CA_DIR}/serial"
+		printf '\n\n\n%s\n\n' "${3}" | openssl req -new -x509 \
+		    -config "${CONFIG_FILE}" -key "${1}" -out "${2}" \
+		    > /dev/null 2>&1
+	elif [ ! -r "${2}" ]; then
+		echo rc.sslkey: creating new certificate for "${3}"
+		sign_key "${1}" "${2}" "${3}"
+	fi
+}
+
+#
+# Main entry point
+#
+# Usage:
+#	rc.sslkey keyfile [ certfile CN ]
+#
+# If this script is called with one argument, it just verifies the
+# CA and SSL RSA keys. Otherwise, there must be three arguments:
+#
+#	$1	RSA key file
+#	$2	SSL certificate file
+#	$3	CN (Common Name, e.g., web site hostname)
+#
+# and the $2 certificate file is also verified/created.
+#
+
+if [ $# -eq 1 ]; then
+	check_key "${CA_KEY}"
+	check_key "${1}"
+	exit 0
+fi
+
+if [ $# -ne 3 ]; then
+	echo Usage: rc.sslkey keyfile \[ certfile common-name \]
+	exit 1
+fi
+
+check_cert "${1}" "${2}" "${3}"
+

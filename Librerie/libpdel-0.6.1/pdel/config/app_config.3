@@ -1,0 +1,720 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: app_config.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt APP_CONFIG 3
+.Os
+.Sh NAME
+.Nm app_config
+.Nd application configuration system
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In pdel/config/app_config.h
+.Ft "struct app_config_ctx *"
+.Fn app_config_init "struct pevent_ctx *ctx" "const struct app_config *info" "void *cookie"
+.Ft int
+.Fn app_config_uninit "struct app_config_ctx **ctxp"
+.Ft "void *"
+.Fn app_config_get_cookie "struct app_config_ctx *ctx"
+.Ft int
+.Fn app_config_load "struct app_config_ctx *ctx" "const char *path" "int allow_writeback"
+.Ft int
+.Fn app_config_reload "struct app_config_ctx *ctx"
+.Ft "void *"
+.Fn app_config_new "struct app_config_ctx *ctx"
+.Ft int
+.Fn app_config_set "struct app_config_ctx *ctx" "const void *config" "u_long delay" "char *ebuf" "int emax"
+.Ft "void *"
+.Fn app_config_get "struct app_config_ctx *ctx" "int pending"
+.Ft "const struct structs_type *"
+.Fn app_config_get_type "struct app_config_ctx *ctx"
+.Ft "void *"
+.Fn app_config_copy "struct app_config_ctx *ctx" "const void *config"
+.Ft void
+.Fn app_config_free "struct app_config_ctx *ctx" "void **configp"
+.Vt extern const struct app_subsystem app_config_alog_subsystem ;
+.Vt extern const struct app_subsystem app_config_curconf_subsystem ;
+.Vt extern const struct app_subsystem app_config_directory_subsystem ;
+.Vt extern const struct app_subsystem app_config_pidfile_subsystem ;
+.Sh DESCRIPTION
+These functions implement an application configuration framework.
+.\"
+.Ss Application model
+.\"
+The
+.Nm app_config
+model assumes that the application's configuration is stored in a single
+.Em "configuration object" ,
+which can be any data structure that is describable by a
+.Xr structs 3
+type.
+The configuration can be stored in an XML file which is automatically updated.
+.Pp
+The application itself consists of one or more
+.Em subsystems .
+A subsystem is an abstract activity that can be started or stopped and
+whose behavior depends on (some part of) the configuration object.
+When the configuration object is changed, those subsystems that
+require it are automatically stopped and then restarted with the new
+configuration.
+.Pp
+The application may provide methods for:
+.Pp
+.Bl -bullet -compact -offset 3n
+.It
+Creating a new, default configuration object
+.It
+Initializing a new configuration object for the current system
+.It
+Checking a configuration object for overall validity
+.It
+Normalizing a configuration object
+.It
+Upgrading a configuration object from an old version
+.El
+.Pp
+Each subsystem may provide methods for:
+.Pp
+.Bl -bullet -compact -offset 3n
+.It
+Starting the subsystem
+.It
+Stopping the subsystem
+.It
+Determining if the subsystem will run
+.It
+Determining if the subsystem needs to be restarted
+.El
+.Pp
+In the steady state, there is a single currently active configuration object.
+Only those subsystems that are supposed to be running are.
+All running subsystems are running with their configurations based on
+(i.e., consistent with) the active configuration object.
+.Pp
+When there needs to be a configuration change, a new configuration object
+is constructed and the
+.Nm app_config
+library is told to apply the new configuration object.
+After a configurable delay (for hysteresis), those subsystems affected
+by the change are stopped, the new configuration object is installed
+in place of the old one, and the stopped subsystems are restarted.
+.Pp
+The
+.Nm app_config
+library guarantees that only "valid" configurations may be applied,
+where the meaning of "valid" is determined by the application.
+.\"
+.Ss Subsystems
+.\"
+A subsystem is defined as anything that can be started and/or stopped.
+A subsystem typically depends on some portion of the configuration
+object such that it must be stopped and restarted when that portion changes.
+.Pp
+A subsystem is defined by a
+.Li "struct app_subsystem" :
+.Pp
+.Bd -literal -compact -offset 3n
+struct app_subsystem {
+    const char          *name;      /* name, null to end list */
+    void                *arg;       /* opaque subsystem argument */
+    app_ss_startup_t    *start;     /* start subsystem */
+    app_ss_shutdown_t   *stop;      /* stop subsystem */
+    app_ss_willrun_t    *willrun;   /* will subsystem run? */
+    app_ss_changed_t    *changed;   /* subsystem config changed? */
+    const char          **deplist;  /* config items dependent on */
+};
+.Ed
+.Pp
+The
+.Fa name
+is currently used only for debugging, but must be
+.Dv NULL
+to terminate the list of subsystems (see below).
+The
+.Fa arg
+is ignored and is for the application's private use.
+The
+.Fa start ,
+.Fa stop ,
+.Fa willrun ,
+and
+.Fa changed
+fields must be pointers to functions having these types:
+.Pp
+.Bd -literal -compact -offset 3n
+typedef int  app_ss_startup_t(struct app_config_ctx *ctx,
+                const struct app_subsystem *ss, const void *config);
+typedef void app_ss_shutdown_t(struct app_config_ctx *ctx,
+                const struct app_subsystem *ss, const void *config);
+typedef int  app_ss_willrun_t(struct app_config_ctx *ctx,
+                const struct app_subsystem *ss, const void *config);
+typedef int  app_ss_changed_t(struct app_config_ctx *ctx,
+                const struct app_subsystem *ss,
+                const void *config1, const void *config2);
+.Ed
+.Pp
+.Fn start
+starts the subsystem;
+.Fa config
+points to a copy of the current (i.e., new) configuration object.
+.Fn start
+should return zero if successful, or else -1 with
+.Va errno
+set on failure.
+In the latter case, the
+.Fn stop
+method will not be called.
+.Pp
+.Fn stop
+stops the subsystem;
+.Fa config
+points to a copy of the current configuration object.
+.Pp
+.Fn willrun
+should return non-zero if the subsystem needs to run at all.
+.Fa config
+points to a copy of the current (i.e., new) configuration object.
+.Pp
+.Fn changed
+determines if the subsystem needs to be restarted during a configuration
+change from
+.Fa config1
+to
+.Fa config2 .
+It should return 1 if so, zero otherwise.
+.Pp
+In the above methods, the configuration object argument(s)
+become invalid after the method returns.
+.Pp
+Alternately, or in conjunction with the
+.Fn changed
+method, the
+.Fa deplist
+may point to a
+.Dv NULL
+terminated list of
+.Xr structs 3
+names of fields in the configuration object on which this subsystem depends.
+The subsystem will automatically be restarted if any of the named fields
+differ between
+.Fa config1
+and
+.Fa config2 ,
+as determined by
+.Xr structs_equal 3 .
+.Pp
+All four of the above subsystem methods are optional and may be specified as
+.Dv NULL .
+In the case of
+.Fn startup
+and
+.Fn shutdown ,
+.Dv NULL
+means "do nothing".
+.Fn willrun
+being
+.Dv NULL
+is equivalent to it always returning 1.
+.Fn changed
+being
+.Dv NULL
+is equivalent to it always returning 0.
+.Fa deplist
+being
+.Dv NULL
+is equivalent to an empty list.
+.\"
+.Ss Application
+.\"
+An application itself is described by a
+.Li "struct app_config" :
+.Pp
+.Bd -literal -compact -offset 3n
+struct app_config {
+    u_int                       version;    /* current version # */
+    const struct structs_type   **types;    /* all version types */
+    const struct app_subsystem  **slist;    /* list of subsystems */
+    app_config_init_t           *init;      /* initialize defaults */
+    app_config_getnew_t         *getnew;    /* generate new config */
+    app_config_checker_t        *checker;   /* validate a config */
+    app_config_normalize_t      *normalize; /* normalize a config */
+    app_config_upgrade_t        *upgrade;   /* upgrade a config */
+};
+.Ed
+.Pp
+The list of subsystems supported by the application is pointed to by
+.Fa slist .
+This list must be terminated with an entry whose
+.Fa name
+is
+.Dv NULL .
+.Pp
+Subsystems are always started in the order they are listed in
+.Fa slist ,
+and they are always shutdown in the reverse order.
+.Pp
+The
+.Fa version
+is the configuration object version number (the first version is zero), and
+.Fa types
+points to an array of
+.Fa "version"
++ 1 pointers to
+.Xr structs 3
+types for the configuration object, where
+.Li "types[i]"
+is the
+.Xr structs 3
+type for version
+.Fa i
+of the configuration object.
+.Pp
+The remaining fields are pointers to functions having these types:
+.Pp
+.Bd -literal -compact -offset 3n
+typedef int  app_config_init_t(struct app_config_ctx *ctx,
+                 void *config);
+typedef int  app_config_getnew_t(struct app_config_ctx *ctx,
+                 void *config);
+typedef int  app_config_checker_t(struct app_config_ctx *ctx,
+                 const void *config, char *errbuf, size_t ebufsize);
+typedef void app_config_normalize_t(struct app_config_ctx *ctx,
+                 void *config);
+typedef int  app_config_upgrade_t(struct app_config_ctx *ctx,
+                 const void *old_conf, u_int old_version,
+		 void *new_conf);
+.Ed
+.Pp
+If the default configuration object is not equal to what is provided by
+.Xr structs_init 3 ,
+then
+.Fn init
+may be implemented.
+It should further modify the
+.Fa config
+as appropriate to get the generic default configuration.
+.Fn init
+returns zero on success, or -1 on error with
+.Va errno
+set appropriately.
+.Pp
+.Fn getnew
+is invoked when no existing configuration is found by
+.Fn app_config_load
+(see below).
+The
+.Fa config
+is as returned by
+.Fn init .
+.Fn getnew
+should apply any further initialization required for this particular system.
+.Fn getnew
+returns zero on success, or -1 on error with
+.Va errno
+set appropriately.
+.Pp
+The distinction between
+.Fn init
+and
+.Fn getnew
+is somewhat subtle:
+.Fn init
+simply initializes a new configuration object.
+It may be invoked many times during the normal operation of the application
+as configuration objects are needed.
+.Fn getnew
+is only invoked once, at the beginning of application startup, when there
+is no previously saved configuration found.
+Therefore, the behavior of
+.Fn init
+should not be affected by the "environment", while the behavior of
+.Fn getnew
+often is.
+.Pp
+.Fn checker
+determines whether the
+.Fa config
+is valid, returning 1 if so or 0 if not.
+In the latter case, it may print an error message (including '\\0')
+into the buffer
+.Fa errbuf ,
+which has size
+.Fa ebufsize
+(see
+.Xr snprintf 3) .
+.Pp
+.Fn normalize
+gives the application a chance to normalize an otherwise valid
+configuration object.
+This is useful when the configuration object contains redundant information,
+or information that can be represented in more than one way.
+.Pp
+All configurations that are applied by
+.Nm app_config
+are guaranteed to have been checked and normalized.
+All configurations passed to
+.Fn checker
+are guaranteed to have been passed through
+.Fn normalize
+first.
+.Pp
+Note: the configurations returned by
+.Fn init
+and
+.Fn getnew
+must be valid according to
+.Fa checker .
+.Pp
+.Fn upgrade
+is invoked when an older version of the configuration object is read
+in from an XML file.
+The configuration version number is stored as the "version" attribute
+of the XML document element.
+.Fa old_conf
+is the old object, which has version
+.Fa old_version ,
+and
+.Fa new_conf
+is a newly initialized configuration object of the current version.
+.Fn upgrade
+should copy the configuration information from
+.Fa old_conf
+to
+.Fa new_conf .
+.Pp
+A quick and dirty way to do this when most of the fields are the same
+is to use
+.Xr structs_traverse 3
+to list the fields in the old configuration object,
+.Xr structs_get_string 3
+to get their ASCII values, and
+.Xr structs_set_string 3
+to set the same values in the new configuration object.
+.\"
+.Ss API
+.\"
+.Fn app_config_init
+should be called at application startup time to initialize
+.Nm app_config
+for the application described by
+.Fa info .
+A
+.Xr pevent 3
+context
+.Fa ctx
+must be supplied.
+.Fn app_config_init
+returns an application context, with which all configuration and
+subsystems are associated.
+Multiple independent application contexts may exist at the same time.
+The
+.Fa cookie
+is saved along with the context but is otherwise ignored.
+.Pp
+.Fn app_config_uninit
+should be called at application shutdown time to release resources
+allocated by
+.Nm app_config .
+It may only be called when all subsystems are shutdown (i.e., the
+current configuration object pointer is
+.Dv NULL) .
+This enables
+.Fn app_config_init
+to be called again, if so desired.
+.Pp
+Upon return from
+.Fn app_config_uninit ,
+.Fa "*ctxp"
+will be set to
+.Dv NULL .
+If
+.Fa "*ctxp"
+is already equal to
+.Dv NULL
+when
+.Fn app_config_uninit
+is invoked, nothing happens.
+.Pp
+.Fn app_config_get_cookie
+retrieves the application cookie provided to
+.Fn app_config_init .
+.Pp
+.Fn app_config_load
+reads in an application configuration object from the XML file at
+.Fa path
+and applies it, making it the current configuration.
+If
+.Fa path
+is empty or non-existent, a new configuration object is created
+using the application's
+.Fn getnew
+method.
+.Pp
+If the file contains an old version of the configuration object,
+it is automatically upgraded to the current version.
+If
+.Fa allow_writeback
+is non-zero, then
+.Fa path
+is remembered and the file is updated (i.e., rewritten) every time
+the application configuration object changes.
+Updates are done atomically by creating a temporary file with the
+suffix ".new" and renaming it (see
+.Xr rename 2) .
+.Pp
+In theory, one call to
+.Fn app_config_load
+in an application's
+.Fn main
+routine is all that is required to get things going.
+.Pp
+.Fn app_config_reload
+reloads the configuration file previously specified to
+.Fn app_config_load
+and applies it.
+This would be the typical response to receiving a
+.Dv SIGHUP
+signal.
+.Pp
+.Fn app_config_new
+creates a new configuration object with the application's default values
+as specified by the application's
+.Fn init
+method.
+The returned pointer should be cast to the appropriate type.
+The caller is responsible for eventually freeing the returned
+configuration object by calling
+.Fn app_config_free .
+.Pp
+.Fn app_config_set
+changes the application's current configuration to be a copy of the
+configuration pointed to by
+.Fa config .
+If this configuration is invalid, -1 is returned with
+.Va errno
+set to
+.Er EINVAL ,
+and if
+.Fa ebuf
+is not
+.Dv NULL ,
+the buffer pointed to by
+.Fa ebuf
+and having size
+.Fa emax
+is filled in with a '\\0'-terminated error message.
+.Fn app_config_set
+may also return -1 with
+.Va errno
+set to other values in the case of system errors.
+.Pp
+If
+.Fa config
+is
+.Dv NULL ,
+all running subsystems will be shut down.
+Any configurations passed to
+.Fn app_config_set
+subsequent to passing a
+.Dv NULL
+configuration, but before the shutdown operation has completed, are ignored.
+This guarantees that a
+.Dv NULL
+configuration does actually shutdown the application.
+.Pp
+The new configuration (or shutdown) takes effect after a delay of
+.Fa delay
+milliseconds after
+.Fn app_config_set
+has successfully returned zero.
+The appropriate subsystem
+.Fn stop ,
+and then
+.Fn start
+methods are invoked serially from a new thread.
+.Pp
+.Fn app_config_get
+returns a copy of the current or pending configuration object.
+The returned pointer should be cast to the appropriate type.
+If
+.Fa pending
+is zero, then the configuration object currently in use is copied.
+Otherwise, the configuration object most recently applied via
+.Fn app_config_set
+is copied.
+These will be different when there is a pending, but not yet applied,
+configuration.
+The caller is responsible for eventually freeing the returned
+configuration object by calling
+.Fn app_config_free .
+.Pp
+.Fn app_config_get_type
+returns the
+.Xr structs 3
+for the application configuration object.
+.Pp
+.Fn app_config_copy
+copies a configuration object.
+The returned pointer should be cast to the appropriate type.
+The caller is responsible for eventually freeing the returned
+configuration object by calling
+.Fn app_config_free .
+.Pp
+.Fn app_config_free
+destroys the configuration object pointed to by
+.Fa "*configp" .
+Upon return,
+.Fa "*configp"
+will be set to
+.Dv NULL .
+If
+.Fa "*configp"
+is already
+.Dv NULL
+when
+.Fn app_config_free
+is invoked, nothing happens.
+.\"
+.Ss Pre-defined subsystems
+.\"
+The
+.Nm app_config
+library comes with some predefined subsystem templates.
+.Pp
+.Va app_config_alog_subsystem
+handles configuring error logging for an application.
+To use
+.Va app_config_alog_subsystem ,
+copy the structure and set the
+.Fa arg
+field to point to a
+.Li "struct app_config_alog_info" :
+.Pp
+.Bd -literal -compact -offset 3n
+struct app_config_alog_info {
+    const char  *name;      /* field name */
+    int         channel;    /* alog channel */
+};
+.Ed
+.Pp
+The
+.Fa name
+should be the
+.Xr structs 3
+field name of the field in the configuration object that configures
+logging for the
+.Xr alog 3
+logging channel
+.Fa channel .
+This field should be a
+.Li "struct alog_config" .
+.Pp
+.Va app_config_curconf_subsystem
+is useful when the application needs efficient access to the currently
+active configuration.
+This subsystem assumes that there is a global pointer variable (call it
+.Va curconf )
+which by definition always points to a read-only copy of the currently
+active configuration.
+For example, if the application's configuration object is a
+.Li "struct my_config" ,
+then
+.Va curconf
+would be defined as:
+.Pp
+.Bd -literal -compact -offset 3n
+const struct my_config *const curconf;
+.Ed
+.Pp
+Then the function of
+.Va app_config_curconf_subsystem
+is to automatically keep this variable up to date.
+(The
+.Li "const"
+keywords reflect the application's point of view:
+the first is because the structure is read-only, while the second
+is because the pointer itself is read-only.)
+.Pp
+To use
+.Va app_config_curconf_subsystem ,
+copy the structure and set the
+.Fa arg
+field to point to the application's
+.Va curconf
+pointer variable.
+Typically the
+.Va app_config_curconf_subsystem
+will be first in the list of subsystems, so that
+.Va curconf
+is always updated before any other subsystem starts.
+Then at any time
+.Va "*curconf"
+can be examined for the currently active configuration.
+.Pp
+.Va app_config_directory_subsystem
+handles configuring the current working directory for the process.
+To use
+.Va app_config_directory_subsystem ,
+copy the structure and set the
+.Fa arg
+field to point to a string containing the
+.Xr structs 3
+name of the field in the configuration object that contains the
+directory name.
+If this name is not the empty string, then the current working directory
+will be set according to the value of this field.
+.Pp
+.Va app_config_pidfile_subsystem
+handles "PID files", i.e., exclusive application lock files into which
+the process ID is written.
+These guard against two instances of the same application running at the
+same time.
+To use
+.Va app_config_pidfile_subsystem ,
+copy the structure and set the
+.Fa arg
+field to point to a string containing the
+.Xr structs 3
+name of the field in the configuration object that contains the PID file
+pathname.
+.Sh RETURN VALUES
+All of the
+.Nm app_config
+functions return
+.Dv NULL
+or -1 to indicate an error and set
+.Va errno
+appropriately.
+.Sh SEE ALSO
+.Xr alog 3 ,
+.Xr libpdel 3 ,
+.Xr pevent 3 ,
+.Xr structs 3 ,
+.Xr typed_mem 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org
+.Sh BUGS
+There should be explicit support for subsystems that require other
+subsystems to be running before they may run.
+As it stands now, such dependencies must be implicitly encoded into the
+.Fn willrun
+and
+.Fn changed
+methods.
+Even so, the dependent subsystem cannot detect if the other subsystem
+fails to start.
+.Pp
+Subsystems should be defined more like objects using dynamically
+allocated structures that can be added and removed from the subsystem
+list at any time, without having to shutdown and restart the whole
+application.
+.Pp
+It should be possible to start and shutdown subsystems individually.

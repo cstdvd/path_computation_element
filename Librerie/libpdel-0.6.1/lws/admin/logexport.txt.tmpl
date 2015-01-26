@@ -1,0 +1,44 @@
+@eval(@readfile("macros.tmpl"))
+@nop(" $Id: logexport.txt.tmpl 540 2002-08-18 03:47:42Z archie $ ")
+
+@set("num", @query("num"))
+@set("sev", @query("sev"))
+@set("time", @query("time"))
+@set("reverse", @query("reverse"))
+@set("regexp", @query("regexp"))
+@if(@empty(@get("regexp")))
+    @logs_load(@get("sev"), @get("num"), @get("time"))
+@else
+    @logs_load(@get("sev"), @get("num"), @get("time"), @get("regexp"), "1")
+@endif
+
+@define("logs_get")
+	@object_get("logs", @get("arg1"))
+@enddef
+
+@set("num", @logs_get("length"))
+@if(@get("reverse"))
+    @set("index", @sub(@get("num"), "1"))
+    @set("last", "0")
+    @set("step", "-1")
+@else
+    @set("index", "0")
+    @set("last", @sub(@get("num"), "1"))
+    @set("step", "1")
+@endif
+
+@if(@equal(@get("num"), "0"))
+    @nop()No matching entries.@nl()
+    @return
+@endif
+@if(@gt(@get("num"), "100"))
+    @unbuffer()
+@endif
+
+@loop("100000")
+    @nop()@strftime(@logs_get(@cat(@get("index"), ".when")), "%b %e %T") @severity_pretty(@logs_get(@cat(@get("index"), ".sev"))) @logs_get(@cat(@get("index"), ".msg"))@nl()
+    @if(@equal(@get("index"), @get("last")))
+	    @break
+    @endif
+    @set("index", @add(@get("index"), @get("step")))
+@endloop

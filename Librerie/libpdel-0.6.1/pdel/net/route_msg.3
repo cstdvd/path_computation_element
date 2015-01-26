@@ -1,0 +1,211 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: route_msg.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt ROUTE_MSG 3
+.Os
+.Sh NAME
+.Nm route_msg
+.Nd routing socket message objects
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdio.h
+.In pdel/net/route_msg.h
+.Ft "struct route_msg *"
+.Fn route_msg_create "void"
+.Ft "void"
+.Fn route_msg_destroy "struct route_msg **msgp"
+.Ft "int"
+.Fn route_msg_get_type "struct route_msg *msg"
+.Ft "void"
+.Fn route_msg_set_type "struct route_msg *msg" "int type"
+.Ft "int"
+.Fn route_msg_get_index "struct route_msg *msg"
+.Ft "void"
+.Fn route_msg_set_index "struct route_msg *msg" "int index"
+.Ft "int"
+.Fn route_msg_get_flags "struct route_msg *msg"
+.Ft "void"
+.Fn route_msg_set_flags "struct route_msg *msg" "int flags"
+.Ft "int"
+.Fn route_msg_get_error "struct route_msg *msg"
+.Ft "pid_t"
+.Fn route_msg_get_pid "struct route_msg *msg"
+.Ft "int"
+.Fn route_msg_get_seq "struct route_msg *msg"
+.Ft "const struct sockaddr *"
+.Fn route_msg_get_dest "struct route_msg *msg"
+.Ft "int"
+.Fn route_msg_set_dest "struct route_msg *msg" "const struct sockaddr *dest"
+.Ft "const struct sockaddr *"
+.Fn route_msg_get_gateway "struct route_msg *msg"
+.Ft "int"
+.Fn route_msg_set_gateway "struct route_msg *msg" "const struct sockaddr *gateway"
+.Ft "const struct sockaddr *"
+.Fn route_msg_get_netmask "struct route_msg *msg"
+.Ft "int"
+.Fn route_msg_set_netmask "struct route_msg *msg" "const struct sockaddr *netmask"
+.Ft "const struct sockaddr *"
+.Fn route_msg_get_genmask "struct route_msg *msg"
+.Ft "int"
+.Fn route_msg_set_genmask "struct route_msg *msg" "const struct sockaddr *genmask"
+.Ft "const struct sockaddr *"
+.Fn route_msg_get_ifp "struct route_msg *msg"
+.Ft "int"
+.Fn route_msg_set_ifp "struct route_msg *msg" "const struct sockaddr *ifp"
+.Ft "const struct sockaddr *"
+.Fn route_msg_get_ifa "struct route_msg *msg"
+.Ft "int"
+.Fn route_msg_set_ifa "struct route_msg *msg" "const struct sockaddr *ifa"
+.Ft "const struct sockaddr *"
+.Fn route_msg_get_author "struct route_msg *msg"
+.Ft "int"
+.Fn route_msg_set_author "struct route_msg *msg" "const struct sockaddr *author"
+.Ft "const struct sockaddr *"
+.Fn route_msg_get_brd "struct route_msg *msg"
+.Ft "int"
+.Fn route_msg_set_brd "struct route_msg *msg" "const struct sockaddr *brd"
+.Ft "int"
+.Fn route_msg_decode "const u_char *data" "size_t dlen" "struct route_msg ***listp" "const char *mtype"
+.Ft "int"
+.Fn route_msg_encode "const struct route_msg *msg" "u_char *data" "size_t dlen"
+.Ft "void"
+.Fn route_msg_print "struct route_msg *msg" "FILE *fp"
+.Ft "int"
+.Fn route_msg_send "struct route_msg *msg" "int sock"
+.Ft "int"
+.Fn route_msg_recv "struct route_msg ***listp" "int sock" "const char *mtype"
+.Sh DESCRIPTION
+These functions support
+.Nm "route_msg"
+objects, used for communication over kernel routing sockets.
+The routing socket messages are defined in the header file
+.Li "<net/route.h>" .
+Each
+.Nm route_msg
+instance is represented by a
+.Li "struct route_msg" .
+.Pp
+.Fn route_msg_create
+creates a new, empty
+.Nm route_msg
+object.
+.Pp
+.Fn route_msg_destroy
+destroys the object pointed to by
+.Fa "*msgp" .
+Upon return,
+.Fa "*msgp"
+will be set to
+.Dv NULL .
+If
+.Fa "*msgp"
+is already
+.Dv NULL
+when
+.Fn route_msg_destroy
+is invoked, nothing happens.
+.Pp
+The
+.Fn route_msg_get_XXX
+and
+.Fn route_msg_set_XXX
+routines allow reading and changing the attributes associated with a
+.Nm route_msg
+object.
+.Pp
+.Fn route_msg_decode
+decodes routing messages from data encoded in the format used when
+communicating over kernel routing sockets.
+The encoded data is pointed to by
+.Fa data
+and has length
+.Fa dlen .
+Zero or more
+.Nm route_msg
+objects are constructed and pointed to by the elements of a newly
+allocated array of pointers.
+The length of the array is returned by
+.Fn route_msg_decode
+and a pointer to the array is stored in
+.Fa "*listp" .
+The array itself is allocated with
+.Xr typed_mem 3
+type
+.Fa mtype ,
+and the caller is responsible for eventually freeing it (as well as
+destroying the individudal
+.Nm route_msg
+objects).
+If the encoded data is invalid, -1 is returned with
+.Va errno
+set to
+.Er EINVAL .
+.Pp
+.Fn route_msg_encode
+encodes a
+.Nm route_msg
+object into the format used when communicating over kernel routing sockets.
+The resulting data is stored in the buffer pointed to by
+.Fa data ,
+which must have length at least
+.Fa dlen .
+If the encoding does not fit in
+.Fa dlen
+bytes, -1 is returned with
+.Va errno
+set to
+.Er EMSGSIZE .
+Otherwise, the number of bytes actually written into
+.Fa data
+is returned.
+.Pp
+.Fn route_msg_print
+prints out a
+.Nm route_msg
+object to the stream
+.Fa fp
+for debugging purposes.
+.Pp
+.Fn route_msg_send
+encodes and writes the
+.Nm route_msg
+object to the routing socket descriptor
+.Fa sock .
+.Pp
+.Nm route_msg_recv
+reads the next packet from the routing socket descriptor
+.Fa sock
+and decodes
+.Nm route_msg
+objects from the data read.
+The
+.Fa listp
+and
+.Fa mtype
+parameters are the same as with
+.Fn route_msg_decode .
+.Sh RETURN VALUES
+Except for functions returning
+.Li "void" ,
+all of the above functions return -1 or
+.Dv NULL
+to indicate an error, with
+.Va errno
+set appropriately.
+.Sh SEE ALSO
+.Xr if_util 3 ,
+.Xr libpdel 3 ,
+.Xr typed_mem 3 ,
+.Xr uroute 3 ,
+.Xr route 4
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

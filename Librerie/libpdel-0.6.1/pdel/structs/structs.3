@@ -1,0 +1,456 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: structs.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRUCTS 3
+.Os
+.Sh NAME
+.Nm structs
+.Nd library for data structure introspection
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In pdel/structs/structs.h
+.Ft int
+.Fn structs_init "const struct structs_type *type" "const char *name" "void *data"
+.Ft int
+.Fn structs_reset "const struct structs_type *type" "const char *name" "void *data"
+.Ft int
+.Fn structs_free "const struct structs_type *type" "const char *name" "void *data"
+.Ft int
+.Fn structs_equal "const struct structs_type *type" "const char *name" "const void *data1" "const void *data2"
+.Ft const struct structs_type *
+.Fn structs_find " const struct structs_type *type" "const char *name" "void **datap" "int set_union"
+.Ft int
+.Fn structs_get "const struct structs_type *type" "const char *name" "const void *from" "void *to"
+.Ft int
+.Fn structs_set "const struct structs_type *type" "const void *from" "const char *name" "void *to"
+.Ft char *
+.Fn structs_get_string "const struct structs_type *type" "const char *name" "const void *data" "const char *mtype"
+.Ft int
+.Fn structs_set_string "const struct structs_type *type" "const char *name" "const char *ascii" "void *data" "char *ebuf" "size_t emax"
+.Ft int
+.Fn structs_get_binary "const struct structs_type *type" "const char *name" "const void *data" "const char *mtype" "struct structs_data *code"
+.Ft int
+.Fn structs_set_binary "const struct structs_type *type" "const char *name" "const struct structs_data *code" "void *data" "char *ebuf" "size_t emax"
+.Ft int
+.Fn structs_traverse "const struct structs_type *type" "const void *data" "char ***listp" "const char *mtype"
+.Sh DESCRIPTION
+.\"
+.Ss Overview
+.\"
+The
+.Nm structs
+library includes macros and functions for defining and using
+.Nm structs
+types.
+A
+.Nm structs
+type is a C structure that contains information describing
+some other C data structure.
+This information can be used to access the contents of
+the described data structure dynamically at run time.
+The library provides several pre-defined types for commonly used
+data structures, as well as macros for creating new types.
+.Pp
+A data structure is supported by the
+.Nm structs
+library if it can be described by a
+.Nm structs
+type (see
+.Xr structs_type 3) .
+There are two classes of types: primitive and complex.
+Primitive types describe things such as integers, strings, etc.
+They are user-definable, and several predefined primitive types are
+supplied with the
+.Nm structs
+library.
+Any data structure can be described by a primitive
+.Nm structs
+type if it has the following properties:
+.Pp
+.Bl -bullet -offset 3n -compact
+.It
+It has a fixed size known at compile time.
+.It
+It can be initialized, uninitialized, copied, and compared for equality.
+.It
+It can be converted into an ASCII string and back without losing information.
+.It
+It can be converted into a byte-order independent, self-delimiting
+binary sequence and back without losing information.
+.El
+.Pp
+The complex types are defined recursively in terms of other types,
+and include the following:
+.Pp
+.Bl -enum -offset 3n -compact
+.It
+Pointers
+.It
+Fixed length arrays
+.It
+Variable length arrays
+.It
+Structures
+.It
+Unions
+.Pp
+.El
+The complex types support accessing sub-elements dircectly by
+name at run-time.
+That is, array, structure, and union elements can be
+accessed by field name or array index expressed as an ASCII string.
+The accessed elements may be arbitrarily deep in the data structure.
+.Pp
+The upshot of all this is that if one takes the time to describe a data
+structures with a
+.Nm structs
+type, then the following operations can be performed dynamically
+and automatically on any instance of that data structure:
+.Pp
+.Bl -bullet -offset 3n -compact
+.It
+Initialization and uninitialization, including allocating
+and freeing heap memory or other resources.
+.It
+Comparison of two instances for equality
+.It
+.Dq Deep
+copying, i.e., creating a completely new instance
+that is a copy of an original with no shared components.
+.It
+Access to arbitrary sub-fields by name (aka.
+.Dq introspection
+).
+.It
+Conversion to/from ASCII (primitive types only)
+.It
+Conversion to/from XML, with precise input validation
+.It
+Conversion to/from XML-RPC "values"
+.It
+Conversion to/from a byte-order independent, self-delimiting byte sequence
+.El
+.Pp
+.\"
+.Ss Data Structure Initialization
+.\"
+A "data structure" is just a contiguous block of memory.
+It may of course contain other sub-structures within it,
+including pointers to yet other data structures, but for the purposes of the
+.Nm structs
+library a "data structure" just a block of memory that you can point to.
+.Pp
+Such a data structure can be in one of two states: uninitialized
+or initialized.
+For example, a region of heap memory freshly returned by
+.Xr malloc 3
+is unintialized.
+The only valid
+.Nm structs
+operation on an uninitialized data structure is to initialize it;
+this is done by invoking
+.Fn structs_init
+(see below).
+.Pp
+Initializing a data structure puts it in a known, valid, default state.
+This may involve more than just filling the region of memory with zeros.
+For example, it may cause additional heap memory to be allocated
+(and initialized), hidden reference counts to be incremented, or other
+resources to be allocated.
+.Pp
+Note that
+.Fn structs_init
+does not itself allocate the block of memory in which the data structure
+is stored, it only initializes it.
+The user code must handle allocation of the block of memory.
+As a consequence, this memory may live on the stack, or the heap.
+Any data structures that are stored in stack variables and are initialized
+during execution of a function must be uninitialized before the function
+returns to avoid resource leaks.
+.Pp
+.Fn structs_free
+(see below)
+is used to free any resources associated with an initialized data structure
+and return it to the uninitialized state.
+Note that this does not invoke
+.Xr free 3
+on the block of memory containing the data structure, though it may cause
+.Xr free 3
+to be invoked for any additional memory previously allocated by
+.Fn structs_init .
+.\"
+.Ss Structs Functions
+.\"
+Generally speaking, in the functions shown above
+.Fa type
+points to the
+.Nm structs
+type describing a data structure,
+.Fa data
+points to an instance of that data structure, and
+.Fa name
+references by name the target sub-field or sub-element of the data structure
+on which the operation is to take place.
+If
+.Fa name
+is equal to
+.Dv NULL
+or the empty string then the entire data structure is the target.
+In practice,
+.Fa name
+is often
+.Dv NULL .
+.Pp
+.Fn structs_init
+initializes the uninitialized sub-field
+.Fa name
+of the data structure pointed to by
+.Fa data .
+The data structure will be set to its default value, which is defined by
+.Fa type.
+.Pp
+.Fn structs_reset
+resets the already initialized sub-field
+.Fa name
+of the data structure pointed to by
+.Fa data
+to its default value, i.e., the same value that it would have after
+a call to
+.Fn structs_init .
+.Pp
+.Fn structs_free
+uninitializes the sub-field
+.Fa name
+of the data structure pointed to by
+.Fa data ,
+freeing any resources previously allocated by
+.Fn structs_init .
+.Pp
+.Fn structs_equal
+compares the sub-fields
+.Fa name
+of the two data structures pointed to by
+.Fa data1
+and
+.Fa data2
+for equality.
+It returns 1 if they are equal or 0 if not.
+.Pp
+.Fn structs_find
+locates a sub-field of a data structure by name and returns its
+.Nm structs
+type.
+When invoked,
+.Fa "*datap"
+should point to the data structure being searched.
+Upon successful return, it will point to the sub-field named by
+.Fa name .
+If
+.Fa set_union
+is non-zero, then if during the search any unions are encountered
+and the union's current field is different from the named field,
+then the union's field is changed to the named field and its value
+reset to the default value before continuing with the search.
+.Pp
+.Fn structs_get
+generates a copy of the sub-field
+.Fa name
+in the data structure pointed to by
+.Fa from
+and places it in the uninitialized region of memory pointed to by
+.Fa to ;
+.Fa type
+is the
+.Nm structs
+type of
+.Fa from .
+This is a recursive, or "deep" copy containing no shared elements with
+.Fa from .
+Note that the
+.Nm structs
+type of
+.Fa "from.<name>"
+and
+.Fa to
+must be the same.
+Upon successful return,
+.Fa to
+will be initialized and therefore it is the caller's responsibility
+to eventually uninitialize it.
+.Pp
+.Fn structs_set
+changes the contents of the already initialized sub-field
+.Fa name
+in the data structure pointed to by
+.Fa to
+to be a copy of the data structure pointed to by
+.Fa from ;
+.Fa type
+is the
+.Nm structs
+type of
+.Fa to .
+This is a recursive, or "deep" copy containing no shared elements with
+.Fa from .
+Note that the
+.Nm structs
+type of
+.Fa "from"
+and
+.Fa "to.<name>"
+must be the same.
+.Fn structs_set
+does not modify
+.Fa from
+in any way.
+.Pp
+.Fn structs_get_string
+returns the ASCII form of the sub-field
+.Fa name
+in the data structure pointed to by
+.Fa data .
+This operation is only required to be implemented for primitive types.
+The returned string is allocated with
+.Xr typed_mem 3
+type
+.Fa mtype ,
+and the caller is responsible for eventually freeing it.
+.Pp
+.Fn structs_set_string
+changes the contents of the already initialized sub-field
+.Fa name
+in the data structure pointed to by
+.Fa data
+to the value represented by the ASCII string
+.Fa ascii .
+This operation is only required to be implemented for primitive types.
+If there is an error, e.g.,
+.Fa ascii
+is not a valid representation of the type, then
+.Fn structs_set_string
+will return -1 and if
+.Fa ebuf
+is not
+.Dv NULL
+an error message (including terminating '\\0') will be printed into the buffer
+.Fa ebuf ,
+which is assumed to have length
+.Fa emax .
+.Pp
+.Fn structs_get_binary
+and
+.Fn structs_set_binary
+are similar, except that they work with byte-order independent,
+self-delimiting binary data instead of ASCII strings.
+.Pp
+.Fn structs_get_binary
+returns the binary encoding of the sub-field
+.Fa name
+in the data structure pointed to by
+.Fa data .
+The
+.Fa code
+argument is a pointer to a
+.Li "struct structs_data" :
+.Pp
+.Bd -literal -compact -offset 3n
+struct structs_data {
+    u_int     length;       /* number of bytes */
+    u_char    *data;        /* pointer to the bytes */
+};
+.Ed
+.Pp
+Upon successful return,
+.Fa "code->data"
+points to the binary encoding, which has length
+.Fa "code->length"
+and is allocated with
+.Xr typed_mem 3
+type
+.Fa mtype .
+The caller is eventually responsible for freeing
+.Fa "code->data" .
+.Pp
+.Fn structs_set_binary
+changes the contents of the already initialized sub-field
+.Fa name
+in the data structure pointed to by
+.Fa data
+to the value represented by the byte-order independent, self-delimiting
+binary encoding described by
+.Fa code .
+On success, the actual number of bytes consumed is returned; this will
+be less than or equal to
+.Fa "code->length" .
+If there is an error, e.g.,
+the encoding was invalid, then
+.Fn structs_set_binary
+will return -1 and if
+.Fa ebuf
+is not
+.Dv NULL
+an error message (including terminating '\\0') will be printed into the buffer
+.Fa ebuf ,
+which is assumed to have length
+.Fa emax .
+.Pp
+.Fn structs_traverse
+generates a list of the names of all of the "leaf" sub-structures in
+the data structure pointed to by
+.Fa data ;
+these will all have primitive
+.Nm structs
+type.
+It returns the number of elements in the array.
+A pointer to the array is stored in the location referenced by
+.Fa listp.
+Each name in the array, as well as the array itself, is allocated with
+.Xr typed_mem 3
+type
+.Fa mtype .
+The caller is responsible for freeing all array elements as well as
+the array itself.
+.Sh RETURN VALUES
+All of the above functions indicate an error condition by returning
+either -1 or
+.Dv NULL
+and setting
+.Va errno
+to an appropriate value.
+.Pp
+Whenever there is an error, no partial work is done: the state of
+the parameters has not changed, and nothing has been allocated or freed.
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr structs_type 3 ,
+.Xr structs_type_array 3 ,
+.Xr structs_type_boolean 3 ,
+.Xr structs_type_bpf 3 ,
+.Xr structs_type_data 3 ,
+.Xr structs_type_dnsname 3 ,
+.Xr structs_type_ether 3 ,
+.Xr structs_type_float 3 ,
+.Xr structs_type_id 3 ,
+.Xr structs_type_int 3 ,
+.Xr structs_type_ip4 3 ,
+.Xr structs_type_null 3 ,
+.Xr structs_type_pointer 3 ,
+.Xr structs_type_regex 3 ,
+.Xr structs_type_string 3 ,
+.Xr structs_type_struct 3 ,
+.Xr structs_type_time 3 ,
+.Xr structs_type_union 3 ,
+.Xr structs_xml_input 3 ,
+.Xr structs_xmlrpc 3 ,
+.Xr typed_mem 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

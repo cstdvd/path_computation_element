@@ -1,0 +1,9 @@
+This is a test program that implements the XML-RPC validation suite.
+More information, and a CGI which runs the test, can be found at:
+
+    http://validator.xmlrpc.com/
+
+It also supports a "faultTest" method that demonstrates how to
+return an XML-RPC fault.
+
+$Id: README 962 2005-02-03 17:50:03Z archie $

@@ -1,0 +1,64 @@
+@set("page_id", "$Id: props.tmpl 547 2002-08-19 20:41:07Z archie $")
+@set("page_title", "Properties")
+@set("page_url", "/admin/props")
+@eval(@readfile("head.tmpl"))
+
+@object_reset("config")
+
+<form method="post" action="prop">
+<table border="0" cellspacing="2" cellpadding="0">
+
+@hidden("new", "1")
+
+@header(@get("page_title"))
+
+    <tr>
+      <td>&nbsp;</td>
+      <td><b>Name</b></td>
+      <td><b>Value</b></td>
+    </tr>
+
+    <tr>
+      <td colspan="3">&nbsp;</td>
+    </tr>
+
+@set("num_props", "0")
+@loop(@config_get("properties.length"))
+
+    @set("name", @config_get(@cat("properties.", @loopindex(), ".name")))
+    @set("value", @config_get(@cat("properties.", @loopindex(), ".value")))
+
+    <tr>
+      <td>&nbsp;</td>
+      <td><a href="prop?pid=@loopindex()">
+	<b>@htmlencode(@get("name"))</b></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      </td>
+      <td>``@htmlencode(@get("value"))''</td>
+    </tr>
+
+    @set("num_props", @add(@get("num_props"), "1"))
+
+@endloop
+
+@if(@not(@get("num_props")))
+    <tr>
+      <td>&nbsp;</td>
+      <td nowrap colspan="2"><b>No properties defined.</b></td>
+    </tr>
+@endif
+
+<tr><td colspan="3">&nbsp;</td><td>
+
+<tr>
+  <td>&nbsp;</td>
+  <td>&nbsp;&nbsp;&nbsp;&nbsp;
+  <input type="submit" name="button" value="New"></td>
+  <td>&nbsp;</td>
+</tr>
+
+<tr><td colspan="3">&nbsp;</td><td>
+
+</table>
+</form>
+
+@eval(@readfile("foot.tmpl"))

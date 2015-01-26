@@ -1,0 +1,301 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: http_response.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt HTTP_RESPONSE 3
+.Os
+.Sh NAME
+.Nm http_response
+.Nd HTTP response object
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdio.h
+.In netinet/in.h
+.In openssl/ssl.h
+.In pdel/http/http_defs.h
+.In pdel/http/http_server.h
+.\"
+.Ss Accessors
+.\"
+.Ft "int"
+.Fn http_response_get_code "struct http_response *resp"
+.Ft "struct in_addr"
+.Fn http_response_get_remote_ip "struct http_response *resp"
+.Ft "u_int16_t"
+.Fn http_response_get_remote_port "struct http_response *resp"
+.Ft "SSL_CTX *"
+.Fn http_response_get_ssl "struct http_response *resp"
+.\"
+.Ss "HTTP Headers"
+.\"
+.Ft "int"
+.Fn http_response_num_headers "struct http_response *req"
+.Ft "const char *"
+.Fn http_response_get_header "struct http_response *resp" "const char *name"
+.Ft "int"
+.Fn http_response_get_header_by_index "struct http_response *resp" "u_int index" "const char **namep" "const char **valuep"
+.Ft "int"
+.Fn http_response_set_header "struct http_response *resp" "int append" "const char *name" "const char *valfmt" "..."
+.Ft "int"
+.Fn http_response_remove_header "struct http_response *resp" "const char *name"
+.Ft "int"
+.Fn http_response_send_headers "struct http_response *resp" "int unbuffer"
+.\"
+.Ss "HTTP Body"
+.\"
+.Ft "FILE *"
+.Fn http_response_get_input "struct http_response *resp"
+.Ft "FILE *"
+.Fn http_response_get_output "struct http_response *resp" "int buffer"
+.\"
+.Ss "Canned Responses"
+.\"
+.Ft "void"
+.Fn http_response_send_redirect "struct http_response *resp" "const char *url"
+.Ft "void"
+.Fn http_response_send_basic_auth "struct http_response *resp" "const char *realm"
+.Ft "void"
+.Fn http_response_send_error "struct http_response *resp" "int code" "const char *fmt" "..."
+.Ft "void"
+.Fn http_response_send_errno_error "struct http_response *resp"
+.\"
+.Ss Miscellaneous
+.\"
+.Ft "void"
+.Fn http_response_guess_mime "const char *path" "const char **ctype" "const char **cencs" "int maxenc"
+.Ft "const char *"
+.Fn http_response_status_msg "int code"
+.Ft "int"
+.Fn http_response_no_body "int code"
+.Ft "int"
+.Fn http_response_get_raw_socket "struct http_response *resp"
+.\"
+.Sh DESCRIPTION
+.\"
+The
+.Nm http_response
+object is used by the PDEL HTTP library to represent an HTTP response.
+An HTTP response may be associated with an HTTP server (the response is
+generated locally) or an HTTP client (the response is generated remotely).
+Some of the functions and values defined below only make sense in one
+of these cases.
+.Pp
+.Nm http_response
+objects are not created directly; rather, they are obtained from another
+object which is associated with the HTTP connection.
+They are freed automatically (and become invalid) when the corresponding
+HTTP connection object is closed.
+.\"
+.Ss Accessors
+.\"
+.Fn http_response_get_code
+returns the HTTP status code from the response, e.g., 200 for "OK".
+Status codes are defined in
+.Li "<pdel/http/http_defs.h>" ,
+which is included by
+.Li "<pdel/http/http_server.h>" .
+.Pp
+.Fn http_response_get_remote_ip
+returns the IP address of the remote side.
+.Pp
+.Fn http_response_get_remote_port
+returns the TCP port of the remote side.
+.Pp
+.Fn http_response_get_ssl
+returns the SSL context for the HTTP connection, or
+.Dv NULL
+if the connection is not over SSL.
+.\"
+.Ss "HTTP Headers"
+.\"
+.Fn http_response_get_header
+returns the value of the named header, or
+.Dv NULL
+if the header is not defined for the response.
+HTTP header names are case-insensitive.
+.Pp
+.Fn http_response_num_headers
+returns the number of headers in the response.
+.Pp
+.Fn http_response_get_header_by_index
+points
+.Fa "*namep"
+at the name and
+.Fa "*valuep"
+at the value of the header with index
+.Fa index ,
+which must be less than the value returned by
+.Fn http_response_num_headers .
+.Pp
+.Fn http_response_set_header
+formats and sets a header value.
+If
+.Fa append
+is non-zero, the value is appended to any existing value
+(after adding a ",\ " separator) rather than replacing it.
+As a special case, setting the "Set-Cookie" header does not
+replace existing instances, it just adds a new instance.
+When the response headers are sent, all instances of "Set-Cookie" are sent.
+.Pp
+.Fn http_response_remove_header
+removes a header from the response.
+.Pp
+.Fn http_response_send_headers
+causes the server response headers to be sent to the client if they
+haven't already been sent.
+Setting
+.Fa unbuffer
+to non-zero causes the output to be unbuffered.
+It has the same affect as setting
+.Fa buffer
+to zero when calling
+.Fn http_response_get_output
+(see below).
+.\"
+.Ss "HTTP Body"
+.\"
+.Fn http_response_get_input
+returns the body of the response as an input stream.
+The local side must be the client for this HTTP connection.
+.Pp
+.Fn http_response_get_output
+returns an output stream that writes into the body of the response.
+The local side must be the server for this HTTP connection.
+.Fa buffer
+determines whether the entire output should be buffered before sending, or
+should writes to the stream translate immediately into writes to the server.
+The latter option will force the headers to be sent (if they haven't been
+sent already) when the first byte is written to the stream.
+Setting
+.Fa buffer
+to zero is also incompatible with keep-alive, unless the user code manually
+sets the "Content-Length" header (in which case it takes responsibility
+for writing the correct number of bytes).
+If
+.Fa buffer
+is non-zero, the output will be buffered entirely in memory until the output
+stream is closed, at which point "Content-Length" is computed automatically.
+.Pp
+Certain HTTP responses (e.g., "304 Not Modified") do not have an associated
+response body (see
+.Fn http_response_no_body
+below); for these responses, the output stream returned by
+.Fn http_response_get_output
+will discard all data written to it.
+.\"
+.Ss "Canned Responses"
+.\"
+.Fn http_response_send_redirect
+sends an HTTP redirect (301) to the client.
+.Fa url
+is the URL to which the client should be redirected.
+.Pp
+.Fn http_response_send_basic_auth
+sends an "Unauthorized" repsonse (401) to the client, causing browsers
+to pop up a login window.
+Only "Basic" authentication is supported.
+The
+.Fa realm
+is the authentication realm (which is usually visible in the popup window).
+.Pp
+.Fn http_response_send_error
+formats and sends an error response to the client with the HTTP status code
+.Fa code .
+For status codes that have response bodies, a very simple HTML page
+is cobbled together and sent as well.
+.Fa fmt
+may be
+.Dv NULL
+to use the generic error message that corresponds to
+.Fa code ;
+otherwise, the error string is formatted as with
+.Xr printf 3 .
+.Pp
+.Fn http_response_send_errno_error
+attempts to generate an appropriate error response based on the value of
+.Va errno .
+.\"
+.Ss Miscellaneous
+.\"
+.Fn http_response_guess_mime
+tries to guess the MIME "Content-Type" and "Content-Encoding" of the file 
+.Fa path .
+The content type is returned in
+.Fa "*ctype" .
+If it can't be determined, "text/plain; charset=iso-8859-1" is returned.
+.Pp
+The content encoding is really a list of encodings.
+For example, "foo.uu.gz" would be detected as having encoding
+"x-uuencode" followed by "gzip".
+The
+.Fa "cencs"
+argument should point to an array of
+.Li "char *"
+having length
+.Fa maxencs .
+This array will be filled in and any extra entries set to
+.Dv NULL .
+If
+.Fa "cencs"
+is
+.Dv NULL ,
+no attempt is made to determine content encoding.
+.Pp
+.Fn http_response_status_msg
+returns an ASCII string corresponding to the HTTP response code
+.Fa code .
+.Pp
+.Fn http_response_no_body
+returns 1 if a response with HTTP response code
+.Fa code
+should not have a response body, otherwise zero.
+.Pp
+.Fn http_response_get_raw_socket
+returns the underlying file descriptor for the HTTP connection.
+This is a huge layering violation fraught with danger.
+This function will fail for SSL connections.
+The returned file descriptor should not be closed.
+.Sh RETURN VALUES
+All of the above routines that can return an error return
+.Dv NULL
+or -1 to indicate this and set
+.Va errno
+to an appropriate value.
+Success is indicated by a normal return value or zero.
+.Sh SEE ALSO
+.Xr http_client 3 ,
+.Xr http_mime 3 ,
+.Xr http_request 3 ,
+.Xr http_server 3 ,
+.Xr http_servlet 3 ,
+.Xr libpdel 3
+.Rs
+.%A R. Fielding
+.%A J. Gettys
+.%A J. Mogul
+.%A H. Frystyk
+.%A L. Masinter
+.%A P. Leach
+.%A T. Berners-Lee
+.%T "Hypertext Transfer Protocol -- HTTP/1.1"
+.%O RFC 2616
+.Re
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org
+.Sh BUGS
+There are not as many
+.Nm http_response
+methods as there are
+.Nm http_request
+methods.
+This reflects a bias of the library towards implementing servers
+rather than clients.
+More support for the client side should be added.

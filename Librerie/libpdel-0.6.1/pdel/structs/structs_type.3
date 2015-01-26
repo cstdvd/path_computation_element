@@ -1,0 +1,467 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: structs_type.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRUCTS_TYPE 3
+.Os
+.Sh NAME
+.Nm structs_type
+.Nd data structure description structure
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In pdel/structs/structs.h
+.Sh DESCRIPTION
+A
+.Nm "structs type"
+defines information about, and provides methods for dealing with,
+instances of a particular data structure.
+This information enables the
+.Xr structs 3
+library to access instances of the data structure in a consistent
+and automated fashion.
+.Pp
+A
+.Nm "structs type"
+is defined by a
+.Li "struct structs_type" :
+.Pp
+.Bd -literal -compact -offset 3n
+struct structs_type {
+    size_t                  size;       /* size of an instance */
+    const char              *name;      /* human informative name */
+    int                     tclass;     /* type class */
+    structs_init_t          *init;      /* type "init" method */
+    structs_copy_t          *copy;      /* type "copy" method */
+    structs_equal_t         *equal;     /* type "equal" method */
+    structs_ascify_t        *ascify;    /* type "ascify" method */
+    structs_binify_t        *binify;    /* type "binify" method */
+    structs_encode_t        *encode;    /* type "encode" method */
+    structs_decode_t        *decode;    /* type "decode" method */
+    structs_uninit_t        *uninit;    /* type "uninit" method */
+    union {                             /* type specific arguments */
+            const void      *v;
+            const char      *s;
+            int             i;
+    }                       args[3];
+};
+.Ed
+.Pp
+.Fa size
+is equal to the size of one instance of the data structure.
+.Pp
+The
+.Fa name
+is ignored by the
+.Nm structs
+library, but is useful for debugging purposes.
+.Pp
+.Fa tclass
+is an internal field used by the
+.Nm structs
+library.
+For completeness, the possible values are:
+.Pp
+.Bd -literal -compact -offset 3n
+STRUCTS_TYPE_PRIMITIVE      Primitive type
+STRUCTS_TYPE_POINTER        Pointer
+STRUCTS_TYPE_ARRAY          Variable length array
+STRUCTS_TYPE_FIXEDARRAY     Fixed length array
+STRUCTS_TYPE_STRUCTURE      Structure type
+STRUCTS_TYPE_UNION          Union
+.Ed
+.Pp
+For user-defined types,
+.Dv STRUCTS_TYPE_PRIMITIVE
+should always be used.
+.Pp
+The
+.Fn init
+method has this type:
+.Pp
+.Bd -literal -compact -offset 3n
+typedef int structs_init_t(const struct structs_type *type,
+                void *data);
+.Ed
+.Pp
+It should initialize the uninitialized region of memory pointed to by
+.Fa data
+to be an instance of the type.
+The instance should be equal to the default value for the type.
+On success,
+.Fn init
+returns zero; otherwise, it returns -1 and sets
+.Va errno
+appropriately, and no resources have been allocated.
+.Pp
+The
+.Fn copy
+method has this type:
+.Pp
+.Bd -literal -compact -offset 3n
+typedef int structs_copy_t(const struct structs_type *type,
+                const void *from, void *to);
+.Ed
+.Pp
+It should initialize the uninitialized region of memory pointed to by
+.Fa to
+to be a new instance of the type equal to the instance pointed to by
+.Fa from .
+On success,
+.Fn copy
+returns zero; otherwise, it returns -1 and sets
+.Va errno
+appropriately, and no resources have been allocated.
+.Pp
+The
+.Fn equal
+method has this type:
+.Pp
+.Bd -literal -compact -offset 3n
+typedef int structs_equal_t(const struct structs_type *type,
+                const void *data1, const void *data2);
+.Ed
+.Pp
+.Fa data1
+and
+.Fa data2
+point to initialized instances of the type
+.Fa type .
+.Fn equal
+should return 1 if the two instances are equal, or 0 if not.
+If an error occurs,
+.Fn equal
+returns -1 and sets
+.Va errno
+appropriately.
+.Pp
+The
+.Fn ascify
+method has this type:
+.Pp
+.Bd -literal -compact -offset 3n
+typedef char *structs_ascify_t(const struct structs_type *type,
+                  const char *mtype, const void *data);
+.Ed
+.Pp
+.Fa data
+points to an initialized instance of the type
+.Fa type .
+.Fn ascify
+should convert this instance into an ASCII string terminated with '\\0' and
+stored in a buffer allocated with
+.Xr typed_mem 3
+type
+.Fa mtype .
+The ASCII string must be unique, in the sense that it can be used as input
+to the
+.Fn binify
+method to create an instance equal to the original
+.Fa data .
+If successful,
+.Fn ascify
+returns the ASCII string buffer; otherwise it returns
+.Dv NULL
+and sets
+.Va errno
+appropriately.
+.Pp
+The
+.Fn binify
+method has this type:
+.Pp
+.Bd -literal -compact -offset 3n
+typedef int structs_binify_t(const struct structs_type *type,
+                const char *ascii, void *data,
+                char *ebuf, size_t emax);
+.Ed
+.Pp
+.Fa data
+points to an uninitialized region of memory large enough to hold an
+instance of the type
+.Fa type .
+.Fn binify
+should convert the ASCII string pointed to by
+.Fa ascii
+into an instance stored at
+.Fa data ,
+thus initializing the memory, and return zero.
+If an error occurs,
+.Fa data
+should remain uninitialized and
+.Fn binify
+should return -1;
+it may also optionally write an explanatory error message,
+including '\\0' byte, into the character buffer having length
+.Fa emax
+and pointed to by
+.Fa ebuf
+(see
+.Xr snprintf 3) .
+.Fn binify
+must successfully convert any ASCII string returned by
+.Fn ascify .
+However,
+.Fa ascii
+is by no means guaranteed to be valid;
+.Fn binify
+must gracefully handle any invalid input string by
+returning an error instead of crashing.
+.Pp
+The
+.Fn encode
+method has this type:
+.Pp
+.Bd -literal -compact -offset 3n
+typedef int structs_encode_t(const struct structs_type *type,
+                const char *mtype, struct structs_data *code,
+                const void *data);
+.Ed
+.Pp
+.Fa data
+points to an initialized instance of the type
+.Fa type .
+.Fn encode
+should encode the instance into a byte-order independent, self-delimiting
+sequence of bytes.
+The sequence should be stored in a buffer allocated with
+.Xr typed_mem 3
+type
+.Fa mtype .
+The
+.Fa code
+structure, shown below, should be filled in with the buffer start and length:
+.Pp
+.Bd -literal -compact -offset 3n
+struct structs_data {
+        u_int     length;       /* number of bytes */
+        u_char    *data;        /* byte sequence */   
+};
+.Ed
+.Pp
+The binary sequence must be unique, in the sense that it can be used as
+input to the
+.Fn decode
+method to create an instance equal to the original
+.Fa data .
+.Fn encode
+returns 0 if successful; otherwise it returns -1 and sets
+.Va errno
+appropriately and does not allocate any memory.
+.Pp
+The
+.Fn decode
+method has this type:
+.Pp
+.Bd -literal -compact -offset 3n
+typedef int structs_decode_t(const struct structs_type *type,
+                const u_char *code, size_t cmax, void *data,
+                char *ebuf, size_t emax);
+.Ed
+.Pp
+.Fa data
+points to an uninitialized region of memory large enough to hold an
+instance of the type
+.Fa type .
+.Fn decode
+should convert the binary sequence pointed to by
+.Fa code
+into an instance stored at
+.Fa data ,
+thus initializing the memory.
+.Fn decode
+should return the number of bytes consumed, of the
+.Fa cmax
+total bytes available.
+Note that
+.Fa cmax
+bytes may include additional bytes beyond those necessary for decoding
+one instance of
+.Fa type ;
+this is why encodings generated by
+.Fn encode
+must be self-delimiting.
+If an error occurs,
+.Fa data
+should remain uninitialized and
+.Fn decode
+should return -1;
+it may also optionally write an explanatory error message,
+including '\\0' byte, into the character buffer having length
+.Fa emax
+and pointed to by
+.Fa ebuf
+(see
+.Xr snprintf 3) .
+.Fn decode
+must successfully convert any byte sequence generated by
+.Fn encode .
+However, the sequence defined by
+.Fa code
+and
+.Fa cmax
+is by no means guaranteed to be valid, have any particular length, etc.
+.Fn decode
+must gracefully handle any invalid input sequence by
+returning an error instead of crashing.
+.Pp
+The
+.Fn uninit
+method has this type:
+.Pp
+.Bd -literal -compact -offset 3n
+typedef void structs_uninit_t(const struct structs_type *type,
+                 void *data);
+.Ed
+.Pp
+.Fa data
+points to an initialized instance of the type
+.Fa type .
+.Fn uninit
+should free any resources allocated on behalf of the instance,
+returning the memory region to an uninitialized state.
+.Pp
+The
+.Fa args
+array is useful for when the same functions are used to implement
+several distinct but related types.
+.Ss "Predefined Methods"
+The following
+.Nm "structs type"
+methods are defined in the
+.Xr structs 3
+library:
+.Pp
+.Bl -tag -width "abcde"
+.It Li "structs_region_init()"
+.Fn init
+method that fills in the region of memory with zeros.
+.It Li "structs_region_copy()"
+.Fn copy
+method that copies the instance using
+.Xr memcpy 3 .
+.It Li "structs_region_equal()"
+.Fn equal
+method that compares two instances using
+.Xr memcmp 3 .
+.It Li "structs_region_encode()"
+.Fn encode
+method that encodes an instance by directly copying the bytes.
+Note: this method is incorrect for host-order dependent data.
+.It Li "structs_region_decode()"
+Decodes data encoded by
+.Li "structs_region_encode()" .
+.It Li "structs_region_encode_netorder()"
+.Fn encode
+method that encodes an instance by copying it, after arranging the bytes
+in network order.
+Only valid for data types that have size 16 bytes or less.
+.It Li "structs_region_decode_netorder()"
+Decodes data encoded by
+.Li "structs_region_encode_netorder()" .
+.It Li "structs_nothing_free()"
+.Fn free
+method that does nothing.
+.It Li "structs_ascii_copy()"
+.Fn copy
+method that copies an instance by converting it to ASCII and back.
+This should work for any primitive type.
+.It Li "structs_string_encode()"
+.It Li "structs_string_decode()"
+.Fn encode
+and
+.Fn decode
+methods that encode an instance by converting it to a NUL-terminated
+ASCII string.
+These methods should work for any primitive type.
+.It Li "structs_notsupp_init()"
+.Fn encode
+method that always returns -1 with
+.Va errno
+set to
+.Er ENOTSUPP .
+.It Li "structs_notsupp_copy()"
+.Fn copy
+method that always returns -1 with
+.Va errno
+set to
+.Er ENOTSUPP .
+.It Li "structs_notsupp_equal()"
+.Fn equal
+method that always returns -1 with
+.Va errno
+set to
+.Er ENOTSUPP .
+.It Li "structs_notsupp_ascify()"
+.Fn ascify
+method that always returns -1 with
+.Va errno
+set to
+.Er ENOTSUPP .
+.It Li "structs_notsupp_binify()"
+.Fn binify
+method that always returns -1 with
+.Va errno
+set to
+.Er ENOTSUPP .
+.It Li "structs_notsupp_encode()"
+.Fn encode
+method that always returns -1 with
+.Va errno
+set to
+.Er ENOTSUPP .
+.It Li "structs_notsupp_decode()"
+.Fn decode
+method that always returns -1 with
+.Va errno
+set to
+.Er ENOTSUPP .
+.El
+.Pp
+.Sh RETURN VALUES
+All of the above functions indicate an error condition by returning
+either -1 or
+.Dv NULL
+and setting
+.Va errno
+to an appropriate value.
+.Pp
+Whenever there is an error, no partial work is done: the state of
+the parameters has not changed, and nothing has been allocated or freed.
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr snprintf 3 ,
+.Xr structs 3 ,
+.Xr structs_type_array 3 ,
+.Xr structs_type_boolean 3 ,
+.Xr structs_type_bpf 3 ,
+.Xr structs_type_data 3 ,
+.Xr structs_type_dnsname 3 ,
+.Xr structs_type_ether 3 ,
+.Xr structs_type_float 3 ,
+.Xr structs_type_id 3 ,
+.Xr structs_type_int 3 ,
+.Xr structs_type_ip4 3 ,
+.Xr structs_type_ip6 3 ,
+.Xr structs_type_null 3 ,
+.Xr structs_type_pointer 3 ,
+.Xr structs_type_regex 3 ,
+.Xr structs_type_string 3 ,
+.Xr structs_type_struct 3 ,
+.Xr structs_type_time 3 ,
+.Xr structs_type_union 3 ,
+.Xr typed_mem 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org
+.Sh BUGS
+Instead of the
+.Fa tclass
+field, each type should provide its own method for accessing sub-elements
+as appropriate.

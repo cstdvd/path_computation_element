@@ -1,0 +1,121 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: string_fp.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRING_FP 3
+.Os
+.Sh NAME
+.Nm string_buf_input ,
+.Nm string_buf_output ,
+.Nm string_buf_content ,
+.Nm string_buf_length
+.Nd string buffer streams
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdio.h
+.In pdel/io/string_fp.h
+.Ft "FILE *"
+.Fn string_buf_input "const void *buf" " size_t len" "int copy"
+.Ft "FILE *"
+.Fn string_buf_output "const void *mtype"
+.Ft "char *"
+.Fn string_buf_content "FILE *fp" "int reset"
+.Ft "int"
+.Fn string_buf_length "FILE *fp"
+.Sh DESCRIPTION
+These functions allow string buffers to be read and written as streams.
+.Pp
+.Fn string_buf_input
+creates a read-only stream that reads from the buffer pointed to by
+.Fa buf
+having length
+.Fa len .
+If
+.Fa copy
+is non-zero, the contents of the buffer are copied and therefore
+.Fa buf
+doesn't need to remain valid while the stream is open.
+Otherwise, the data pointed to by
+.Fa buf
+is not copied and must remain valid while the stream is open.
+.Xr fclose 3
+should be used to close the stream.
+.Pp
+.Fn string_buf_output
+creates a write-only stream that writes into an internal buffer that
+grows dynamically.
+.Xr fclose 3
+should be used to close the stream; this also frees the internal buffer.
+The current buffer length is returned by
+.Fn string_buf_length .
+.Pp
+.Fn string_buf_content
+returns the contents of the internal buffer.
+As with
+.Fn string_buf_length ,
+the
+.Fa fp
+argument must be a stream created by
+.Fn string_buf_output .
+If
+.Fa reset
+is zero, then the internal buffer remains valid and the returned pointer
+should be treated as read-only and not be freed; it also becomes invalid
+with the next operation on the stream.
+If
+.Fa reset
+is non-zero, the current buffer contents are "detached" and returned by
+.Fn string_buf_content ,
+and a new, empty internal buffer is created; in this case, the caller is
+responsible for eventually freeing the returned buffer,
+which is allocated with
+.Xr typed_mem 3
+type
+.Fa mtype ,
+and its contents remain valid until then.
+.Pp
+In either case, the data returned by
+.Fn string_buf_content
+is guaranteed to have one additional '\\0' byte appended.
+Therefore, it is always safe to treat this pointer as a normal C string.
+However, any '\\0' bytes previously written to the stream will cause
+this string to appear truncated.
+.Sh RETURN VALUES
+.Fn string_buf_input ,
+.Fn string_buf_output ,
+and
+.Fn string_buf_content
+return
+.Dv NULL
+to indicate an error, with
+.Va errno
+set appropriately.
+.Pp
+Even if 
+.Fn string_buf_content
+returns
+.Dv NULL ,
+the stream will still need to be closed.
+.Sh IMPLEMENTATION NOTES
+.Fn string_buf_content
+and
+.Fn string_buf_length
+attempt to verify that the supplied stream was indeed created by
+.Fn string_buf_output .
+If they detect otherwise, an immediate assertion failure is generated.
+.Sh SEE ALSO
+.Xr base64 3 ,
+.Xr filter 3 ,
+.Xr fopen 3 ,
+.Xr libpdel 3 ,
+.Xr typed_mem 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

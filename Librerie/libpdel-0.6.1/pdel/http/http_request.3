@@ -1,0 +1,460 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: http_request.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt HTTP_REQUEST 3
+.Os
+.Sh NAME
+.Nm http_request
+.Nd HTTP request object
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdio.h
+.In netinet/in.h
+.In openssl/ssl.h
+.In pdel/http/http_defs.h
+.In pdel/http/http_server.h
+.\"
+.Ss Accessors
+.\"
+.Ft "const char *"
+.Fn http_request_get_method "struct http_request *req"
+.Ft "int"
+.Fn http_request_set_method "struct http_request *req" "const char *method"
+.Ft "const char *"
+.Fn http_request_get_uri "struct http_request *req"
+.Ft "const char *"
+.Fn http_request_get_path "struct http_request *req"
+.Ft "int"
+.Fn http_request_set_path "struct http_request *req" "const char *path"
+.Ft "const char *"
+.Fn http_request_get_version "struct http_request *req"
+.Ft "const char *"
+.Fn http_request_get_query_string "struct http_request *req"
+.Ft "const char *"
+.Fn http_request_get_host "struct http_request *req"
+.Ft "struct in_addr"
+.Fn http_request_get_remote_ip "struct http_request *req"
+.Ft "u_int16_t"
+.Fn http_request_get_remote_port "struct http_request *req"
+.Ft "SSL_CTX *"
+.Fn http_request_get_ssl "struct http_request *req"
+.\"
+.Ss "HTTP Headers"
+.\"
+.Ft "const char *"
+.Fn http_request_get_header "struct http_request *req" "const char *name"
+.Ft "int"
+.Fn http_request_num_headers "struct http_request *req"
+.Ft "int"
+.Fn http_request_get_header_by_index "struct http_request *req" "u_int index" "const char **namep" "const char **valuep"
+.Ft "int"
+.Fn http_request_set_header "struct http_request *req" "int append" "const char *name" "const char *valfmt" "..."
+.Ft "int"
+.Fn http_request_remove_header "struct http_request *req" "const char *name"
+.Ft "int"
+.Fn http_request_send_headers "struct http_request *req"
+.\"
+.Ss "HTTP Body"
+.\"
+.Ft "FILE *"
+.Fn http_request_get_input "struct http_request *req"
+.Ft "FILE *"
+.Fn http_request_get_output "struct http_request *req" "int buffer"
+.\"
+.Ss "HTTP Basic Authorization"
+.\"
+.Ft "const char *"
+.Fn http_request_get_username "struct http_request *req"
+.Ft "const char *"
+.Fn http_request_get_password "struct http_request *req"
+.Ft "char *"
+.Fn http_request_encode_basic_auth "const char *mtype" "const char *username" "const char *password"
+.\"
+.Ss "Name/Value Pairs"
+.\"
+.Ft "const char *"
+.Fn http_request_get_value "struct http_request *req" "const char *name" "int instance"
+.Ft "int"
+.Fn http_request_set_value "struct http_request *req" "const char *name" "const char *value"
+.Ft int
+.Fn http_request_get_num_values "struct http_request *req"
+.Ft int
+.Fn http_request_get_value_by_index "struct http_request *req" "int index" "const char **name" "const char **value"
+.Ft "int"
+.Fn http_request_set_query_from_values "struct http_request *req"
+.Ft "int"
+.Fn http_request_read_url_encoded_values "struct http_request *req"
+.Ft "int"
+.Fn http_request_write_url_encoded_values "struct http_request *req"
+.\"
+.Ss "MIME Multi-Part Support"
+.\"
+.Ft int
+.Fn http_request_get_mime_multiparts "struct http_request *req" "http_mime_handler_t *handler" "void *arg"
+.Ft "struct mime_multipart *"
+.Fn http_request_read_mime_multipart "struct http_request *req"
+.Ft "int"
+.Fn http_request_file_upload "struct http_request *req" "const char *field" "FILE *fp" "size_t max"
+.\"
+.Ss Miscellaneous
+.\"
+.Ft "char *"
+.Fn http_request_url_encode "const char *mtype" "const char *string"
+.Ft "void"
+.Fn http_request_url_decode "const char *s" "char *t"
+.Ft "time_t"
+.Fn http_request_parse_time "const char *string"
+.Ft "void "
+.Fn http_request_set_proxy "struct http_request *req" "int whether"
+.Ft "int"
+.Fn http_request_get_raw_socket "struct http_request *req"
+.\"
+.Sh DESCRIPTION
+.\"
+The
+.Nm http_request
+object is used by the PDEL HTTP library to represent an HTTP request.
+An HTTP request may be associated with an HTTP client (the request is
+generated locally) or an HTTP server (the request is generated remotely).
+Some of the functions and values defined below only make sense in one
+of these cases.
+.Pp
+.Nm http_request
+objects are not created directly; rather, they are obtained from another
+object which is associated with the HTTP connection.
+They are freed automatically (and become invalid) when the corresponding
+HTTP connection object is closed.
+.\"
+.Ss Accessors
+.\"
+.Fn http_request_get_method
+returns the HTTP method, typically "GET" or "POST" but others are possible.
+.Pp
+.Fn http_request_set_method
+sets the method for a request when the local side is the client.
+.Pp
+.Fn http_request_get_uri
+gets the URI from the request.
+This is the requested resource exactly as the client requested it,
+before any URL-decoding.
+The first character of this string will always be '/' for non-proxy requests.
+.Pp
+.Fn http_request_get_path
+returns the path part of the URI, after URL-decoding has taken place.
+This does not include the '?' and query string part, if any.
+The first character of this string will always be '/'.
+.Pp
+.Fn http_request_set_path
+sets the path for a request.
+The first character must be '/'.
+.Pp
+.Fn http_request_get_version
+returns the version string for this request.
+Typically one of "HTTP/0.9", "HTTP/1.0", or "HTTP/1.1".
+.Pp
+.Fn http_request_get_query_string
+returns the HTTP query string (which optionally appears at the end of
+an URL after a '?' character), or the empty string if there is no query string.
+The returned string is exactly as it was submitted by the client,
+i.e., no URL-decoding has been performed on it.
+.Pp
+.Fn http_request_get_host
+returns the hostname specified in the request.
+This may be
+.Dv NULL
+for a non-proxy request if the client fails to send the "Host" header
+(typically older browsers).
+This value can be used to implement "virtual hosting".
+.Pp
+.Fn http_request_get_remote_ip
+returns the IP address of the remote side.
+.Pp
+.Fn http_request_get_remote_port
+returns the TCP port of the remote side.
+.Pp
+.Fn http_request_get_ssl
+returns the SSL context for the HTTP connection, or
+.Dv NULL
+if the connection is not over SSL.
+.\"
+.Ss "HTTP Headers"
+.\"
+.Fn http_request_get_header
+returns the value of the named header, or
+.Dv NULL
+if the header is not defined for the request.
+HTTP header names are case-insensitive.
+.Pp
+.Fn http_request_num_headers
+returns the number of headers in the request.
+.Pp
+.Fn http_request_get_header_by_index
+points
+.Fa "*namep"
+at the name and
+.Fa "*valuep"
+at the value of the header with index
+.Fa index ,
+which must be less than the value returned by
+.Fn http_request_num_headers .
+.Pp
+.Fn http_request_set_header
+formats and sets a header value.
+If
+.Fa append
+is non-zero, the value is appended to any existing value
+(after adding a ",\ " separator) rather than replacing it.
+.Pp
+.Fn http_request_remove_header
+removes a header from the request.
+.Pp
+.Fn http_request_send_headers
+causes the client request headers to be sent to the server if they
+haven't already been sent.
+This causes the URI to be constructed from the request path (see
+.Fn http_request_set_path
+above) and the name/value pairs (see
+.Fn http_request_set_value
+below) added as the query string.
+.\"
+.Ss "HTTP Body"
+.\"
+.Fn http_request_get_input
+returns the body of the request as an input stream.
+The local side must be the server for this HTTP connection.
+.Pp
+.Fn http_request_get_output
+returns an output stream that writes into the body of the request.
+The local side must be the client for this HTTP connection.
+.Fa buffer
+determines whether the entire output should be buffered before sending, or
+should writes to the stream translate immediately into writes to the server.
+The latter option will force the headers to be sent (if they haven't been
+sent already) when the first byte is written to the stream.
+Setting
+.Fa buffer
+to zero is also incompatible with keep-alive, unless the user code manually
+sets the "Content-Length" header (in which case it takes responsibility
+for writing the correct number of bytes).
+If
+.Fa buffer
+is non-zero, the output will be buffered entirely in memory until the output
+stream is closed, at which point "Content-Length" is computed automatically.
+.\"
+.Ss "HTTP Basic Authorization"
+.\"
+.Fn http_request_get_username
+returns the username from the "Authorization" header, or
+.Dv NULL
+if none was specified.
+This works for "Basic" authentication only.
+.Pp
+.Fn http_request_get_password
+returns the password from the "Authorization" header, or
+.Dv NULL
+if none was specified.
+This works for "Basic" authentication only.
+.Pp
+.Fn http_request_encode_basic_auth
+formats and base-64 encodes the
+.Fa username
+and
+.Fa password
+into a form suitable for the HTTP "Basic" authentication header.
+The returned buffer is allocated with
+.Xr typed_mem 3
+type
+.Fa mtype ;
+the caller must eventually free it.
+.\"
+.Ss "Name/Value Pairs"
+.\"
+Requests have an internal list of name, value pairs.
+The names need not be unique.
+For servers, this list is automatically initialized from the request
+by parsing the URI query string.
+For clients, this list is used to automatically generate the URI query
+string when the request headers are sent for "GET" queries only.
+.Pp
+.Fn http_request_get_value
+returns the value associated with with
+.Fa name .
+Since the same name may exist multiple times,
+.Fa instance
+should be 0 to retrieve the first value, 1 for the second, etc.
+.Dv NULL
+is returned if the value is not found.
+.Pp
+.Fn http_request_set_value
+adds a name, value pair to the internal database.
+.Pp
+.Fn http_request_get_num_values
+returns the number of name, value pairs.
+.Pp
+.Fn http_request_get_value_by_index
+retrieves name, value pair that is at position
+.Fa index
+in the list.
+Note that the list is kept sorted by name.
+.Pp
+.Fn http_request_set_query_from_values
+generates a query string for the request based on the
+name, value pairs.
+This is useful if a query string is desired with a non-GET request.
+.Pp
+.Fn http_request_read_url_encoded_values
+reads the request body, interprets it as an URL-encoded query string,
+and sets the request's name, value pairs from string.
+This is typically used by a server to input HTML form data that
+was submitted using the "POST" method.
+.Pp
+.Fn http_request_write_url_encoded_values
+writes out the name, value pairs as URL-encoded query string data.
+This is typically used by a client to output HTML form data using
+the "POST" method.
+.Pp
+.\"
+.Ss "MIME Multi-Part Support"
+.\"
+These functions operate on requests whose body contains multi-part MIME data.
+The request must have content type "multipart/form-data" and
+the body must be properly formatted for multi-part MIME or else these
+functions will return an error.
+.Pp
+.Fn http_request_get_mime_multiparts
+reads the request body as a multi-part MIME document and invokes the
+.Fa handler
+for each part:
+.Pp
+.Bd -literal -compact
+    typedef int http_mime_handler_t(void *arg,
+                struct mime_part *part, FILE *fp);
+.Ed
+.Pp
+The
+.Fa arg
+is passed untouched to the handler.
+.Fa fp
+is an input stream that reads only the MIME part being processed.
+The handler should read as much of the MIME part as desired and then return
+0 to continue with subsequent parts, or else
+-1 (with
+.Va errno
+set) to abort processing.
+In the latter case,
+.Fn http_request_get_mime_multiparts
+will return -1.
+In no case should
+the handler close the stream
+.Fa fp
+or free
+.Fa part .
+See
+.Xr http_mime 3
+for a description of how to use
+.Fa part .
+.Pp
+.Fn http_request_read_mime_multipart
+reads an entire multi-part MIME request body into memory and returns
+the result, which the caller is responsible for eventually freeing.
+See
+.Xr http_mime 3
+for a description of how to use the return value.
+.Pp
+.Fn http_request_file_upload
+reads only the value of the field
+.Fa field
+from a multi-part MIME request body and writes it to the output stream
+.Fa fp .
+The data is transferred in an on-line fasion so that the entire value
+does not need to fit in memory at once.
+This is useful for HTML form file uploads of large files.
+All MIME parts other than the first part with name
+.Fa field
+are discarded.
+If
+.Fa max
+is non-zero and the length of the field is more than
+.Fa max
+bytes, an error is generated with
+.Va errno
+set to
+.Er EFBIG.
+This is useful for avoiding disk-filling attacks.
+.\"
+.Ss Miscellaneous
+.\"
+.Fn http_request_url_encode
+URL-encodes the string
+.Fa s
+into a buffer allocated with
+.Xr typed_mem 3
+type
+.Fa mtype 
+and returns the result, which the caller must eventually free.
+.Pp
+.Fn http_request_url_decode
+URL-decodes the string
+.Fa s
+and puts the result in the buffer
+.Fa t ,
+which must have length at least
+.Li "strlen(s) + 1" .
+.Pp
+.Fn http_request_parse_time
+parses an HTTP time string and returns the result, or -1 on failure.
+.Pp
+.Fn http_request_set_proxy
+sets or clears the proxy bit for a client request.
+When this bit is set, the client will make a proxy HTTP request instead
+of a normal HTTP request.
+.Pp
+.Fn http_request_get_raw_socket
+returns the underlying file descriptor for the HTTP connection.
+This is a huge layering violation fraught with danger, but necessary
+for implementing a proxy server that supports the "CONNECT" method.
+This function will fail for SSL connections.
+The returned file descriptor should not be closed.
+.Sh RETURN VALUES
+All of the above routines that can return an error return
+.Dv NULL
+or -1 to indicate this and set
+.Va errno
+to an appropriate value.
+Success is indicated by a normal return value or zero.
+.Sh SEE ALSO
+.Xr http_client 3 ,
+.Xr http_mime 3 ,
+.Xr http_response 3 ,
+.Xr http_server 3 ,
+.Xr http_servlet 3 ,
+.Xr libpdel 3 ,
+.Xr typed_mem 3
+.Rs
+.%A R. Fielding
+.%A J. Gettys
+.%A J. Mogul
+.%A H. Frystyk
+.%A L. Masinter
+.%A P. Leach
+.%A T. Berners-Lee
+.%T "Hypertext Transfer Protocol -- HTTP/1.1"
+.%O RFC 2616
+.Re
+.Rs
+.%A N. Freed
+.%A N. Borenstein
+.%T "Multipurpose Internet Mail Extensions (MIME) Part Two: Media Types"
+.%O RFC 2046
+.Re
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

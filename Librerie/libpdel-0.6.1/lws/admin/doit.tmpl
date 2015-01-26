@@ -1,0 +1,29 @@
+@set("page_id", "$Id: doit.tmpl 547 2002-08-19 20:41:07Z archie $")
+@set("page_title", @htmlencode(@query("title")))
+@set("page_url", "/admin/doit")
+@eval(@readfile("head.tmpl"))
+
+<tr><td colspan="2">&nbsp;</td></tr>
+
+<tr>
+    <td>&nbsp;&nbsp;</td>
+    <td align="left"><h4>@get("page_title")</h4></td>
+</tr>
+
+<tr>
+    <td>&nbsp;</td>
+    <td>@htmlencode(@query("msg"))
+
+    <p>
+    @set("argc", @query("argc"))
+    @loop(@query("argc"))
+	@set(@cat("arg", @loopindex()), @query(@cat("arg", @loopindex())))
+    @endloop
+    @invoke()</td>
+</tr>
+
+<tr><td colspan="2">&nbsp;</td></tr>
+
+</table>
+
+@eval(@readfile("foot.tmpl"))

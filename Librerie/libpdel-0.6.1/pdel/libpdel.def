@@ -1,0 +1,625 @@
+LIBRARY pdel.dll
+    
+EXPORTS
+    
+    __isthreaded  CONSTANT
+    alog_config_type CONSTANT
+    alog_facility_type CONSTANT
+    alog_history_type CONSTANT
+    alog_severity_type CONSTANT
+    app_config_alog_subsystem CONSTANT
+    app_config_curconf_subsystem CONSTANT
+    app_config_pidfile_subsystem CONSTANT
+    b64_rfc2045_charset CONSTANT
+    pd_null_fd CONSTANT
+    pd_optarg CONSTANT
+    pd_optind CONSTANT
+    pd_optopt CONSTANT
+    pd_optreset CONSTANT
+    structs_type_boolean_char CONSTANT
+    structs_type_boolean_char_01 CONSTANT
+    structs_type_boolean_int CONSTANT
+    structs_type_boolean_int_01 CONSTANT
+    structs_type_char CONSTANT
+    structs_type_data CONSTANT
+    structs_type_dnsname CONSTANT
+    structs_type_double CONSTANT
+    structs_type_ether CONSTANT
+    structs_type_ether_nocolon CONSTANT
+    structs_type_float CONSTANT
+    structs_type_hchar CONSTANT
+    structs_type_hexdata CONSTANT
+    structs_type_hint CONSTANT
+    structs_type_hint8 CONSTANT
+    structs_type_hint16 CONSTANT
+    structs_type_hint32 CONSTANT
+    structs_type_hint64 CONSTANT
+    structs_type_hlong CONSTANT
+    structs_type_hshort CONSTANT
+    structs_type_int CONSTANT
+    structs_type_int8 CONSTANT
+    structs_type_int16 CONSTANT
+    structs_type_int32 CONSTANT
+    structs_type_int64 CONSTANT
+    structs_type_ip4 CONSTANT
+    structs_type_ip6 CONSTANT
+    structs_type_long CONSTANT
+    structs_type_null CONSTANT
+    structs_type_regex CONSTANT
+    structs_type_regex_icase CONSTANT
+    structs_type_short CONSTANT
+    structs_type_string CONSTANT
+    structs_type_string_null CONSTANT
+    structs_type_time_abs CONSTANT
+    structs_type_time_gmt CONSTANT
+    structs_type_time_iso8601 CONSTANT
+    structs_type_time_local CONSTANT
+    structs_type_time_rel CONSTANT
+    structs_type_uchar CONSTANT
+    structs_type_uint CONSTANT
+    structs_type_uint8 CONSTANT
+    structs_type_uint16 CONSTANT
+    structs_type_uint32 CONSTANT
+    structs_type_uint64 CONSTANT
+    structs_type_ulong CONSTANT
+    structs_type_ushort CONSTANT
+    structs_type_xmlrpc_array CONSTANT
+    structs_type_xmlrpc_compact_fault CONSTANT
+    structs_type_xmlrpc_fault CONSTANT
+    structs_type_xmlrpc_member CONSTANT
+    structs_type_xmlrpc_request CONSTANT
+    structs_type_xmlrpc_response CONSTANT
+    structs_type_xmlrpc_struct CONSTANT
+    structs_type_xmlrpc_value CONSTANT
+    typed_mem_stats_type CONSTANT
+    
+    app_config_copy
+    app_config_free
+    app_config_get
+    app_config_get_cookie
+    app_config_get_type
+    app_config_init
+    app_config_load
+    app_config_new
+    app_config_reload
+    app_config_set
+    app_config_uninit
+    http_client_close
+    http_client_connect
+    http_client_create
+    http_client_destroy
+    http_client_get_local_ip
+    http_client_get_local_port
+    http_client_get_reason
+    http_client_get_request
+    http_client_get_response
+    _http_connection_create
+    _http_connection_free
+    _http_connection_cache_create
+    _http_connection_cache_destroy
+    _http_connection_cache_get
+    _http_connection_cache_put
+    _http_head_copy
+    _http_head_free
+    _http_head_get
+    _http_head_get_by_index
+    _http_head_get_headers
+    _http_head_has_anything
+    _http_head_new
+    _http_head_num_headers
+    _http_head_read
+    _http_head_read_headers
+    _http_head_remove
+    _http_head_set
+    _http_head_vset
+    _http_head_want_keepalive
+    _http_head_write
+    _http_message_connection_header
+    _http_message_free
+    _http_message_get_output
+    _http_message_get_raw_socket
+    _http_message_get_remote_ip
+    _http_message_get_remote_port
+    _http_message_has_anything
+    _http_message_new
+    _http_message_read
+    _http_message_remove_header
+    _http_message_send_body
+    _http_message_send_headers
+    _http_message_vset_header
+    http_mime_multipart_free
+    http_mime_multipart_get_count
+    http_mime_multipart_get_part
+    http_mime_part_get_data
+    http_mime_part_get_header
+    http_mime_part_get_length
+    http_request_get_mime_multiparts
+    http_request_read_mime_multipart
+    _http_request_free
+    _http_request_new
+    _http_request_read
+    http_request_encode_basic_auth
+    http_request_file_upload
+    http_request_get_header
+    http_request_get_header_by_index
+    http_request_get_host
+    http_request_get_input
+    http_request_get_method
+    http_request_get_num_values
+    http_request_get_output
+    http_request_get_password
+    http_request_get_path
+    http_request_get_query_string
+    http_request_get_raw_socket
+    http_request_get_remote_ip
+    http_request_get_remote_port
+    http_request_get_ssl
+    http_request_get_uri
+    http_request_get_username
+    http_request_get_value
+    http_request_get_value_by_index
+    http_request_get_version
+    http_request_num_headers
+    http_request_parse_time
+    http_request_read_url_encoded_values
+    http_request_remove_header
+    http_request_send_headers
+    http_request_set_header
+    http_request_set_method
+    http_request_set_path
+    http_request_set_proxy
+    http_request_set_query_from_values
+    http_request_set_value
+    http_request_url_decode
+    http_request_url_encode
+    http_request_write_url_encoded_values
+    _http_response_free
+    _http_response_new
+    _http_response_read
+    http_response_get_code
+    http_response_get_header
+    http_response_get_header_by_index
+    http_response_get_input
+    http_response_get_output
+    http_response_get_raw_socket
+    http_response_get_remote_ip
+    http_response_get_remote_port
+    http_response_get_ssl
+    http_response_guess_mime
+    http_response_no_body
+    http_response_num_headers
+    http_response_remove_header
+    http_response_send_basic_auth
+    http_response_send_errno_error
+    http_response_send_error
+    http_response_send_headers
+    http_response_send_redirect
+    http_response_set_header
+    http_server_destroy_servlet
+    http_server_register_servlet
+    http_server_set_proxy_handler
+    http_server_start
+    http_server_stop
+    _http_ssl_init
+    http_response_status_msg
+    http_xml_send
+    http_xml_send_xmlrpc
+    http_xml_send_xmlrpc2
+    http_servlet_basicauth_create
+    http_servlet_cookieauth_create
+    http_servlet_cookieauth_login
+    http_servlet_cookieauth_logout
+    http_servlet_cookieauth_user
+    http_servlet_file_create
+    http_servlet_file_serve
+    http_servlet_redirect_create
+    _http_servlet_tmpl_copy_tinfo
+    _http_servlet_tmpl_free_tinfo
+    http_servlet_tmpl_create
+    http_servlet_tmpl_func_get_header
+    http_servlet_tmpl_func_query
+    http_servlet_tmpl_func_query_exists
+    http_servlet_tmpl_func_query_string
+    http_servlet_tmpl_func_redirect
+    http_servlet_tmpl_func_remove_header
+    http_servlet_tmpl_func_set_header
+    http_servlet_tmpl_func_unbuffer
+    http_servlet_xml_create
+    http_servlet_xmlrpc_create
+    b64_decoder_create
+    b64_encoder_create
+    boundary_fopen
+    count_fopen
+    filter_convert
+    filter_destroy
+    filter_end
+    filter_fopen
+    filter_process
+    filter_read
+    filter_write
+    pd_poll
+    pd_socketpair
+    ssl_fdopen
+    ssl_log
+    string_buf_content
+    string_buf_input
+    string_buf_length
+    string_buf_output
+    timeout_fdopen
+    pd_gai_strerror
+    pd_realpath
+    pd_strsep
+    pd_chown
+    pd_getopt
+    pd_getpid
+    pd_gettimeofday
+    pd_strptime
+    pd_timegm
+    domain_connection_get_cookie
+    domain_connection_get_fd
+    domain_connection_get_fp
+    domain_connection_get_peer
+    domain_server_get_cookie
+    domain_server_start
+    domain_server_stop
+    pd_inet_ntop
+    pd_inet_pton
+    tcp_connection_get_cookie
+    tcp_connection_get_fd
+    tcp_connection_get_fp
+    tcp_connection_get_peer
+    tcp_server_get_cookie
+    tcp_server_start
+    tcp_server_stop
+    structs_equal
+    structs_find
+    structs_free
+    structs_get
+    structs_get_binary
+    structs_get_string
+    structs_init
+    structs_reset
+    structs_set
+    structs_set_binary
+    structs_set_string
+    structs_traverse
+    structs_ascii_copy
+    structs_nothing_free
+    structs_notsupp_ascify
+    structs_notsupp_binify
+    structs_notsupp_copy
+    structs_notsupp_decode
+    structs_notsupp_encode
+    structs_notsupp_equal
+    structs_notsupp_init
+    structs_region_copy
+    structs_region_decode
+    structs_region_decode_netorder
+    structs_region_encode
+    structs_region_encode_netorder
+    structs_region_equal
+    structs_region_init
+    structs_xml_input
+    structs_xml_output
+    structs_struct2xmlrpc
+    structs_xmlrpc_build_fault_response
+    structs_xmlrpc_build_request
+    structs_xmlrpc_build_response
+    structs_xmlrpc2struct
+    structs_array_copy
+    structs_array_decode
+    structs_array_delete
+    structs_array_encode
+    structs_array_equal
+    structs_array_free
+    structs_array_insert
+    structs_array_length
+    structs_array_prep
+    structs_array_reset
+    structs_fixedarray_copy
+    structs_fixedarray_decode
+    structs_fixedarray_encode
+    structs_fixedarray_equal
+    structs_fixedarray_free
+    structs_fixedarray_init
+    structs_data_ascify
+    structs_data_binify
+    structs_data_copy
+    structs_data_decode
+    structs_data_encode
+    structs_data_equal
+    structs_data_free
+    structs_fixeddata_ascify
+    structs_fixeddata_binify
+    structs_fixeddata_decode
+    structs_fixeddata_encode
+    structs_id_ascify
+    structs_id_binify
+    structs_id_init
+    structs_int_ascify
+    structs_int_binify
+    structs_pointer_ascify
+    structs_pointer_binify
+    structs_pointer_copy
+    structs_pointer_decode
+    structs_pointer_encode
+    structs_pointer_equal
+    structs_pointer_free
+    structs_pointer_init
+    structs_regex_ascify
+    structs_regex_binify
+    structs_regex_equal
+    structs_regex_free
+    structs_bstring_ascify
+    structs_bstring_binify
+    structs_bstring_equal
+    structs_string_ascify
+    structs_string_binify
+    structs_string_decode
+    structs_string_encode
+    structs_string_equal
+    structs_string_free
+    structs_string_init
+    structs_struct_copy
+    structs_struct_decode
+    structs_struct_encode
+    structs_struct_equal
+    structs_struct_free
+    structs_struct_init
+    structs_union_copy
+    structs_union_decode
+    structs_union_encode
+    structs_union_equal
+    structs_union_free
+    structs_union_init
+    structs_union_set
+    alog
+    alog_clear_history
+    alog_configure
+    alog_expand
+    alog_facility
+    alog_facility_name
+    alog_get_history
+    alog_set_channel
+    alog_set_debug
+    alog_severity
+    alog_severity_name
+    alog_shutdown
+    valog
+    logfile_close
+    logfile_get
+    logfile_num_entries
+    logfile_open
+    logfile_put
+    logfile_sync
+    logfile_trim
+    pd_mmap_cleanup
+    pd_mmap_fd
+    pd_mmap_file
+    pd_mmap_getaddr
+    pd_mmap_getfd
+    pd_mmap_getmh
+    pd_mmap_getsize
+    pd_mmap_sync
+    tmpl_create
+    tmpl_create_mmap
+    tmpl_destroy
+    tmpl_ctx_create
+    tmpl_ctx_destroy
+    tmpl_ctx_get_arg
+    tmpl_ctx_get_mtype
+    tmpl_ctx_reset
+    tmpl_list_handler
+    _tmpl_execute_elems
+    _tmpl_invoke
+    _tmpl_true
+    tmpl_execute
+    tmpl_execute_func
+    _tmpl_free_arg
+    _tmpl_free_call
+    _tmpl_free_elems
+    _tmpl_free_func
+    _tmpl_compact
+    _tmpl_compact_elems
+    _tmpl_parse
+    _tmpl_find_func
+    _tmpl_find_var
+    _tmpl_set_func
+    tmpl_ctx_get_var
+    tmpl_ctx_set_var
+    ghash_arg
+    ghash_create
+    ghash_destroy
+    ghash_dump
+    ghash_get
+    ghash_iter_create
+    ghash_iter_destroy
+    ghash_iter_has_next
+    ghash_iter_next
+    ghash_iter_remove
+    ghash_put
+    ghash_remove
+    ghash_size
+    ghash_walk_init
+    ghash_walk_next
+    gtree_arg
+    gtree_create
+    gtree_destroy
+    gtree_dump
+    gtree_first
+    gtree_get
+    gtree_last
+    gtree_next
+    gtree_node_size
+    gtree_prev
+    gtree_print
+    gtree_put
+    gtree_put_prealloc
+    gtree_remove
+    gtree_size
+    gtree_traverse
+    _mesg_port_set_event
+    mesg_port_create
+    mesg_port_destroy
+    mesg_port_get
+    mesg_port_put
+    mesg_port_qlen
+    paction_cancel
+    paction_start
+    _pevent_canceled
+    _pevent_unref
+    pevent_ctx_count
+    pevent_ctx_create
+    pevent_ctx_destroy
+    pevent_get_info
+    pevent_register
+    pevent_trigger
+    pevent_unregister
+    rsa_util_sign
+    rsa_util_verify
+    rsa_util_verify_priv
+    string_dequote
+    string_enquote
+    tinfo_get
+    tinfo_set
+    tinfo_set_nocopy
+    typed_mem_asprintf
+    typed_mem_calloc
+    typed_mem_dump
+    typed_mem_enable
+    typed_mem_free
+    typed_mem_realloc
+    typed_mem_reallocf
+    typed_mem_strdup
+    typed_mem_type
+    typed_mem_usage
+    typed_mem_vasprintf
+    _flockfile_debug_stub
+    pd_flockfile_p
+    pd_ftrylockfile_p
+    pd_funlockfile_p
+    pd_clearerr_p
+    pd_fclose_p
+    pd_fcloseall_p
+    pd_feof_p
+    pd_ferror_p
+    __fflush
+    __sflush
+    pd_fflush_p
+    pd_fgetc_p
+    __slbexpand
+    pd_fgetln_p
+    pd_fgetpos_p
+    pd_fgets_p
+    __sfp
+    __sinit
+    _cleanup
+    file2filepd
+    filepd2file
+    pd_fcloseonly_p
+    __sflags
+    pd_fprintf_p
+    pd_fpurge_p
+    pd_fputc_p
+    pd_fputs_p
+    __fread
+    pd_fread_p
+    pd_fscanf_p
+    _pd_fseeko_p
+    pd_fseek_p
+    pd_fseeko_p
+    pd_fsetpos_p
+    _pd_ftello_p
+    pd_ftell_p
+    pd_ftello_p
+    pd_funopen_p
+    __sfvwrite
+    _fwalk
+    pd_fwrite_p
+    pd_getc_p
+    pd_getw_p
+    __smakebuf
+    __swhatbuf
+    pd_putc_p
+    pd_putw_p
+    __srefill
+    pd_rewind_p
+    __srget
+    pd_setbuf_p
+    pd_setbuffer_p
+    pd_setlinebuf_p
+    pd_setvbuf_p
+    __sclose
+    __sread
+    __sseek
+    __swrite
+    _sread
+    _sseek
+    _swrite
+    __ungetc
+    pd_ungetc_p
+    pd_clearerr_unlocked_p
+    pd_feof_unlocked_p
+    pd_ferror_unlocked_p
+    pd_fileno_unlocked_p
+    pd_getc_unlocked_p
+    pd_putc_unlocked_p
+    pd_vasprintf_p
+    pd_vfprintf_p
+    __svfscanf
+    pd_vfscanf_p
+    __swbuf
+    __swsetup
+    pd_clearerr
+    pd_clearerr_unlocked
+    pd_fclose
+    pd_fcloseall
+    pd_feof
+    pd_feof_unlocked
+    pd_ferror
+    pd_ferror_unlocked
+    pd_fflush
+    pd_fgetc
+    pd_fgetcookie
+    pd_fgetln
+    pd_fgetpos
+    pd_fgets
+    pd_fileno_unlocked
+    pd_flockfile
+    pd_fopen
+    pd_fprintf
+    pd_fpurge
+    pd_fputc
+    pd_fputs
+    pd_fread
+    pd_freopen
+    pd_fscanf
+    pd_fseek
+    pd_fseeko
+    pd_fsetpos
+    pd_ftell
+    pd_ftello
+    pd_ftrylockfile
+    pd_funlockfile
+    pd_funopen
+    pd_fwrite
+    pd_getc
+    pd_getc_unlocked
+    pd_getw
+    pd_putc
+    pd_putc_unlocked
+    pd_putw
+    pd_rewind
+    pd_setbuf
+    pd_setbuffer
+    pd_setlinebuf
+    pd_setvbuf
+    pd_ungetc
+    pd_vasprintf
+    pd_vfprintf
+    pd_vfscanf
+    pd_regcomp
+    pd_regerror
+    pd_regexec
+    pd_regfree
+    pd_ftruncate

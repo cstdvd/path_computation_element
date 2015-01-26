@@ -1,0 +1,159 @@
+@set("page_id", "$Id: logs.tmpl 693 2002-09-06 20:56:55Z archie $")
+@set("page_title", "Logs")
+@set("page_url", "/admin/logs")
+@eval(@readfile("head.tmpl"))
+
+@define("logs_get")
+	@object_get("logs", @get("arg1"))
+@enddef
+
+@nop(" Get form values or set defaults ")
+@set("num", @query("num"))
+@if(@not(@query_exists("num")))
+	@set("num", "100")
+@endif
+@set("sev", @query("sev"))
+@if(@not(@query_exists("sev")))
+	@if(@not(@equal(@debug_level(), "0")))
+		@set("sev", "info")
+	@else
+		@set("sev", "notice")
+	@endif
+@endif
+@set("time", @query("time"))
+@if(@not(@query_exists("time")))
+	@set("time", "86400")
+@endif
+@set("reverse", @query("reverse"))
+@if(@not(@query_exists("reverse")))
+	@set("reverse", @not(@query_exists("action")))
+@endif
+@set("regexp", @query("regexp"))
+
+@nop(" Clear logs if desired ")
+@if(@equal(@query("action"), "Clear Logs"))
+	@logs_clear()
+@endif
+
+<form method="get" action="@get("page_url")">
+
+<table border="0" cellspacing="0" cellpadding="0">
+
+<tr>
+  <td nowrap colspan="3" align="left">@nop()
+  @nop()<b>&nbsp;&nbsp;Lines:&nbsp;&nbsp;</b>@nop()
+    @nop()<select name="num">
+    @select("10", "10", @get("num"))
+    @select("100", "100", @get("num"))
+    @select("1000", "1000", @get("num"))
+    @select("2147483647", "Unlimited", @get("num"))
+    </select>@nop()
+  @nop()<b>&nbsp;&nbsp;Filter:&nbsp;&nbsp;</b>@nop()
+    @nop()<select name="sev">
+    @select("emerg", "Critical", @get("sev"))
+    @select("err", "Error", @get("sev"))
+    @select("warning", "Warning", @get("sev"))
+    @select("notice", "Notice", @get("sev"))
+    @select("info", "Informational", @get("sev"))
+    @if(@not(@equal(@debug_level(), "0")))
+	@select("debug", "Debugging", @get("sev"))
+    @endif
+    </select>@nop()
+  @nop()<b>&nbsp;&nbsp;Within:&nbsp;&nbsp;</b>@nop()
+    @nop()<select name="time">
+    @select("3600", "The past hour", @get("time"))
+    @select("86400", "The past day", @get("time"))
+    @select("604800", "The past week", @get("time"))
+    @select("2147483647", "No time limit", @get("time"))
+    </select>@nop()
+  @nop()&nbsp;&nbsp;&nbsp;&nbsp;<input
+    name="action" type="submit" value="Update">@nop()
+  @nop()&nbsp;&nbsp;&nbsp;&nbsp;<input
+    name="action" type="submit" value="Clear Logs">
+  </td>
+</tr>
+
+@if(@empty(@get("regexp")))
+    @logs_load(@get("sev"), @get("num"), @get("time"))
+@else
+    @logs_load(@get("sev"), @get("num"), @get("time"), @get("regexp"), "1")
+@endif
+
+@set("num", @logs_get("length"))
+
+<tr>
+    <td nowrap align="left"><b>&nbsp;&nbsp;Pattern:&nbsp;&nbsp;</b>@textinput("regexp", "20", "64", @get("regexp"))</td>
+    <td nowrap align="left">
+	&nbsp;&nbsp;@checkbox("reverse",
+	  @get("reverse"))&nbsp;&nbsp;Show most recent first</td>
+@if(@equal(@get("num"), "0"))
+    <td>&nbsp;&nbsp;</td>
+@else
+    <td nowrap align="right">
+	@coldlink(@cat("logexport.txt",
+		"?sev=", @urlencode(@get("sev")),
+		"&amp;num=", @urlencode(@get("num")),
+		"&amp;time=", @urlencode(@get("time")),
+		"&amp;reverse=", @urlencode(@get("reverse")),
+		"&amp;regexp=", @urlencode(@get("regexp"))),
+	    "Export these logs as plain text")
+    </td>
+@endif
+</tr>
+
+</table>
+
+</form>
+
+@if(@equal(@get("num"), "0"))
+
+	<h4><font class="standout">&nbsp;&nbsp;No matching entries.</font></h4>
+
+	@eval(@readfile("foot.tmpl"))
+	@return
+@endif
+
+<table border="0" cellspacing="0" cellpadding="1" width="100%">
+
+<tr>
+<th class="logs-header">Time</th>
+<th class="logs-header">Severity</th>
+<th class="logs-header" width="99%">Message</th>
+</tr>
+
+<tr><td colspan="3">&nbsp;</td></tr>
+
+@if(@get("reverse"))
+	@set("index", @sub(@get("num"), "1"))
+	@set("last", "0")
+	@set("step", "-1")
+@else
+	@set("index", "0")
+	@set("last", @sub(@get("num"), "1"))
+	@set("step", "1")
+@endif
+
+@nop(" If we're sending more than 100 lines, don't buffer the output ")
+@if(@gt(@get("num"), "100"))
+	@unbuffer()
+@endif
+
+@loop("100000")
+    @set("sev", @logs_get(@cat(@get("index"), ".sev")))
+    <tr>
+	<td valign="top" nowrap>@htmlencode(
+	  @strftime(@logs_get(@cat(@get("index"), ".when")), "%b %e %T"))</td>
+	<td valign="top" align="center"><font
+	  class="log-@get("sev")">@severity_pretty(@get("sev"))</font></td>
+	<td valign="top">@htmlencode(
+	  @logs_get(@cat(@get("index"), ".msg")))</td>
+    </tr>
+    @if(@equal(@get("index"), @get("last")))
+	@break
+    @endif
+    @set("index", @add(@get("index"), @get("step")))
+@endloop
+
+</table>
+
+@eval(@readfile("foot.tmpl"))

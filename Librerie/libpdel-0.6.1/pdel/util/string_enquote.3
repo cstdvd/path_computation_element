@@ -1,0 +1,86 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: string_enquote.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRING_ENQUOTE 3
+.Os
+.Sh NAME
+.Nm string_enquote ,
+.Nm string_dequote
+.Nd doubly quoted string conversion routines
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In stdio.h
+.In pdel/util/string_quote.h
+.Ft "char *"
+.Fn string_enquote "const char *str" "const char *mtype"
+.Ft "char *"
+.Fn string_dequote "FILE *input" "const char *mtype"
+.Sh DESCRIPTION
+These routines handle converting strings to and from a printable form,
+namely, doubly-quoted strings with C backslash escapes.
+.Pp
+.Fn string_enquote
+encodes the string
+.Fa str
+using only printable characters and returns the result, which will begin
+and end with a double quote character.
+The returned string is allocated with
+.Xr typed_mem 3
+type
+.Fa mtype
+and must be freed by the caller.
+.Pp
+.Fn string_dequote
+reads and parses a doubly-quoted string from
+.Fa input
+and returns the result, allocated with 
+.Xr typed_mem 3
+type
+.Fa mtype .
+The caller must free the returned string.
+The input stream is assumed to be pointing at the character after the
+opening double quote character.
+Upon return, it will be pointing to the character after the closing double
+quote character.
+.Pp
+.Fn string_dequote
+parses in a liberal manner and does not detect parse errors.
+Any malformed backslash escapes are passed through unchanged.
+In other words, if 
+.Fn string_dequote
+is passed a string that was produced by
+.Fn string_enquote ,
+it guarantees to reproduce the original string;
+however, it will successfully parse any input string.
+.Sh RETURN VALUES
+If there was a system error,
+.Fn string_enquote
+and
+.Fn string_dequote
+return
+.Dv NULL
+with
+.Va errno
+set to the appropriate value.
+.Fn string_dequote
+also returns
+.Dv NULL
+if the end of file is encountered before the closing quote character,
+in which case
+.Va errno
+is set to
+.Er EINVAL .
+.Sh SEE ALSO
+.Xr string_fp 3 ,
+.Xr libpdel 3 ,
+.Xr typed_mem 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org

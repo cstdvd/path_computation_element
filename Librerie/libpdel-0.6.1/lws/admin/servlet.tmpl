@@ -1,0 +1,246 @@
+@set("page_id", "$Id: servlet.tmpl 692 2002-09-06 20:56:43Z archie $")
+@set("sid", @add(@query("sid"), "0"))
+@set("sid1", @add(@get("sid"), "1"))
+@set("vid", @add(@query("vid"), "0"))
+@set("vid1", @add(@get("vid"), "1"))
+@set("lid", @add(@query("lid"), "0"))
+@set("lid1", @add(@get("lid"), "1"))
+@eval(@readfile("macros.tmpl"))
+@object_reset("config")
+@if(@equal(@config_get(@cat("servers.", @get("sid"),
+    ".virtual_hosts.", @get("vid"), ".server_name")), ""))
+	@set("page_title_prefix", @cat("Server #", @get("sid1"),
+	    ": Default Virtual Host"))
+@else
+	@set("page_title_prefix", @cat("Server #", @get("sid1"),
+	    ": ", @config_get(@cat("servers.", @get("sid"),
+		".virtual_hosts.", @get("vid"), ".server_name"))))
+@endif
+@if(@query("new"))
+	@set("page_title", @cat(@get("page_title_prefix"), ": New Servlet"))
+@else
+	@set("page_title", @cat(@get("page_title_prefix"), ": ",
+	    @config_get(@cat("servers.", @get("sid"),
+	    ".virtual_hosts.", @get("vid"), ".servlets.", @get("lid"),
+	    ".info.field_name")), " servlet"))
+@endif
+@set("page_url", "/admin/servlet")
+@eval(@readfile("head.tmpl"))
+
+<form method="post" action="doconfig">
+<table border="0" cellspacing="2" cellpadding="0">
+
+@set("lprefix", @cat("servers.", @get("sid"),
+	".virtual_hosts.", @get("vid"), ".servlets"))
+@define("prefix")
+	@cat(@get("lprefix"), ".", @get("lid"), ".", @get("arg1"))
+@enddef
+@define("linfo")
+	@config_get(@prefix(@get("arg1")))
+@enddef
+
+@if(@query("new"))
+	@set("lid", @config_get(@cat(@get("lprefix"), ".length")))
+	@object_array_insert("config", @get("lprefix"), @get("lid"))
+	@hidden("insert:", @cat(@get("lprefix"), ":", @get("lid")))
+@else
+	@hidden("delete:", @cat(@get("lprefix"), ":", @get("lid")))
+@endif
+
+@header(@get("page_title"))
+
+@if(@equal(@linfo("url_pattern"), "^/admin"))
+<tr>
+  <td colspan="3">&nbsp;&nbsp;
+  <font color="#ff0000">Warning:</font> The <b>/admin</b> servlets
+  are used by this administrative UI and should not be modified.
+  </td>
+</tr>
+
+<tr><td colspan="3">&nbsp;</td><td>
+@endif
+
+<tr>
+  <td>&nbsp;</td>
+  <td nowrap align="right"><b>URL Pattern:&nbsp;&nbsp;</b></td>
+  <td align="left">@config_textinput(@prefix("url_pattern"), "32", "256")
+	@nop()&nbsp;&nbsp;(an extended regular expression)</td>
+</tr>
+
+<tr>
+  <td>&nbsp;</td>
+  <td nowrap align="right"><b>Ordering:&nbsp;&nbsp;</b></td>
+  <td align="left">@config_textinput_num(@prefix("ordering"))
+	@nop()&nbsp;&nbsp;(default zero; lower values match before higher values)</td>
+</tr>
+
+@define("fixunion")
+	@if(@not(@query("new")))
+		@object_reset("config")
+	@endif
+	@if(@not(@equal(@config_get(@prefix("info.field_name")), @get("arg1"))))
+		@object_union_set("config", @prefix("info"), @get("arg1"))
+	@endif
+@enddef
+
+<tr><td colspan="3">&nbsp;</td></tr>
+
+<tr>
+  <td>&nbsp;</td>
+  <td nowrap valign="top" align="right">&nbsp;<br>
+	<b>Servlet Type:&nbsp;&nbsp;</b></td>
+  <td align="left">
+    <table border="0" cellspacing="2" cellpadding="0">
+
+    @set("orig_field_name", @config_get(@prefix("info.field_name")))
+    @define("uradio")
+	@radio(@cat("union:", @prefix("info")),
+	    @get("arg1"), @get("orig_field_name"))
+    @enddef
+    @define("ufield")
+	@cat("ufield:", @prefix("info"), ":", @get("arg1"))
+    @enddef
+    @define("utextinput")
+	@textinput(@ufield(@get("arg1")), @get("arg2"), @get("arg3"),
+	    @config_get(@prefix(@cat("info.", @get("arg1")))))
+    @enddef
+    @define("ufradio")
+	@radio(@ufield(@get("arg1")), @get("arg2"),
+	    @config_get(@prefix(@cat("info.", @get("arg1")))))
+    @enddef
+
+    <tr>
+    <td valign="top">@uradio("file")</td>
+    <td align="left" colspan="2"><b>File Servlet</b><br></td>
+    </tr>
+
+	@fixunion("file")
+
+	<tr>
+	<td>&nbsp;</td>
+	<td align="right">Document Root:&nbsp;&nbsp</td>
+	<td align="left">@utextinput("file.docroot", "32", "128")</td>
+	</tr>
+
+	<tr>
+	<td>&nbsp;</td>
+	<td align="right">Filename:&nbsp;&nbsp</td>
+	<td align="left">@utextinput("file.filename", "24", "128")
+		@nop()&nbsp;&nbsp;(leave empty for entire hierarchy)</td>
+	</tr>
+
+	<tr>
+	<td>&nbsp;</td>
+	<td align="right">Allow escape:&nbsp</td>
+	<td align="left">
+	@ufradio("file.allow_escape", "1")&nbsp;Yes
+	@ufradio("file.allow_escape", "0")&nbsp;No
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Allow templates:&nbsp;
+	@ufradio("file.allow_templates", "1")&nbsp;Yes
+	@ufradio("file.allow_templates", "0")&nbsp;No
+	</td>
+	</tr>
+
+	<tr>
+	<td>&nbsp;</td>
+	<td align="right">Strip URL prefix:&nbsp;&nbsp</td>
+	<td align="left">@utextinput("file.prefix", "20", "128")</td>
+	</tr>
+
+	<tr><td colspan="3">&nbsp;</td></tr>
+
+    <tr>
+    <td valign="top">@uradio("redirect")</td>
+    <td align="left" colspan="2"><b>Redirect Servlet</b><br></td>
+    </tr>
+
+	@fixunion("redirect")
+
+	<tr>
+	<td>&nbsp;</td>
+	<td align="right">Redirect URL:&nbsp;&nbsp</td>
+	<td align="left">@utextinput("redirect.url", "48", "2048")</td>
+	</tr>
+
+	<tr>
+	<td>&nbsp;</td>
+	<td align="right">Original URL:&nbsp;&nbsp</td>
+	<td align="left">
+	<select name="@ufield("redirect.method")">
+	@select("no_append", "Discard",
+	    @config_get(@prefix("info.redirect.method")))
+	@select("append_query", "Append just the query string",
+	    @config_get(@prefix("info.redirect.method")))
+	@select("append_uri", "Append the path and the query string",
+	    @config_get(@prefix("info.redirect.method")))
+	@select("append_url", "Append the entire URL as query string",
+	    @config_get(@prefix("info.redirect.method")))
+	</select>
+	</td>
+
+	<tr><td colspan="3">&nbsp;</td></tr>
+
+	</tr>
+
+    <tr>
+    <td valign="top">@uradio("cookieauth")</td>
+    <td align="left" colspan="2"><b>Cookie Authentication Servlet</b><br></td>
+    </tr>
+
+	@fixunion("cookieauth")
+
+	<tr>
+	<td>&nbsp;</td>
+	<td align="right">Resource name:&nbsp;&nbsp</td>
+	<td align="left">@utextinput("cookieauth.resource_name",
+		"24", "128")</td>
+	</tr>
+
+	<tr>
+	<td>&nbsp;</td>
+	<td align="right">Cookie name:&nbsp;&nbsp</td>
+	<td align="left">@utextinput("cookieauth.cookie_name", "24", "128")</td>
+	</tr>
+
+	<tr>
+	<td>&nbsp;</td>
+	<td align="right">Logon page URL:&nbsp;&nbsp</td>
+	<td align="left">@utextinput("cookieauth.logon_url", "32", "128")</td>
+	</tr>
+
+	<tr>
+	<td>&nbsp;</td>
+	<td align="right">Allow exceptions:&nbsp</td>
+	<td align="left">
+	@ufradio("cookieauth.allow_exceptions", "1")&nbsp;Yes
+	@ufradio("cookieauth.allow_exceptions", "0")&nbsp;No
+	</td>
+	</tr>
+
+	<tr>
+	<td>&nbsp;</td>
+	<td align="right">Exceptions pattern:&nbsp;&nbsp</td>
+	<td align="left">@utextinput("cookieauth.exceptions_pattern",
+		"48", "1024")</td>
+	</tr>
+
+	<tr><td colspan="3">&nbsp;</td></tr>
+
+    </table>
+  </td>
+</tr>
+
+<tr>
+  <td colspan="2">&nbsp;</td>
+  <td align="left"><input type="submit" name="button" value="Update">
+@if(@not(@query("new")))
+  &nbsp;&nbsp;<input type="submit" name="button" value="Delete">
+@endif
+  &nbsp;&nbsp;<input type="reset" value="Reset">
+  </td>
+</tr>
+
+</table>
+</form>
+
+@eval(@readfile("foot.tmpl"))

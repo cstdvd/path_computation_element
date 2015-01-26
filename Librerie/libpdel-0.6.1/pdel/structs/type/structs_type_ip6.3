@@ -1,0 +1,39 @@
+.\" @COPYRIGHT@
+.\"
+.\" Author: Archie Cobbs <archie@freebsd.org>
+.\"
+.\" $Id: structs_type_ip6.3 901 2004-06-02 17:24:39Z archie $
+.\"
+.Dd April 22, 2002
+.Dt STRUCTS_TYPE_IP6 3
+.Os
+.Sh NAME
+.Nm structs_type_ip6
+.Nd structs types for IPv6 addresses
+.Sh LIBRARY
+PDEL Library (libpdel, \-lpdel)
+.Sh SYNOPSIS
+.In sys/types.h
+.In pdel/structs/structs.h
+.In pdel/structs/type/ip6.h
+.Vt extern const struct structs_type structs_type_ip6 ;
+.Sh DESCRIPTION
+.Nm structs_type_ip6
+is a
+.Xr structs 3
+type for IPv6 addresses.
+The represented data type is a
+.Li "struct in6_addr" .
+.Sh IMPLEMENTATION NOTES
+The ASCII string parser for this type is 
+.Xr inet_pton 3 .
+.Sh SEE ALSO
+.Xr libpdel 3 ,
+.Xr structs 3 ,
+.Xr structs_type 3 ,
+.Xr structs_type_ip4 3
+.Sh HISTORY
+The PDEL library was developed at Packet Design, LLC.
+.Dv "http://www.packetdesign.com/"
+.Sh AUTHORS
+.An Archie Cobbs Aq archie@freebsd.org
