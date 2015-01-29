@@ -9,6 +9,7 @@
 
 #include "header_project.h"
 
+
 int main(int argc, char *argv[]) {
 
 	struct xmlRoot2 *xmlTopology;
@@ -19,18 +20,20 @@ int main(int argc, char *argv[]) {
 	ImportTopology(xmlTopology);
 	nodes = xmlTopology->nodes;
 
-	Topology net(nodes);
+	Topology net(nodes);//Topology net=new Topology(nodes);
 	net.LoadTopology(xmlTopology);
 	net.PrintAdjMatrix();
 
-	system("./config_tap.sh");
+	printf("Select mode(0=GNS3, 1=real 2=demo)\n");
+	int mode=0;
+	scanf("%i",&mode);
+	if(mode==0){
+		system("chmod 700 ./config_tap.sh");
+		system("./config_tap.sh");
+		//system("./tap_addr.sh");
+	}
+	//system("ping 10.1.1.1 -c 5");
 
-	FILE *fp;
-	char result [14];
-	fp = popen("./tap_addr.sh","r");
-	fread(result,1,sizeof(result),fp);
-	fclose (fp);
-	printf("Tap0 ip addr: %s\n",result);
 
 	return 0;
 }
