@@ -28,12 +28,13 @@ int main(int argc, char *argv[]) {
 	int mode=0;
 	scanf("%i",&mode);
 	if(mode==0){
-		system("chmod 700 ./config_tap.sh");
-		system("./config_tap.sh");
+		system("chmod 700 ./script/config_tap.sh");
+		system("./script/config_tap.sh");
 		//system("./tap_addr.sh");
 	}
-	//system("ping 10.1.1.1 -c 5");
-
+	printf("test\n");
+	system("ping 10.1.1.1 -c 5");
+	printf("test ended\n");
 
 	return 0;
 }
