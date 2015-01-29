@@ -30,11 +30,14 @@ int main(int argc, char *argv[]) {
 	if(mode==0){
 		system("chmod 700 ./script/config_tap.sh");
 		system("./script/config_tap.sh");
-		//system("./tap_addr.sh");
+		printf("test\n");
+		system("ping 10.1.1.1 -c 3");
+		printf("test ended\n");
+		system("chmod 700 ./script/telnet_test.sh");
+		system("expect ./script/telnet_test.sh");
+
 	}
-	printf("test\n");
-	system("ping 10.1.1.1 -c 5");
-	printf("test ended\n");
+
 
 	return 0;
 }
