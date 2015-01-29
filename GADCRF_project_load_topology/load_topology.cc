@@ -31,10 +31,10 @@ int main(int argc, char *argv[]) {
 		system("chmod 700 ./script/config_tap.sh");
 		system("./script/config_tap.sh");
 		printf("test\n");
-		system("ping 10.1.1.1 -c 3");
+		//system("ping 10.1.1.1 -c 3");
 		printf("test ended\n");
 		system("chmod 700 ./script/telnet_test.sh");
-		system("expect ./script/telnet_test.sh");
+		system("expect ./script/telnet_test.sh 10.1.1.1");
 
 	}
 
