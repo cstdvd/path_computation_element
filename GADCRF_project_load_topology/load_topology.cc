@@ -23,5 +23,14 @@ int main(int argc, char *argv[]) {
 	net.LoadTopology(xmlTopology);
 	net.PrintAdjMatrix();
 
+	system("./config_tap.sh");
+
+	FILE *fp;
+	char result [14];
+	fp = popen("./tap_addr.sh","r");
+	fread(result,1,sizeof(result),fp);
+	fclose (fp);
+	printf("Tap0 ip addr: %s\n",result);
+
 	return 0;
 }
