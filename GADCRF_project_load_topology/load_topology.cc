@@ -24,6 +24,8 @@ int main(int argc, char *argv[]) {
 	net.LoadTopology(xmlTopology);
 	net.PrintAdjMatrix();
 
+	int* path = find_path(net.Matrix(),nodes,0,4,50);
+
 	printf("Select mode(0=GNS3, 1=real 2=demo)\n");
 	int mode=0;
 	scanf("%i",&mode);

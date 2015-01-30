@@ -344,6 +344,11 @@ void Topology::LoadTopology(struct xmlRoot2* xmlTopology){
 	}
 }
 
+struct topologyLink ** Topology::Matrix()
+{
+	return adjMatrix;
+}
+
 /******************* END TOPOLOGY CLASS METHODS ******************************/
 
 /******************* BEGIN AUSILIARITY FUNCTIONS *****************************/
