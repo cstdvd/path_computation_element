@@ -142,7 +142,7 @@ void Topology::InitAdjMatrix(){
 				strcpy(adjMatrix[i][j].srcInterface,"NULL");
 				strcpy(adjMatrix[i][j].dstInterface,"NULL");
 				adjMatrix[i][j].capacity = -1;
-				adjMatrix[i][j].used = -1;
+				adjMatrix[i][j].used = 0;
 		}
 	}
 
@@ -152,7 +152,7 @@ void Topology::InitAdjMatrix(){
 	strcpy(adjMatrix[0][1].srcInterface,"Ethernet interface 1/0");
 	strcpy(adjMatrix[0][1].dstInterface,"Ethernet interface 1/0");
 	adjMatrix[0][1].capacity = 100;
-	adjMatrix[0][1].used = 100;
+	adjMatrix[0][1].used = 0;
 
 	//From R1 to R3
 	strcpy(adjMatrix[0][2].srcAddr,"10.2.2.1");
@@ -160,7 +160,7 @@ void Topology::InitAdjMatrix(){
 	strcpy(adjMatrix[0][2].srcInterface,"Ethernet interface 1/1");
 	strcpy(adjMatrix[0][2].dstInterface,"Ethernet interface 1/1");
 	adjMatrix[0][2].capacity = 100;
-	adjMatrix[0][2].used = 100;
+	adjMatrix[0][2].used = 0;
 
 	//From R2 to R1
 	strcpy(adjMatrix[1][0].srcAddr,"10.1.1.2");
@@ -168,7 +168,7 @@ void Topology::InitAdjMatrix(){
 	strcpy(adjMatrix[1][0].srcInterface,"Ethernet interface 1/0");
 	strcpy(adjMatrix[1][0].dstInterface,"Ethernet interface 1/0");
 	adjMatrix[1][0].capacity = 100;
-	adjMatrix[1][0].used = 100;
+	adjMatrix[1][0].used = 0;
 
 	//From R2 to R5
 	strcpy(adjMatrix[1][4].srcAddr,"10.5.5.1");
@@ -176,7 +176,7 @@ void Topology::InitAdjMatrix(){
 	strcpy(adjMatrix[1][4].srcInterface,"Ethernet interface 1/2");
 	strcpy(adjMatrix[1][4].dstInterface,"Ethernet interface 1/2");
 	adjMatrix[1][4].capacity = 100;
-	adjMatrix[1][4].used = 100;
+	adjMatrix[1][4].used = 0;
 
 	//From R3 to R1
 	strcpy(adjMatrix[2][0].srcAddr,"10.2.2.2");
@@ -184,7 +184,7 @@ void Topology::InitAdjMatrix(){
 	strcpy(adjMatrix[2][0].srcInterface,"Ethernet interface 1/1");
 	strcpy(adjMatrix[2][0].dstInterface,"Ethernet interface 1/1");
 	adjMatrix[2][0].capacity = 100;
-	adjMatrix[2][0].used = 100;
+	adjMatrix[2][0].used = 0;
 
 	//From R3 to R4
 	strcpy(adjMatrix[2][3].srcAddr,"10.3.3.1");
@@ -192,7 +192,7 @@ void Topology::InitAdjMatrix(){
 	strcpy(adjMatrix[2][3].srcInterface,"Ethernet interface 1/0");
 	strcpy(adjMatrix[2][3].dstInterface,"Ethernet interface 1/0");
 	adjMatrix[2][3].capacity = 100;
-	adjMatrix[2][3].used = 100;
+	adjMatrix[2][3].used = 0;
 
 	//From R4 to R3
 	strcpy(adjMatrix[3][2].srcAddr,"10.3.3.2");
@@ -200,7 +200,7 @@ void Topology::InitAdjMatrix(){
 	strcpy(adjMatrix[3][2].srcInterface,"Ethernet interface 1/0");
 	strcpy(adjMatrix[3][2].dstInterface,"Ethernet interface 1/0");
 	adjMatrix[3][2].capacity = 100;
-	adjMatrix[3][2].used = 100;
+	adjMatrix[3][2].used = 0;
 
 	//From R4 to R5
 	strcpy(adjMatrix[3][4].srcAddr,"10.4.4.1");
@@ -208,7 +208,7 @@ void Topology::InitAdjMatrix(){
 	strcpy(adjMatrix[3][4].srcInterface,"Ethernet interface 1/1");
 	strcpy(adjMatrix[3][4].dstInterface,"Ethernet interface 1/1");
 	adjMatrix[3][4].capacity = 100;
-	adjMatrix[3][4].used = 100;
+	adjMatrix[3][4].used = 0;
 
 	//From R5 to R2
 	strcpy(adjMatrix[4][1].srcAddr,"10.5.5.2");
@@ -216,7 +216,7 @@ void Topology::InitAdjMatrix(){
 	strcpy(adjMatrix[4][1].srcInterface,"Ethernet interface 1/2");
 	strcpy(adjMatrix[4][1].dstInterface,"Ethernet interface 1/2");
 	adjMatrix[4][1].capacity = 100;
-	adjMatrix[4][1].used = 100;
+	adjMatrix[4][1].used = 0;
 
 	//From R5 to R4
 	strcpy(adjMatrix[4][3].srcAddr,"10.4.4.2");
@@ -224,7 +224,7 @@ void Topology::InitAdjMatrix(){
 	strcpy(adjMatrix[4][3].srcInterface,"Ethernet interface 1/1");
 	strcpy(adjMatrix[4][3].dstInterface,"Ethernet interface 1/1");
 	adjMatrix[4][3].capacity = 100;
-	adjMatrix[4][3].used = 100;
+	adjMatrix[4][3].used = 0;
 
 }
 
