@@ -1,10 +1,8 @@
 #include "header_project.h"
  
-// A utility function to find the vertex with minimum distance value, from
-// the set of vertices not yet included in shortest path tree
+// Nodo con minima distanza (tra quelli non considerati)
 int minDistance(int n, int dist[], bool sptSet[])
 {
-   // Initialize min value
    int min = -1, min_index;
  
    for (int v = 0; v < n; v++)
@@ -15,7 +13,7 @@ int minDistance(int n, int dist[], bool sptSet[])
    return min_index;
 }
  
-// A utility function to print the constructed distance array
+// Stampa distanza di ogni nodo dal sorgente
 void printSolution(int dist[], int n)
 {
    printf("Node   Distance from Source\n");
@@ -27,44 +25,40 @@ void printSolution(int dist[], int n)
 int* find_path(struct topologyLink ** net, int nodes, int src, int dest, int c)
 {
      int n = nodes;
-	 int dist[n];     // The output array.  dist[i] will hold the shortest
-                      // distance from src to i
+	 int dist[n];
 	 int prev[n];
  
-     bool sptSet[n]; // sptSet[i] will true if vertex i is included in shortest
-                     // path tree or shortest distance from src to i is finalized
-     int temp;
+     bool sptSet[n];
+     int temp, rim;
 
-     // Initialize all distances as INFINITE and stpSet[] as false
+     // Inizializza vettori (distanza infinita rappresentata da -1)
      for (int i = 0; i < n; i++){
         dist[i] = -1;
         prev[i] = -1;
         sptSet[i] = false;
      }
  
-     // Distance of source vertex from itself is always 0
      dist[src] = 0;
  
-     // Find shortest path for all vertices
+     // Trova il cammino minimo per tutti i nodi
      for (int count = 0; count < n-1; count++)
      {
-       // Pick the minimum distance vertex from the set of vertices not
-       // yet processed. u is always equal to src in first iteration.
        int u = minDistance(n, dist, sptSet);
  
-       // Mark the picked vertex as processed
        sptSet[u] = true;
  
-       // Update dist value of the adjacent vertices of the picked vertex.
-       for (int v = 0; v < n; v++){
- 
-         // Update dist[v] only if is not in sptSet, there is an edge from 
-         // u to v, and total weight of path from src to  v through u is 
-         // smaller than current value of dist[v]
-    	 //temp = ((net[u][v].capacity - net[u][v].used)==0)?-1:net[u][v].capacity - net[u][v].used;
-    	 temp=net[u][v].capacity;
+       // Aggiorna vettore distanza:
+       // il nodo non deve essere quello selezionato (sptSet),
+       // deve esistere il link tra u e v,
+       // il link tra u e v deve avere capacità residua sufficiente
+       // il peso tra src e v deve essere minore del corrente
+       for (int v = 0; v < n; v++)
+       {
+    	 rim = net[u][v].capacity - net[u][v].used;
+    	 //temp = ((net[u][v].capacity - net[u][v].used)==0)?-1:1/(net[u][v].capacity - net[u][v].used);
+    	 temp = (net[u][v].capacity==-1)?-1:(MAX_CAP - (net[u][v].capacity - net[u][v].used));
 
-    	 if(!sptSet[v] && temp!=-1 && dist[u]!=-1 && ((dist[u]+temp<dist[v] && dist[v]!=-1)
+    	 if(!sptSet[v] && temp!=-1 && dist[u]!=-1 && ((dist[u]+temp<dist[v] && rim>=c && dist[v]!=-1)
     			 	 	 	 	 	 || dist[v]==-1)){
     		 dist[v]=dist[u]+temp;
     		 prev[v]=u;
@@ -73,7 +67,6 @@ int* find_path(struct topologyLink ** net, int nodes, int src, int dest, int c)
        }
      }
  
-     // print the constructed distance array
      printSolution(dist, n);
 
      printf("Precedences vector: ");
