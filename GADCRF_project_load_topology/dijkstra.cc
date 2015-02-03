@@ -22,7 +22,7 @@ void printSolution(int dist[], int n)
    printf("\n");
 }
  
-int* find_path(struct topologyLink ** net, int nodes, int src, int dest, int c)
+int* find_path(struct topologyLink ** net, int nodes, int src, int dest, int c, int *s)
 {
      int n = nodes;
 	 int dist[n];
@@ -52,11 +52,11 @@ int* find_path(struct topologyLink ** net, int nodes, int src, int dest, int c)
        // deve esistere il link tra u e v,
        // il link tra u e v deve avere capacità residua sufficiente
        // il peso tra src e v deve essere minore del corrente
+       // (come peso viene cinsiderato il numero di passi)
        for (int v = 0; v < n; v++)
        {
     	 rim = net[u][v].capacity - net[u][v].used;
-    	 //temp = ((net[u][v].capacity - net[u][v].used)==0)?-1:1/(net[u][v].capacity - net[u][v].used);
-    	 temp = (net[u][v].capacity==-1)?-1:(MAX_CAP - (net[u][v].capacity - net[u][v].used));
+    	 temp = (net[u][v].capacity==-1)?-1:1;
 
     	 if(!sptSet[v] && temp!=-1 && dist[u]!=-1 && ((dist[u]+temp<dist[v] && rim>=c && dist[v]!=-1)
     			 	 	 	 	 	 || dist[v]==-1)){
@@ -82,6 +82,7 @@ int* find_path(struct topologyLink ** net, int nodes, int src, int dest, int c)
 
      int app=count;
      prec=dest;
+     *s = count+1;
      int* path=new int[count+1];
      while(prec!=src){
     	 path[app]=prec;
