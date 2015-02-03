@@ -31,7 +31,7 @@
 #define NUM_NODES 5
 #define CHAR_ADDRESS 50
 #define CHAR_INTERFACE 30
-#define MAX_CAP 500
+#define DEBUG true
 
 struct topologyLink{
 	int capacity;
@@ -79,4 +79,3 @@ public:
 void ImportTopology(struct xmlRoot2* xmlTopology);
 
 int* find_path(struct topologyLink **net, int nodes, int src, int dest, int c,int *s);
-
