@@ -349,6 +349,14 @@ struct topologyLink ** Topology::Matrix()
 	return adjMatrix;
 }
 
+bool Topology::UpdateTopology(int *path,int len,int c){
+	int i;
+	for(i=0;i<(len-1);i++){
+		adjMatrix[path[i]][path[i+1]].used+=c;
+	}
+	return true;
+}
+
 /******************* END TOPOLOGY CLASS METHODS ******************************/
 
 /******************* BEGIN AUSILIARITY FUNCTIONS *****************************/

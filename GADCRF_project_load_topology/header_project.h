@@ -72,9 +72,11 @@ public:
 	void SaveTopology();	//Export adj matrix in XML file
 	void LoadTopology(struct xmlRoot2* xmlTopology); //Load imported topology
 	struct topologyLink ** Matrix();
+	bool UpdateTopology(int *path,int len,int c);
 };
 
 //Import topology from XML file
 void ImportTopology(struct xmlRoot2* xmlTopology);
 
-int* find_path(struct topologyLink ** net, int nodes, int src, int dest, int c);
+int* find_path(struct topologyLink **net, int nodes, int src, int dest, int c,int *s);
+

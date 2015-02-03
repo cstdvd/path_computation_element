@@ -30,6 +30,7 @@ int main(int argc, char *argv[]) {
 	int* path2 = find_path(net.Matrix(),nodes,0,4,50,&size);
 	net.UpdateTopology(path2,size,50);
 	net.PrintAdjMatrix();
+
 	printf("Select mode(0=GNS3, 1=real 2=demo)\n");
 	int mode=0;
 	scanf("%i",&mode);

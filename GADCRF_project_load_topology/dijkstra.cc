@@ -58,7 +58,7 @@ int* find_path(struct topologyLink ** net, int nodes, int src, int dest, int c, 
     	 rim = net[u][v].capacity - net[u][v].used;
     	 temp = (net[u][v].capacity==-1)?-1:1;
 
-    	 if(!sptSet[v] && temp!=-1 && dist[u]!=-1 && ((dist[u]+temp<dist[v] && rim>=c && dist[v]!=-1)
+    	 if(!sptSet[v] && temp!=-1 && dist[u]!=-1 && rim>=c && ((dist[u]+temp<dist[v] && dist[v]!=-1)
     			 	 	 	 	 	 || dist[v]==-1)){
     		 dist[v]=dist[u]+temp;
     		 prev[v]=u;
@@ -75,9 +75,11 @@ int* find_path(struct topologyLink ** net, int nodes, int src, int dest, int c, 
      printf("\n");
 
      int prec=dest, count=0;
-     while(prec!=src){
+     while(prec!=src && count<n){
     	 count++;
     	 prec=prev[prec];
+    	 if(prec==-1)
+    		 return NULL;
      }
 
      int app=count;
