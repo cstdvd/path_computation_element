@@ -23,9 +23,13 @@ int main(int argc, char *argv[]) {
 	Topology net(nodes);//Topology net=new Topology(nodes);
 	net.LoadTopology(xmlTopology);
 	net.PrintAdjMatrix();
-
-	int* path = find_path(net.Matrix(),nodes,0,4,50);
-
+    int size;
+	int* path = find_path(net.Matrix(),nodes,0,4,70,&size);
+	net.UpdateTopology(path,size,70);
+	net.PrintAdjMatrix();
+	int* path2 = find_path(net.Matrix(),nodes,0,4,50,&size);
+	net.UpdateTopology(path2,size,50);
+	net.PrintAdjMatrix();
 	printf("Select mode(0=GNS3, 1=real 2=demo)\n");
 	int mode=0;
 	scanf("%i",&mode);
@@ -33,13 +37,11 @@ int main(int argc, char *argv[]) {
 		system("chmod 700 ./script/config_tap.sh");
 		system("./script/config_tap.sh");
 		printf("test\n");
-		//system("ping 10.1.1.1 -c 3");
+		system("ping 10.1.1.1 -c 3");
 		printf("test ended\n");
 		system("chmod 700 ./script/telnet_test.sh");
 		system("expect ./script/telnet_test.sh 10.1.1.1");
 
 	}
-
-
 	return 0;
 }
