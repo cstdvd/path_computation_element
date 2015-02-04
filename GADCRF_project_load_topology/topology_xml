@@ -12,20 +12,20 @@
 		<dstInterface>NULL</dstInterface>
 	    </link>
 	    <link>
-		<capacity>100</capacity>
+		<capacity>1024</capacity>
 		<used>0</used>
 		<srcAddr>10.1.1.1</srcAddr>
 		<dstAddr>10.1.1.2</dstAddr>
-		<srcInterface>Ethernet interface 1/0</srcInterface>
-		<dstInterface>Ethernet interface 1/0</dstInterface>
+		<srcInterface>Ethernet1/0</srcInterface>
+		<dstInterface>Ethernet1/0</dstInterface>
 	    </link>
 	    <link>
-		<capacity>100</capacity>
+		<capacity>1024</capacity>
 		<used>0</used>
 		<srcAddr>10.2.2.1</srcAddr>
 		<dstAddr>10.2.2.2</dstAddr>
-		<srcInterface>Ethernet interface 1/1</srcInterface>
-		<dstInterface>Ethernet interface 1/1</dstInterface>
+		<srcInterface>Ethernet1/1</srcInterface>
+		<dstInterface>Ethernet1/1</dstInterface>
 	    </link>
 	    <link>
 		<capacity>-1</capacity>
@@ -44,12 +44,12 @@
 		<dstInterface>NULL</dstInterface>
 	    </link>
 	    <link>
-		<capacity>100</capacity>
+		<capacity>1024</capacity>
 		<used>0</used>
 		<srcAddr>10.1.1.2</srcAddr>
 		<dstAddr>10.1.1.1</dstAddr>
-		<srcInterface>Ethernet interface 1/0</srcInterface>
-		<dstInterface>Ethernet interface 1/0</dstInterface>
+		<srcInterface>Ethernet1/0</srcInterface>
+		<dstInterface>Ethernet1/0</dstInterface>
 	    </link>
 	    <link>
 		<capacity>-1</capacity>
@@ -76,20 +76,20 @@
 		<dstInterface>NULL</dstInterface>
 	    </link>
 	    <link>
-		<capacity>100</capacity>
+		<capacity>1024</capacity>
 		<used>0</used>
 		<srcAddr>10.5.5.1</srcAddr>
 		<dstAddr>10.5.5.2</dstAddr>
-		<srcInterface>Ethernet interface 1/2</srcInterface>
-		<dstInterface>Ethernet interface 1/2</dstInterface>
+		<srcInterface>Ethernet1/2</srcInterface>
+		<dstInterface>Ethernet1/2</dstInterface>
 	    </link>
 	    <link>
-		<capacity>100</capacity>
+		<capacity>1024</capacity>
 		<used>0</used>
 		<srcAddr>10.2.2.2</srcAddr>
 		<dstAddr>10.2.2.1</dstAddr>
-		<srcInterface>Ethernet interface 1/1</srcInterface>
-		<dstInterface>Ethernet interface 1/1</dstInterface>
+		<srcInterface>Ethernet1/1</srcInterface>
+		<dstInterface>Ethernet1/1</dstInterface>
 	    </link>
 	    <link>
 		<capacity>-1</capacity>
@@ -108,12 +108,12 @@
 		<dstInterface>NULL</dstInterface>
 	    </link>
 	    <link>
-		<capacity>100</capacity>
+		<capacity>1024</capacity>
 		<used>0</used>
 		<srcAddr>10.3.3.1</srcAddr>
 		<dstAddr>10.3.3.2</dstAddr>
-		<srcInterface>Ethernet interface 1/0</srcInterface>
-		<dstInterface>Ethernet interface 1/0</dstInterface>
+		<srcInterface>Ethernet1/0</srcInterface>
+		<dstInterface>Ethernet1/0</dstInterface>
 	    </link>
 	    <link>
 		<capacity>-1</capacity>
@@ -140,12 +140,12 @@
 		<dstInterface>NULL</dstInterface>
 	    </link>
 	    <link>
-		<capacity>100</capacity>
+		<capacity>1024</capacity>
 		<used>0</used>
 		<srcAddr>10.3.3.2</srcAddr>
 		<dstAddr>10.3.3.1</dstAddr>
-		<srcInterface>Ethernet interface 1/0</srcInterface>
-		<dstInterface>Ethernet interface 1/0</dstInterface>
+		<srcInterface>Ethernet1/0</srcInterface>
+		<dstInterface>Ethernet1/0</dstInterface>
 	    </link>
 	    <link>
 		<capacity>-1</capacity>
@@ -156,12 +156,12 @@
 		<dstInterface>NULL</dstInterface>
 	    </link>
 	    <link>
-		<capacity>100</capacity>
+		<capacity>1024</capacity>
 		<used>0</used>
 		<srcAddr>10.4.4.1</srcAddr>
 		<dstAddr>10.4.4.2</dstAddr>
-		<srcInterface>Ethernet interface 1/1</srcInterface>
-		<dstInterface>Ethernet interface 1/1</dstInterface>
+		<srcInterface>Ethernet1/1</srcInterface>
+		<dstInterface>Ethernet1/1</dstInterface>
 	    </link>
 	    <link>
 		<capacity>-1</capacity>
@@ -172,12 +172,12 @@
 		<dstInterface>NULL</dstInterface>
 	    </link>
 	    <link>
-		<capacity>100</capacity>
+		<capacity>1024</capacity>
 		<used>0</used>
 		<srcAddr>10.5.5.2</srcAddr>
 		<dstAddr>10.5.5.1</dstAddr>
-		<srcInterface>Ethernet interface 1/2</srcInterface>
-		<dstInterface>Ethernet interface 1/2</dstInterface>
+		<srcInterface>Ethernet1/2</srcInterface>
+		<dstInterface>Ethernet1/2</dstInterface>
 	    </link>
 	    <link>
 		<capacity>-1</capacity>
@@ -188,12 +188,12 @@
 		<dstInterface>NULL</dstInterface>
 	    </link>
 	    <link>
-		<capacity>100</capacity>
+		<capacity>1024</capacity>
 		<used>0</used>
 		<srcAddr>10.4.4.2</srcAddr>
 		<dstAddr>10.4.4.1</dstAddr>
-		<srcInterface>Ethernet interface 1/1</srcInterface>
-		<dstInterface>Ethernet interface 1/1</dstInterface>
+		<srcInterface>Ethernet1/1</srcInterface>
+		<dstInterface>Ethernet1/1</dstInterface>
 	    </link>
 	    <link>
 		<capacity>-1</capacity>
@@ -205,4 +205,13 @@
 	    </link>
 	</list>
     </xmlVector>
+    <loopbackInterfaces>
+	<list>
+	    <loopbackAddr>172.16.1.1</loopbackAddr>
+	    <loopbackAddr>172.16.1.2</loopbackAddr>
+	    <loopbackAddr>172.16.1.3</loopbackAddr>
+	    <loopbackAddr>172.16.1.4</loopbackAddr>
+	    <loopbackAddr>172.16.1.5</loopbackAddr>
+	</list>
+    </loopbackInterfaces>
 </Topology>

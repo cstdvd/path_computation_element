@@ -46,9 +46,18 @@ struct topLink{
 	struct structs_array list;
 };
 
+struct loopbackAddr{
+	struct structs_array list;
+};
+
 struct xmlRoot2{
 	int nodes;
+	struct loopbackAddr *loopbackInterfaces;
 	struct topLink *xmlVector;
+};
+
+struct loopback{
+	char *loopAddr;
 };
 
 class Topology{
@@ -58,6 +67,7 @@ private:
 	//Attributes for topology manipulation
 	int n;
 	struct topologyLink **adjMatrix;
+	struct loopback *loopbackArray;
 
 	//Attributes for import/export topology
 	struct xmlRoot2 *xmlStruct;
@@ -67,7 +77,9 @@ public:
 	Topology(int nodes);	//Constructor
 	~Topology();			//Destructor
 	void InitAdjMatrix();	//Inizialization of adj matrix
+	void InitLoopbackAddresses(); //Initialization of loopbackArray
 	void PrintAdjMatrix();	//Print adj matrix
+	void PrintLoopbackArray();
 	void InitXmlStruct();	//Inizialization of xml structs
 	void SaveTopology();	//Export adj matrix in XML file
 	void LoadTopology(struct xmlRoot2* xmlTopology); //Load imported topology

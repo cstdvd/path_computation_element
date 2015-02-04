@@ -16,7 +16,9 @@ int main(int argc, char *argv[]) {
 	Topology net(nodes);
 
 	net.InitAdjMatrix();
+	net.InitLoopbackAddresses();
 	net.PrintAdjMatrix();
+	net.PrintLoopbackArray();
 	net.InitXmlStruct();
 	net.SaveTopology();
 	return 0;
