@@ -9,7 +9,8 @@
 
 #include "header_project.h"
 
-void InstallLSP(Topology *net,int nodes);
+void installLSP(Topology *net,int nodes);
+void installLSPdemo(Topology *net,int nodes);
 
 int main(int argc, char *argv[]) {
 
@@ -24,23 +25,37 @@ int main(int argc, char *argv[]) {
 	Topology net(nodes);//Topology net=new Topology(nodes);
 	net.LoadTopology(xmlTopology);
 
-	printf("Select mode(0=GNS3, 1=real 2=demo)\n");
-	int mode=0;
-	scanf("%i",&mode);
-	if(mode==0){
-		//Enable tap interface and test it
-		system("chmod 700 ./script/config_tap.sh");
-		system("./script/config_tap.sh");
-		printf("test\n");
-		system("ping 10.1.1.1 -c 3");
-		printf("test ended\n");
+	int mode;
+	while(mode!=0 && mode!=2){
+		printf("Select mode(0=GNS3, 1=real, 2=demo)\n> ");
+		scanf("%i",&mode);
+		switch(mode){
+		case 0:
+			//Enable tap interface and test it
+			system("chmod 700 ./script/config_tap.sh");
+			system("./script/config_tap.sh");
+			printf("test\n");
+			system("ping 10.1.1.1 -c 3");
+			printf("test ended\n");
+			break;
+		case 1:
+			printf("Real mode not implemented.\n");
+			break;
+		case 2:
+			printf("Demo mode\n");
+			break;
+		default:
+			printf("Command not found.\n");
+			break;
+		}
 	}
 
-	int choise=0;
+	int choise;
 	while(1){
 		printf("********* MENU *********\n");
 		printf("1: Print adjacency matrix\n");
 		printf("2: Install LSP\n");
+		printf("3: Exit\n");
 		printf("> ");
 		scanf("%i",&choise);
 		switch(choise){
@@ -48,15 +63,23 @@ int main(int argc, char *argv[]) {
 			net.PrintAdjMatrix();
 			break;
 		case 2:
-			InstallLSP(&net,nodes);
-
+			if(mode==0)
+				installLSP(&net,nodes);
+			else if(mode==2)
+				installLSPdemo(&net,nodes);
+			break;
+		case 3:
+			return 0;
+		default:
+			printf("Command not found\n");
+			break;
 		}
 	}
 
 	return 0;
 }
 
-void InstallLSP(Topology *net,int nodes){
+void installLSP(Topology *net,int nodes){
 
 	int size;
 	int capacity;
@@ -99,4 +122,23 @@ void InstallLSP(Topology *net,int nodes){
 	system("expect ./script/cef.sh 10.3.3.2 Ethernet1/1 Ethernet1/0");
 }
 
+void installLSPdemo(Topology *net,int nodes){
+	int size;
+	int capacity;
+	int src;
+	int dst;
 
+	printf("Source node:\n> ");
+	scanf("%i",&src);
+	printf("Destination node:\n> ");
+	scanf("%i",&dst);
+	printf("Capacity:\n> ");
+	scanf("%i",&capacity);
+	int* path = find_path(net->Matrix(),nodes,src,dst,capacity,&size);
+	if(path==NULL){
+		printf("It's not possible to install an LSP\n");
+		return;
+	}
+	net->UpdateTopology(path,size,capacity);
+
+}
