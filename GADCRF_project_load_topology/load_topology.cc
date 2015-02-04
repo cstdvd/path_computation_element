@@ -90,6 +90,13 @@ void InstallLSP(Topology *net,int nodes){
 			}
 		}
 	}
+	// per prova
+
+	system("expect ./script/cef.sh 10.1.1.1 Ethernet0/0 Ethernet1/1 Ethernet1/0 Ethernet1/3");
+	system("expect ./script/cef.sh 10.1.1.2 Ethernet1/0 Ethernet1/2");
+	system("expect ./script/cef.sh 10.2.2.2 Ethernet1/1 Ethernet1/0");
+	system("expect ./script/cef.sh 10.5.5.2 Ethernet0/0 Ethernet1/1 Ethernet1/2");
+	system("expect ./script/cef.sh 10.3.3.2 Ethernet1/1 Ethernet1/0");
 }
 
 
