@@ -31,6 +31,7 @@
 #define NUM_NODES 5
 #define CHAR_ADDRESS 50
 #define CHAR_INTERFACE 30
+#define CHAR_COMMAND 500
 #define DEBUG true
 
 struct topologyLink{
@@ -84,6 +85,7 @@ public:
 	void SaveTopology();	//Export adj matrix in XML file
 	void LoadTopology(struct xmlRoot2* xmlTopology); //Load imported topology
 	struct topologyLink ** Matrix();
+	struct loopback * LoopArray();
 	bool UpdateTopology(int *path,int len,int c);
 };
 

@@ -85,6 +85,8 @@ void installLSP(Topology *net,int nodes){
 	int capacity;
 	int src;
 	int dst;
+	int i,j;
+	char *command[nodes];
 
 	printf("Source node:\n> ");
 	scanf("%i",&src);
@@ -100,26 +102,26 @@ void installLSP(Topology *net,int nodes){
 	net->UpdateTopology(path,size,capacity);
 	//Aprire i terminali per configurare i router!
 
-	for(int i=0;i<size;i++){
-		int index=path[i];
-		for(int j=0;j<nodes;j++){
-			if(net->Matrix()[index][j].capacity!=-1){
-				char dest[100]="";
-				strcat(dest,"expect ./script/telnet_test.sh ");
-				strcat(dest,net->Matrix()[index][j].srcAddr);
-				printf("%s\n",dest);
-				system(dest);
-				break;
-			}
-		}
-	}
+
+
 	// per prova
 
-	system("expect ./script/cef.sh 10.1.1.1 Ethernet0/0 Ethernet1/1 Ethernet1/0 Ethernet1/3");
-	system("expect ./script/cef.sh 10.1.1.2 Ethernet1/0 Ethernet1/2");
-	system("expect ./script/cef.sh 10.2.2.2 Ethernet1/1 Ethernet1/0");
-	system("expect ./script/cef.sh 10.5.5.2 Ethernet0/0 Ethernet1/1 Ethernet1/2");
-	system("expect ./script/cef.sh 10.3.3.2 Ethernet1/1 Ethernet1/0");
+	for (i=0;i<nodes;i++){
+
+		command[i] = (char*)calloc(CHAR_COMMAND,sizeof(char));
+		strcpy(command[i],"expect ./script/cef.sh ");
+		strcat(command[i],net->LoopArray()[i].loopAddr);
+
+		for(j=0;j<nodes;j++){
+
+			if(net->Matrix()[i][j].capacity!=-1){
+				strcat(command[i]," ");
+				strcat(command[i],net->Matrix()[i][j].srcInterface);
+			}
+		}
+		printf("system[%i]=%s\n",i,command[i]);
+		system(command[i]);
+	}
 }
 
 void installLSPdemo(Topology *net,int nodes){

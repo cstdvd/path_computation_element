@@ -401,6 +401,10 @@ struct topologyLink ** Topology::Matrix()
 	return adjMatrix;
 }
 
+struct loopback * Topology::LoopArray(){
+	return loopbackArray;
+}
+
 bool Topology::UpdateTopology(int *path,int len,int c){
 	int i;
 	for(i=0;i<(len-1);i++){
