@@ -9,9 +9,21 @@
 
 #include "header_project.h"
 
+int simul;
+
 int main(int argc, char *argv[]) {
 
-	int nodes = NUM_NODES;
+	int nodes = 0;
+
+	printf("0: Stampa topologia per GNS3\n");
+	printf("1: Stampa topologia per simulazione\n");
+	printf(">\n");
+	scanf("%i",&simul);
+
+	if(simul==0)
+		nodes = NUM_NODES;
+	else
+		nodes = NUM_NODES_DEMO;
 
 	Topology net(nodes);
 

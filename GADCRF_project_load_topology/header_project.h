@@ -33,6 +33,7 @@
 #define CHAR_INTERFACE 30
 #define CHAR_COMMAND 500
 #define DEBUG true
+#define INT_DIGITS 19
 
 struct topologyLink{
 	int capacity;
