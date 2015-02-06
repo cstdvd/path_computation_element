@@ -89,7 +89,10 @@ int main(int argc, char *argv[]) {
 			net->PrintAdjMatrix();
 			break;
 		case 2:
-			configureNet(net,nodes);
+			if(mode==2)
+				printf("Network does not require configuration in demo mode\n");
+			else
+				configureNet(net,nodes);
 			break;
 		case 3:
 			if(mode==0 || mode==1)
@@ -111,17 +114,29 @@ int main(int argc, char *argv[]) {
 void installLSP(Topology *net,int nodes){
 
 	int size;
-	int capacity;
-	int src;
-	int dst;
+	int capacity=-1;
+	int src=-1;
+	int dst=-1;
 	char *command;
 
-	printf("Source node:\n> ");
-	scanf("%i",&src);
-	printf("Destination node:\n> ");
-	scanf("%i",&dst);
-	printf("Capacity:\n> ");
-	scanf("%i",&capacity);
+	while(src<0 || src>=nodes){
+		printf("Source node:\n> ");
+		scanf("%i",&src);
+		if(src<0 || src>=nodes)
+			printf("Source node not valid\n");
+	}
+	while(dst<0 || dst>=nodes){
+		printf("Destination node:\n> ");
+		scanf("%i",&dst);
+		if(dst<0 || dst>=nodes)
+			printf("Destination node not valid\n");
+	}
+	while(capacity<0){
+		printf("Capacity:\n> ");
+		scanf("%i",&capacity);
+		if(capacity<0)
+			printf("Negative capacity not valid\n");
+	}
 	int* path = find_path(net->Matrix(),nodes,src,dst,capacity,&size);
 	if(path==NULL){
 		printf("It's not possible to install an LSP\n");
@@ -150,16 +165,28 @@ void installLSP(Topology *net,int nodes){
 
 void installLSPdemo(Topology *net,int nodes){
 	int size;
-	int capacity;
-	int src;
-	int dst;
+	int capacity=-1;
+	int src=-1;
+	int dst=-1;
 
-	printf("Source node:\n> ");
-	scanf("%i",&src);
-	printf("Destination node:\n> ");
-	scanf("%i",&dst);
-	printf("Capacity:\n> ");
-	scanf("%i",&capacity);
+	while(src<0 || src>=nodes){
+		printf("Source node:\n> ");
+		scanf("%i",&src);
+		if(src<0 || src>=nodes)
+			printf("Source node not valid\n");
+	}
+	while(dst<0 || dst>=nodes){
+		printf("Destination node:\n> ");
+		scanf("%i",&dst);
+		if(dst<0 || dst>=nodes)
+			printf("Destination node not valid\n");
+	}
+	while(capacity<0){
+		printf("Capacity:\n> ");
+		scanf("%i",&capacity);
+		if(capacity<0)
+			printf("Negative capacity not valid\n");
+	}
 	int* path = find_path(net->Matrix(),nodes,src,dst,capacity,&size);
 	if(path==NULL){
 		printf("It's not possible to install an LSP\n");
