@@ -101,3 +101,84 @@ int* find_path(struct topologyLink ** net, int nodes, int src, int dest, int c, 
 
 	return path;
 }
+
+// Algoritmo di Dijkstra uguale al precedente senza il vincolo
+// della capacità sufficiente (per confronti in modalità demo)
+int* find_path_unconstrained(struct topologyLink ** net, int nodes, int src, int dest, int *s)
+{
+	int n = nodes;
+	int dist[n];
+	int prev[n];
+
+	bool sptSet[n];
+	int temp;
+
+	// Inizializza vettori (distanza infinita rappresentata da -1)
+	for (int i = 0; i < n; i++){
+		dist[i] = -1;
+		prev[i] = -1;
+		sptSet[i] = false;
+	}
+
+	dist[src] = 0;
+
+	// Trova il cammino minimo per tutti i nodi
+	for (int count = 0; count < n-1; count++)
+	{
+		int u = minDistance(n, dist, sptSet);
+
+		sptSet[u] = true;
+
+		// Aggiorna vettore distanza:
+		// il nodo non deve essere quello selezionato (sptSet),
+		// deve esistere il link tra u e v,
+		// il link tra u e v deve avere capacità residua sufficiente
+		// il peso tra src e v deve essere minore del corrente
+		// (come peso viene cinsiderato il numero di passi)
+		for (int v = 0; v < n; v++)
+		{
+			temp = (net[u][v].capacity==-1)?-1:1;
+
+			if(!sptSet[v] && temp!=-1 && dist[u]!=-1 && ((dist[u]+temp<dist[v] && dist[v]!=-1)
+					|| dist[v]==-1)){
+				dist[v]=dist[u]+temp;
+				prev[v]=u;
+			}
+
+		}
+	}
+	if (DEBUG){
+		printSolution(dist, n);
+
+		printf("Precedences vector: ");
+		for(int i=0;i<n;i++)
+			printf("%d ",prev[i]);
+		printf("\n");
+	}
+	int prec=dest, count=0;
+	while(prec!=src && count<n){
+		count++;
+		prec=prev[prec];
+		if(prec==-1)
+			return NULL;
+	}
+
+	int app=count;
+	prec=dest;
+	*s = count+1;
+	int* path=new int[count+1];
+	while(prec!=src){
+		path[app]=prec;
+		prec=prev[prec];
+		app--;
+	}
+	path[0]=src;
+
+	printf("\nPath from node %d to node %d with no capacity constrain: ",src,dest);
+	for(int i=0;i<count+1;i++)
+		printf("%d ",path[i]);
+
+	printf("\n\n");
+
+	return path;
+}

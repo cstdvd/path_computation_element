@@ -192,6 +192,11 @@ void installLSPdemo(Topology *net,int nodes){
 		printf("It's not possible to install an LSP\n");
 		return;
 	}
+	int* path_unc = find_path_unconstrained(net->Matrix(),nodes,src,dst,&size);
+	if(path_unc==NULL){
+		printf("It's not possible to install an LSP\n");
+		return;
+	}
 	net->UpdateTopology(path,size,capacity);
 
 }
