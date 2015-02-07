@@ -1,0 +1,57 @@
+Feb 06 12:22:09.395 HYPERVISOR: Release 0.2.13-x86/Linux (tag 2014071016)
+Feb 06 12:22:09.395 HYPERVISOR: Started on IP = 127.0.0.1, TCP port = 7200.
+Feb 06 12:22:09.396 HYPERVISOR: exec_cmd: hypervisor version 
+Feb 06 12:22:09.397 HYPERVISOR: exec_cmd: hypervisor uuid 
+Feb 06 12:22:09.397 HYPERVISOR: exec_cmd: hypervisor working_dir /home/user/GNS3/projects/project_topology/project_topology/project_topology-files/dynamips 
+Feb 06 12:22:09.397 GENERAL: working_dir=/home/user/GNS3/projects/project_topology/project_topology/project_topology-files/dynamips
+Feb 06 12:22:09.398 HYPERVISOR: exec_cmd: vm create R1 1 c2600 
+Feb 06 12:22:09.398 VM: VM R1 created.
+Feb 06 12:22:09.399 HYPERVISOR: exec_cmd: vm set_con_tcp_port R1 2001 
+Feb 06 12:22:09.399 HYPERVISOR: exec_cmd: vm set_aux_tcp_port R1 2501 
+Feb 06 12:22:09.399 HYPERVISOR: exec_cmd: c2600 get_mac_addr R1 
+Feb 06 12:22:09.400 HYPERVISOR: exec_cmd: vm set_ios R1 /home/user/GNS3/images/IOS/c2600-jk9o3s-mz.122-19a.image 
+Feb 06 12:22:09.400 HYPERVISOR: exec_cmd: vm set_ram_mmap R1 1 
+Feb 06 12:22:09.401 HYPERVISOR: exec_cmd: c2600 set_mac_addr R1 c801.0b2b.0000 
+Feb 06 12:22:09.402 HYPERVISOR: exec_cmd: vm create Ghost 0 c7200 
+Feb 06 12:22:09.402 VM: VM Ghost created.
+Feb 06 12:22:09.402 HYPERVISOR: exec_cmd: vm set_ios Ghost /home/user/GNS3/images/IOS/c2600-jk9o3s-mz.122-19a.image 
+Feb 06 12:22:09.403 HYPERVISOR: exec_cmd: vm set_ghost_status Ghost 1 
+Feb 06 12:22:09.403 HYPERVISOR: exec_cmd: vm set_ghost_file Ghost c2600-jk9o3s-mz.122-19a.image-64.ghost 
+Feb 06 12:22:09.404 HYPERVISOR: exec_cmd: vm set_ram Ghost 64 
+Feb 06 12:22:09.404 HYPERVISOR: exec_cmd: vm get_status Ghost 
+Feb 06 12:22:09.430 HYPERVISOR: exec_cmd: vm start Ghost 
+Feb 06 12:22:10.374 HYPERVISOR: exec_cmd: vm get_status Ghost 
+Feb 06 12:22:10.375 HYPERVISOR: exec_cmd: vm stop Ghost 
+Feb 06 12:22:10.518 VM: VM Ghost shutdown.
+Feb 06 12:22:10.518 HYPERVISOR: exec_cmd: vm clean_delete Ghost 
+Feb 06 12:22:10.519 VM: VM Ghost destroyed.
+Feb 06 12:22:10.520 HYPERVISOR: exec_cmd: vm set_ghost_status R1 2 
+Feb 06 12:22:10.521 HYPERVISOR: exec_cmd: vm set_ghost_file R1 c2600-jk9o3s-mz.122-19a.image-64.ghost 
+Feb 06 12:22:10.786 HYPERVISOR: exec_cmd: vm set_config R1 configs/i1_startup-config.cfg 
+Feb 06 12:22:10.787 HYPERVISOR: exec_cmd: vm set_config R1 configs/i1_startup-config.cfg configs/i1_private-config.cfg 
+Feb 06 12:22:10.788 HYPERVISOR: exec_cmd: vm get_status R1 
+Feb 06 12:22:10.788 HYPERVISOR: exec_cmd: vm set_idle_pc R1 0x802b9ab0 
+Feb 06 12:22:10.789 HYPERVISOR: exec_cmd: vm set_nvram R1 256 
+Feb 06 12:22:10.789 HYPERVISOR: exec_cmd: vm get_status R1 
+Feb 06 12:22:10.790 HYPERVISOR: exec_cmd: vm slot_add_binding R1 1 0 NM-4E 
+Feb 06 12:22:10.790 HYPERVISOR: exec_cmd: vm get_status R1 
+Feb 06 12:22:10.791 HYPERVISOR: exec_cmd: vm slot_add_binding R1 0 32 WIC-1T 
+Feb 06 12:22:10.791 HYPERVISOR: exec_cmd: c2600 set_iomem R1 5 
+Feb 06 12:22:10.792 HYPERVISOR: exec_cmd: vm set_disk0 R1 1 
+Feb 06 12:22:10.792 HYPERVISOR: exec_cmd: vm slot_add_binding R1 0 16 WIC-1T 
+Feb 06 12:22:10.925 HYPERVISOR: exec_cmd: nio create_tap nio_tap0 tap0 
+Feb 06 12:22:10.926 HYPERVISOR: exec_cmd: vm slot_add_nio_binding R1 1 3 nio_tap0 
+Feb 06 12:22:10.927 HYPERVISOR: exec_cmd: vm get_status R1 
+Feb 06 12:22:10.930 HYPERVISOR: exec_cmd: nio create_udp_auto nio_udp_auto0 127.0.0.1 10001 20000 
+Feb 06 12:22:10.934 HYPERVISOR: exec_cmd: nio create_udp_auto nio_udp_auto1 127.0.0.1 10001 20000 
+Feb 06 12:22:10.945 HYPERVISOR: exec_cmd: nio create_udp_auto nio_udp_auto3 127.0.0.1 10001 20000 
+Feb 06 12:22:11.098 HYPERVISOR: exec_cmd: nio connect_udp_auto nio_udp_auto0 127.0.0.1 40001 
+Feb 06 12:22:11.098 HYPERVISOR: exec_cmd: vm slot_add_nio_binding R1 0 0 nio_udp_auto0 
+Feb 06 12:22:11.099 HYPERVISOR: exec_cmd: vm get_status R1 
+Feb 06 12:22:11.114 HYPERVISOR: exec_cmd: nio connect_udp_auto nio_udp_auto1 127.0.0.1 10003 
+Feb 06 12:22:11.115 HYPERVISOR: exec_cmd: vm slot_add_nio_binding R1 1 0 nio_udp_auto1 
+Feb 06 12:22:11.116 HYPERVISOR: exec_cmd: vm get_status R1 
+Feb 06 12:22:11.150 HYPERVISOR: exec_cmd: nio connect_udp_auto nio_udp_auto3 127.0.0.1 10005 
+Feb 06 12:22:11.150 HYPERVISOR: exec_cmd: vm slot_add_nio_binding R1 1 1 nio_udp_auto3 
+Feb 06 12:22:11.151 HYPERVISOR: exec_cmd: vm get_status R1 
+Feb 06 12:22:12.992 HYPERVISOR: exec_cmd: hypervisor stop 

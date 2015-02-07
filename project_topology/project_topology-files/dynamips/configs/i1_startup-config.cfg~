@@ -1,0 +1,107 @@
+!
+!
+!
+!
+!
+!
+!
+
+!
+version 12.2
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+!
+hostname R1
+!
+!
+ip subnet-zero
+no ip icmp rate-limit unreachable
+!
+!
+ip tcp synwait-time 5
+no ip domain-lookup
+!
+ip dhcp pool loc1
+   network 192.168.1.0 255.255.255.0
+   default-router 192.168.1.1 
+!
+ip dhcp pool loc2
+   network 192.168.2.0 255.255.255.0
+   default-router 192.168.2.1 
+!
+ip dhcp pool loc3
+   network 192.168.3.0 255.255.255.0
+   default-router 192.168.3.1 
+!
+ip cef
+mpls traffic-eng tunnels
+ip audit notify log
+ip audit po max-events 100
+!
+call rsvp-sync
+!
+!
+interface Loopback0
+ ip address 172.16.1.1 255.255.255.255
+!
+!
+interface Ethernet0/0
+ ip address 192.168.1.1 255.255.255.0
+ half-duplex
+!
+interface Serial0/0
+ no ip address
+ shutdown
+!
+interface Serial0/1
+ no ip address
+ shutdown
+!
+interface Ethernet1/0
+ ip address 10.1.1.1 255.255.255.252
+ half-duplex
+!
+interface Ethernet1/1
+ ip address 10.2.2.1 255.255.255.252
+ half-duplex
+!
+interface Ethernet1/2
+ ip address 192.168.2.1 255.255.255.0
+ half-duplex
+!
+interface Ethernet1/3
+ ip address 192.168.3.1 255.255.255.0
+ half-duplex
+!
+router ospf 100
+ network 172.16.1.1 0.0.0.0 area 1
+ network 10.1.1.0 0.0.0.3 area 1
+ network 10.2.2.0 0.0.0.3 area 1
+ network 192.168.1.0 0.0.0.255 area 1
+ network 192.168.2.0 0.0.0.255 area 1
+ network 192.168.3.0 0.0.0.255 area 1
+!
+ip classless
+ip http server
+!
+!
+!
+dial-peer cor custom
+!
+!
+!
+!
+!
+line con 0
+ exec-timeout 0 0
+ privilege level 15
+ logging synchronous
+line aux 0
+ exec-timeout 0 0
+ privilege level 15
+ logging synchronous
+line vty 0 4
+ login
+!
+end

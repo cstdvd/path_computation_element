@@ -1,0 +1,50 @@
+Nov 10 14:07:26.654 HYPERVISOR: Release 0.2.13-x86/Linux (tag 2014071016)
+Nov 10 14:07:26.654 HYPERVISOR: Started on IP = 127.0.0.1, TCP port = 7205.
+Nov 10 14:07:26.662 HYPERVISOR: exec_cmd: hypervisor version 
+Nov 10 14:07:26.662 HYPERVISOR: exec_cmd: hypervisor uuid 
+Nov 10 14:07:26.662 HYPERVISOR: exec_cmd: hypervisor working_dir /home/user/GNS3/projects/best_effort/best_effort-files/dynamips 
+Nov 10 14:07:26.662 GENERAL: working_dir=/home/user/GNS3/projects/best_effort/best_effort-files/dynamips
+Nov 10 14:07:26.662 HYPERVISOR: exec_cmd: vm create R5 5 c2600 
+Nov 10 14:07:26.663 VM: VM R5 created.
+Nov 10 14:07:26.663 HYPERVISOR: exec_cmd: vm set_con_tcp_port R5 2005 
+Nov 10 14:07:26.663 HYPERVISOR: exec_cmd: vm set_aux_tcp_port R5 2505 
+Nov 10 14:07:26.663 HYPERVISOR: exec_cmd: c2600 get_mac_addr R5 
+Nov 10 14:07:26.664 HYPERVISOR: exec_cmd: vm set_ios R5 /home/user/GNS3/images/IOS/c2600-jk9o3s-mz.122-19a.image 
+Nov 10 14:07:26.664 HYPERVISOR: exec_cmd: vm set_ram_mmap R5 1 
+Nov 10 14:07:26.664 HYPERVISOR: exec_cmd: c2600 set_mac_addr R5 c805.0b6f.0000 
+Nov 10 14:07:26.664 HYPERVISOR: exec_cmd: vm set_ghost_status R5 2 
+Nov 10 14:07:26.665 HYPERVISOR: exec_cmd: vm set_ghost_file R5 c2600-jk9o3s-mz.122-19a.image-64.ghost 
+Nov 10 14:07:26.726 HYPERVISOR: exec_cmd: vm set_config R5 configs/i5_startup-config.cfg 
+Nov 10 14:07:26.726 HYPERVISOR: exec_cmd: vm set_config R5 configs/i5_startup-config.cfg configs/i5_private-config.cfg 
+Nov 10 14:07:26.726 HYPERVISOR: exec_cmd: vm slot_add_binding R5 0 32 WIC-1T 
+Nov 10 14:07:26.727 HYPERVISOR: exec_cmd: vm set_disk0 R5 1 
+Nov 10 14:07:26.727 HYPERVISOR: exec_cmd: vm slot_add_binding R5 0 16 WIC-1T 
+Nov 10 14:07:26.727 HYPERVISOR: exec_cmd: vm get_status R5 
+Nov 10 14:07:26.727 HYPERVISOR: exec_cmd: vm set_idle_pc R5 0x802b9ab0 
+Nov 10 14:07:26.727 HYPERVISOR: exec_cmd: vm get_status R5 
+Nov 10 14:07:26.728 HYPERVISOR: exec_cmd: vm slot_add_binding R5 1 0 NM-4E 
+Nov 10 14:07:26.728 HYPERVISOR: exec_cmd: vm get_status R5 
+Nov 10 14:07:26.728 HYPERVISOR: exec_cmd: c2600 set_iomem R5 5 
+Nov 10 14:07:26.728 HYPERVISOR: exec_cmd: vm set_nvram R5 256 
+Nov 10 14:07:26.746 HYPERVISOR: exec_cmd: nio create_udp_auto nio_udp_auto13 127.0.0.1 10001 20000 
+Nov 10 14:07:26.749 HYPERVISOR: exec_cmd: nio create_udp_auto nio_udp_auto15 127.0.0.1 10001 20000 
+Nov 10 14:07:26.751 HYPERVISOR: exec_cmd: nio create_udp_auto nio_udp_auto16 127.0.0.1 10001 20000 
+Nov 10 14:07:26.923 HYPERVISOR: exec_cmd: nio connect_udp_auto nio_udp_auto13 127.0.0.1 10013 
+Nov 10 14:07:26.923 HYPERVISOR: exec_cmd: vm slot_add_nio_binding R5 1 1 nio_udp_auto13 
+Nov 10 14:07:26.923 HYPERVISOR: exec_cmd: vm get_status R5 
+Nov 10 14:07:26.937 HYPERVISOR: exec_cmd: nio connect_udp_auto nio_udp_auto15 127.0.0.1 10015 
+Nov 10 14:07:26.937 HYPERVISOR: exec_cmd: vm slot_add_nio_binding R5 1 2 nio_udp_auto15 
+Nov 10 14:07:26.937 HYPERVISOR: exec_cmd: vm get_status R5 
+Nov 10 14:07:26.944 HYPERVISOR: exec_cmd: nio connect_udp_auto nio_udp_auto16 127.0.0.1 10018 
+Nov 10 14:07:26.944 HYPERVISOR: exec_cmd: vm slot_add_nio_binding R5 0 0 nio_udp_auto16 
+Nov 10 14:07:26.945 HYPERVISOR: exec_cmd: vm get_status R5 
+Nov 10 14:07:41.587 HYPERVISOR: exec_cmd: vm get_status R5 
+Nov 10 14:07:41.587 HYPERVISOR: exec_cmd: vm start R5 
+Nov 10 14:08:29.093 HYPERVISOR: exec_cmd: vm get_status R5 
+Nov 10 14:08:29.093 HYPERVISOR: exec_cmd: vm stop R5 
+Nov 10 14:08:29.304 VM: VM R5 shutdown.
+Nov 10 14:08:46.779 HYPERVISOR: exec_cmd: hypervisor working_dir /home/user/GNS3/projects/base_scenario/base_scenario-files/dynamips 
+Nov 10 14:08:46.779 GENERAL: working_dir=/home/user/GNS3/projects/base_scenario/base_scenario-files/dynamips
+Nov 10 14:08:49.559 HYPERVISOR: exec_cmd: vm extract_config R5 
+Nov 10 14:08:55.823 HYPERVISOR: exec_cmd: vm extract_config R5 
+Nov 10 14:08:57.594 HYPERVISOR: exec_cmd: hypervisor stop 

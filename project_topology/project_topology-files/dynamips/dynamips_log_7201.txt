@@ -1,0 +1,37 @@
+Feb 06 12:22:10.649 HYPERVISOR: Release 0.2.13-x86/Linux (tag 2014071016)
+Feb 06 12:22:10.649 HYPERVISOR: Started on IP = 127.0.0.1, TCP port = 7201.
+Feb 06 12:22:10.661 HYPERVISOR: exec_cmd: hypervisor version 
+Feb 06 12:22:10.662 HYPERVISOR: exec_cmd: hypervisor uuid 
+Feb 06 12:22:10.662 HYPERVISOR: exec_cmd: hypervisor working_dir /home/user/GNS3/projects/project_topology/project_topology/project_topology-files/dynamips 
+Feb 06 12:22:10.662 GENERAL: working_dir=/home/user/GNS3/projects/project_topology/project_topology/project_topology-files/dynamips
+Feb 06 12:22:10.662 HYPERVISOR: exec_cmd: vm create R2 2 c2600 
+Feb 06 12:22:10.663 VM: VM R2 created.
+Feb 06 12:22:10.663 HYPERVISOR: exec_cmd: vm set_con_tcp_port R2 2002 
+Feb 06 12:22:10.664 HYPERVISOR: exec_cmd: vm set_aux_tcp_port R2 2502 
+Feb 06 12:22:10.664 HYPERVISOR: exec_cmd: c2600 get_mac_addr R2 
+Feb 06 12:22:10.665 HYPERVISOR: exec_cmd: vm set_ios R2 /home/user/GNS3/images/IOS/c2600-jk9o3s-mz.122-19a.image 
+Feb 06 12:22:10.665 HYPERVISOR: exec_cmd: vm set_ram_mmap R2 1 
+Feb 06 12:22:10.665 HYPERVISOR: exec_cmd: c2600 set_mac_addr R2 c802.0b3e.0000 
+Feb 06 12:22:10.666 HYPERVISOR: exec_cmd: vm set_ghost_status R2 2 
+Feb 06 12:22:10.666 HYPERVISOR: exec_cmd: vm set_ghost_file R2 c2600-jk9o3s-mz.122-19a.image-64.ghost 
+Feb 06 12:22:10.814 HYPERVISOR: exec_cmd: vm set_config R2 configs/i2_startup-config.cfg 
+Feb 06 12:22:10.815 HYPERVISOR: exec_cmd: vm set_config R2 configs/i2_startup-config.cfg configs/i2_private-config.cfg 
+Feb 06 12:22:10.816 HYPERVISOR: exec_cmd: vm get_status R2 
+Feb 06 12:22:10.816 HYPERVISOR: exec_cmd: vm set_idle_pc R2 0x802b9ab0 
+Feb 06 12:22:10.817 HYPERVISOR: exec_cmd: vm set_nvram R2 256 
+Feb 06 12:22:10.817 HYPERVISOR: exec_cmd: vm get_status R2 
+Feb 06 12:22:10.818 HYPERVISOR: exec_cmd: vm slot_add_binding R2 1 0 NM-4E 
+Feb 06 12:22:10.818 HYPERVISOR: exec_cmd: vm get_status R2 
+Feb 06 12:22:10.818 HYPERVISOR: exec_cmd: vm slot_add_binding R2 0 32 WIC-1T 
+Feb 06 12:22:10.819 HYPERVISOR: exec_cmd: c2600 set_iomem R2 5 
+Feb 06 12:22:10.820 HYPERVISOR: exec_cmd: vm set_disk0 R2 1 
+Feb 06 12:22:10.820 HYPERVISOR: exec_cmd: vm slot_add_binding R2 0 16 WIC-1T 
+Feb 06 12:22:10.941 HYPERVISOR: exec_cmd: nio create_udp_auto nio_udp_auto2 127.0.0.1 10001 20000 
+Feb 06 12:22:10.969 HYPERVISOR: exec_cmd: nio create_udp_auto nio_udp_auto9 127.0.0.1 10001 20000 
+Feb 06 12:22:11.131 HYPERVISOR: exec_cmd: nio connect_udp_auto nio_udp_auto2 127.0.0.1 10002 
+Feb 06 12:22:11.132 HYPERVISOR: exec_cmd: vm slot_add_nio_binding R2 1 0 nio_udp_auto2 
+Feb 06 12:22:11.132 HYPERVISOR: exec_cmd: vm get_status R2 
+Feb 06 12:22:11.252 HYPERVISOR: exec_cmd: nio connect_udp_auto nio_udp_auto9 127.0.0.1 10011 
+Feb 06 12:22:11.253 HYPERVISOR: exec_cmd: vm slot_add_nio_binding R2 1 2 nio_udp_auto9 
+Feb 06 12:22:11.253 HYPERVISOR: exec_cmd: vm get_status R2 
+Feb 06 12:22:13.036 HYPERVISOR: exec_cmd: hypervisor stop 

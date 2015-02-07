@@ -1,0 +1,107 @@
+!
+!
+!
+!
+!
+!
+!
+
+!
+version 12.2
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+!
+hostname R2
+!
+!
+ip subnet-zero
+no ip icmp rate-limit unreachable
+!
+!
+ip tcp synwait-time 5
+no ip domain-lookup
+!
+ip cef
+mpls traffic-eng tunnels
+ip audit notify log
+ip audit po max-events 100
+!
+call rsvp-sync
+!
+!
+!
+!
+!
+!
+interface Loopback0
+ ip address 172.16.1.2 255.255.255.255
+!
+!
+interface Ethernet0/0
+ no ip address
+ shutdown
+ half-duplex
+!
+interface Serial0/0
+ no ip address
+ shutdown
+!
+interface Serial0/1
+ no ip address
+ shutdown
+!
+interface Ethernet1/0
+ ip address 10.1.1.2 255.255.255.252
+ half-duplex
+ tag-switching ip
+ mpls traffic-eng tunnels 
+ ip rsvp bandwidth 512 512
+!
+interface Ethernet1/1
+ no ip address
+ shutdown
+ half-duplex
+!
+interface Ethernet1/2
+ ip address 10.5.5.1 255.255.255.252
+ half-duplex
+ tag-switching ip
+ mpls traffic-eng tunnels 
+ ip rsvp bandwidth 512 512
+!
+interface Ethernet1/3
+ no ip address
+ shutdown
+ half-duplex
+!
+router ospf 100
+ network 172.16.1.2 0.0.0.0 area 1
+ network 10.5.5.0 0.0.0.3 area 1
+ network 10.1.1.0 0.0.0.3 area 1
+ mpls traffic-eng area 1
+ mpls traffic-eng router-id Loopback0
+!
+ip classless
+ip http server
+!
+!
+!
+dial-peer cor custom
+!
+!
+!
+!
+!
+line con 0
+ exec-timeout 0 0
+ privilege level 15
+ logging synchronous
+line aux 0
+ exec-timeout 0 0
+ privilege level 15
+ logging synchronous
+line vty 0 4
+ login
+!
+end
