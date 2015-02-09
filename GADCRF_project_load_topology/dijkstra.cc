@@ -1,6 +1,6 @@
 #include "header_project.h"
 
-// Nodo con minima distanza (tra quelli non considerati)
+// Node with minimum distance (from the ones selected)
 int minDistance(int n, int dist[], bool sptSet[])
 {
 	int min = -1, min_index;
@@ -13,7 +13,7 @@ int minDistance(int n, int dist[], bool sptSet[])
 	return min_index;
 }
 
-// Stampa distanza di ogni nodo dal sorgente
+// Print distance of all the nodes from the source
 void printSolution(int dist[], int n)
 {
 	printf("Node   Distance from Source\n");
@@ -31,7 +31,7 @@ int* find_path(struct topologyLink ** net, int nodes, int src, int dest, int c, 
 	bool sptSet[n];
 	int temp, rim;
 
-	// Inizializza vettori (distanza infinita rappresentata da -1)
+	// Vectors inizialization (infinite distance = -1)
 	for (int i = 0; i < n; i++){
 		dist[i] = -1;
 		prev[i] = -1;
@@ -40,19 +40,20 @@ int* find_path(struct topologyLink ** net, int nodes, int src, int dest, int c, 
 
 	dist[src] = 0;
 
-	// Trova il cammino minimo per tutti i nodi
+	// Find minimum path for all the nodes
 	for (int count = 0; count < n-1; count++)
 	{
 		int u = minDistance(n, dist, sptSet);
 
 		sptSet[u] = true;
 
-		// Aggiorna vettore distanza:
-		// il nodo non deve essere quello selezionato (sptSet),
-		// deve esistere il link tra u e v,
-		// il link tra u e v deve avere capacità residua sufficiente
-		// il peso tra src e v deve essere minore del corrente
-		// (come peso viene cinsiderato il numero di passi)
+		/* Update distance vector:
+		 * node must not be the one selected (sptSet),
+		 * it must exist a link between u and v,
+		 * link between u and v must has sufficient residual capacity
+		 * weight between src and v must be less than the current one
+		 * (weight is equal to the number of traversed router)
+		 */
 		for (int v = 0; v < n; v++)
 		{
 			rim = net[u][v].capacity - net[u][v].used;
@@ -102,8 +103,8 @@ int* find_path(struct topologyLink ** net, int nodes, int src, int dest, int c, 
 	return path;
 }
 
-// Algoritmo di Dijkstra uguale al precedente senza il vincolo
-// della capacità sufficiente (per confronti in modalità demo)
+/* Dijkstra Algorithm without constrains
+ * Used for network simulation */
 int* find_path_unconstrained(struct topologyLink ** net, int nodes, int src, int dest, int *s)
 {
 	int n = nodes;
@@ -113,7 +114,7 @@ int* find_path_unconstrained(struct topologyLink ** net, int nodes, int src, int
 	bool sptSet[n];
 	int temp;
 
-	// Inizializza vettori (distanza infinita rappresentata da -1)
+	// Vectors inizialization (infinite distance = -1)
 	for (int i = 0; i < n; i++){
 		dist[i] = -1;
 		prev[i] = -1;
@@ -122,19 +123,19 @@ int* find_path_unconstrained(struct topologyLink ** net, int nodes, int src, int
 
 	dist[src] = 0;
 
-	// Trova il cammino minimo per tutti i nodi
+	// Find minimum path for all the nodes
 	for (int count = 0; count < n-1; count++)
 	{
 		int u = minDistance(n, dist, sptSet);
 
 		sptSet[u] = true;
 
-		// Aggiorna vettore distanza:
-		// il nodo non deve essere quello selezionato (sptSet),
-		// deve esistere il link tra u e v,
-		// il link tra u e v deve avere capacità residua sufficiente
-		// il peso tra src e v deve essere minore del corrente
-		// (come peso viene cinsiderato il numero di passi)
+		/* Update distance vector:
+		 * node must not be the one selected (sptSet),
+		 * it must exist a link between u and v,
+		 * weight between src and v must be less than the current one
+		 * (weight is equal to the number of traversed router)
+		 */
 		for (int v = 0; v < n; v++)
 		{
 			temp = (net[u][v].capacity==-1)?-1:1;

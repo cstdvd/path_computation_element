@@ -625,7 +625,7 @@
 		<srcAddr>10.6.6.2</srcAddr>
 		<dstAddr>10.6.6.1</dstAddr>
 		<srcInterface>Ethernet1/0</srcInterface>
-		<dstInterface>Ethernet1/4</dstInterface>
+		<dstInterface>Ethernet1/3</dstInterface>
 	    </link>
 	    <link>
 		<capacity>-1</capacity>
@@ -760,7 +760,7 @@
 		<used>0</used>
 		<srcAddr>10.6.6.1</srcAddr>
 		<dstAddr>10.6.6.2</dstAddr>
-		<srcInterface>Ethernet1/4</srcInterface>
+		<srcInterface>Ethernet1/3</srcInterface>
 		<dstInterface>Ethernet1/0</dstInterface>
 	    </link>
 	    <link>
@@ -784,7 +784,7 @@
 		<used>0</used>
 		<srcAddr>10.10.10.1</srcAddr>
 		<dstAddr>10.10.10.2</dstAddr>
-		<srcInterface>Ethernet1/3</srcInterface>
+		<srcInterface>Ethernet1/2</srcInterface>
 		<dstInterface>Ethernet1/0</dstInterface>
 	    </link>
 	    <link>
@@ -796,12 +796,12 @@
 		<dstInterface>NULL</dstInterface>
 	    </link>
 	    <link>
-		<capacity>1024</capacity>
+		<capacity>-1</capacity>
 		<used>0</used>
-		<srcAddr>10.11.11.1</srcAddr>
-		<dstAddr>10.11.11.2</dstAddr>
-		<srcInterface>Ethernet1/2</srcInterface>
-		<dstInterface>Ethernet1/0</dstInterface>
+		<srcAddr>NULL</srcAddr>
+		<dstAddr>NULL</dstAddr>
+		<srcInterface>NULL</srcInterface>
+		<dstInterface>NULL</dstInterface>
 	    </link>
 	    <link>
 		<capacity>1024</capacity>
@@ -1057,7 +1057,7 @@
 		<srcAddr>10.10.10.2</srcAddr>
 		<dstAddr>10.10.10.1</dstAddr>
 		<srcInterface>Ethernet1/0</srcInterface>
-		<dstInterface>Ethernet1/3</dstInterface>
+		<dstInterface>Ethernet1/2</dstInterface>
 	    </link>
 	    <link>
 		<capacity>-1</capacity>
@@ -1233,7 +1233,7 @@
 		<srcAddr>10.30.30.2</srcAddr>
 		<dstAddr>10.30.30.1</dstAddr>
 		<srcInterface>Ethernet0/0</srcInterface>
-		<dstInterface>Ethernet1/1</dstInterface>
+		<dstInterface>Ethernet1/0</dstInterface>
 	    </link>
 	    <link>
 		<capacity>-1</capacity>
@@ -1340,12 +1340,12 @@
 		<dstInterface>NULL</dstInterface>
 	    </link>
 	    <link>
-		<capacity>1024</capacity>
+		<capacity>-1</capacity>
 		<used>0</used>
-		<srcAddr>10.11.11.2</srcAddr>
-		<dstAddr>10.11.11.1</dstAddr>
-		<srcInterface>Ethernet1/0</srcInterface>
-		<dstInterface>Ethernet1/2</dstInterface>
+		<srcAddr>NULL</srcAddr>
+		<dstAddr>NULL</dstAddr>
+		<srcInterface>NULL</srcInterface>
+		<dstInterface>NULL</dstInterface>
 	    </link>
 	    <link>
 		<capacity>-1</capacity>
@@ -1368,7 +1368,7 @@
 		<used>0</used>
 		<srcAddr>10.30.30.1</srcAddr>
 		<dstAddr>10.30.30.2</dstAddr>
-		<srcInterface>Ethernet1/4</srcInterface>
+		<srcInterface>Ethernet1/0</srcInterface>
 		<dstInterface>Ethernet0/0</dstInterface>
 	    </link>
 	    <link>

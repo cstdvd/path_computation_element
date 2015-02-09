@@ -1,9 +1,7 @@
 /*
  * config_topology.cc
  *
- *  Created on: Jan 24, 2015
- * Last modify: Jan 26, 2015
- *      Author: Roberta Fumarola
+ *     Authors: Roberta Fumarola, David Costa, Gaetano Alboreto
  * Description: Implementation of all the methods of Topology Class.
  * 				Implementation of ausiliarity functions for saving/loading a Topology object.
  */
@@ -175,7 +173,7 @@ void Topology::InitAdjMatrix(){
 		strcpy(adjMatrix[0][1].srcInterface,"Ethernet1/0");
 		strcpy(adjMatrix[0][1].dstInterface,"Ethernet1/0");
 		adjMatrix[0][1].capacity = 1024;
-		adjMatrix[0][1].used = 0;
+		adjMatrix[0][1].used = 10;
 
 		//From R1 to R3
 		strcpy(adjMatrix[0][2].srcAddr,"10.2.2.1");
@@ -183,7 +181,7 @@ void Topology::InitAdjMatrix(){
 		strcpy(adjMatrix[0][2].srcInterface,"Ethernet1/1");
 		strcpy(adjMatrix[0][2].dstInterface,"Ethernet1/1");
 		adjMatrix[0][2].capacity = 1024;
-		adjMatrix[0][2].used = 0;
+		adjMatrix[0][2].used = 10;
 
 		//From R2 to R1
 		strcpy(adjMatrix[1][0].srcAddr,"10.1.1.2");
@@ -191,7 +189,7 @@ void Topology::InitAdjMatrix(){
 		strcpy(adjMatrix[1][0].srcInterface,"Ethernet1/0");
 		strcpy(adjMatrix[1][0].dstInterface,"Ethernet1/0");
 		adjMatrix[1][0].capacity = 1024;
-		adjMatrix[1][0].used = 0;
+		adjMatrix[1][0].used = 10;
 
 		//From R2 to R5
 		strcpy(adjMatrix[1][4].srcAddr,"10.5.5.1");
@@ -199,7 +197,7 @@ void Topology::InitAdjMatrix(){
 		strcpy(adjMatrix[1][4].srcInterface,"Ethernet1/2");
 		strcpy(adjMatrix[1][4].dstInterface,"Ethernet1/2");
 		adjMatrix[1][4].capacity = 1024;
-		adjMatrix[1][4].used = 0;
+		adjMatrix[1][4].used = 10;
 
 		//From R3 to R1
 		strcpy(adjMatrix[2][0].srcAddr,"10.2.2.2");
@@ -207,7 +205,7 @@ void Topology::InitAdjMatrix(){
 		strcpy(adjMatrix[2][0].srcInterface,"Ethernet1/1");
 		strcpy(adjMatrix[2][0].dstInterface,"Ethernet1/1");
 		adjMatrix[2][0].capacity = 1024;
-		adjMatrix[2][0].used = 0;
+		adjMatrix[2][0].used = 10;
 
 		//From R3 to R4
 		strcpy(adjMatrix[2][3].srcAddr,"10.3.3.1");
@@ -215,7 +213,7 @@ void Topology::InitAdjMatrix(){
 		strcpy(adjMatrix[2][3].srcInterface,"Ethernet1/0");
 		strcpy(adjMatrix[2][3].dstInterface,"Ethernet1/0");
 		adjMatrix[2][3].capacity = 1024;
-		adjMatrix[2][3].used = 0;
+		adjMatrix[2][3].used = 10;
 
 		//From R4 to R3
 		strcpy(adjMatrix[3][2].srcAddr,"10.3.3.2");
@@ -223,7 +221,7 @@ void Topology::InitAdjMatrix(){
 		strcpy(adjMatrix[3][2].srcInterface,"Ethernet1/0");
 		strcpy(adjMatrix[3][2].dstInterface,"Ethernet1/0");
 		adjMatrix[3][2].capacity = 1024;
-		adjMatrix[3][2].used = 0;
+		adjMatrix[3][2].used = 10;
 
 		//From R4 to R5
 		strcpy(adjMatrix[3][4].srcAddr,"10.4.4.1");
@@ -231,7 +229,7 @@ void Topology::InitAdjMatrix(){
 		strcpy(adjMatrix[3][4].srcInterface,"Ethernet1/1");
 		strcpy(adjMatrix[3][4].dstInterface,"Ethernet1/1");
 		adjMatrix[3][4].capacity = 1024;
-		adjMatrix[3][4].used = 0;
+		adjMatrix[3][4].used = 10;
 
 		//From R5 to R2
 		strcpy(adjMatrix[4][1].srcAddr,"10.5.5.2");
@@ -239,7 +237,7 @@ void Topology::InitAdjMatrix(){
 		strcpy(adjMatrix[4][1].srcInterface,"Ethernet1/2");
 		strcpy(adjMatrix[4][1].dstInterface,"Ethernet1/2");
 		adjMatrix[4][1].capacity = 1024;
-		adjMatrix[4][1].used = 0;
+		adjMatrix[4][1].used = 10;
 
 		//From R5 to R4
 		strcpy(adjMatrix[4][3].srcAddr,"10.4.4.2");
@@ -247,7 +245,7 @@ void Topology::InitAdjMatrix(){
 		strcpy(adjMatrix[4][3].srcInterface,"Ethernet1/1");
 		strcpy(adjMatrix[4][3].dstInterface,"Ethernet1/1");
 		adjMatrix[4][3].capacity = 1024;
-		adjMatrix[4][3].used = 0;
+		adjMatrix[4][3].used = 10;
 	}
 	else{
 		//From R1 to R2
@@ -350,7 +348,7 @@ void Topology::InitAdjMatrix(){
 		strcpy(adjMatrix[4][5].srcAddr,"10.6.6.2");
 		strcpy(adjMatrix[4][5].dstAddr,"10.6.6.1");
 		strcpy(adjMatrix[4][5].srcInterface,"Ethernet1/0");
-		strcpy(adjMatrix[4][5].dstInterface,"Ethernet1/4");
+		strcpy(adjMatrix[4][5].dstInterface,"Ethernet1/3");
 		adjMatrix[4][5].capacity = 1024;
 		adjMatrix[4][5].used = 10;
 
@@ -373,7 +371,7 @@ void Topology::InitAdjMatrix(){
 		//From R6 to R5
 		strcpy(adjMatrix[5][4].srcAddr,"10.6.6.1");
 		strcpy(adjMatrix[5][4].dstAddr,"10.6.6.2");
-		strcpy(adjMatrix[5][4].srcInterface,"Ethernet1/4");
+		strcpy(adjMatrix[5][4].srcInterface,"Ethernet1/3");
 		strcpy(adjMatrix[5][4].dstInterface,"Ethernet1/0");
 		adjMatrix[5][4].capacity = 1024;
 		adjMatrix[5][4].used = 10;
@@ -389,18 +387,10 @@ void Topology::InitAdjMatrix(){
 		//From R6 to R8
 		strcpy(adjMatrix[5][7].srcAddr,"10.10.10.1");
 		strcpy(adjMatrix[5][7].dstAddr,"10.10.10.2");
-		strcpy(adjMatrix[5][7].srcInterface,"Ethernet1/3");
+		strcpy(adjMatrix[5][7].srcInterface,"Ethernet1/2");
 		strcpy(adjMatrix[5][7].dstInterface,"Ethernet1/0");
 		adjMatrix[5][7].capacity = 1024;
 		adjMatrix[5][7].used = 10;
-
-		//From R6 to R10
-		strcpy(adjMatrix[5][9].srcAddr,"10.11.11.1");
-		strcpy(adjMatrix[5][9].dstAddr,"10.11.11.2");
-		strcpy(adjMatrix[5][9].srcInterface,"Ethernet1/2");
-		strcpy(adjMatrix[5][9].dstInterface,"Ethernet1/0");
-		adjMatrix[5][9].capacity = 1024;
-		adjMatrix[5][9].used = 10;
 
 		//From R6 to R11
 		strcpy(adjMatrix[5][10].srcAddr,"10.14.14.1");
@@ -446,7 +436,7 @@ void Topology::InitAdjMatrix(){
 		strcpy(adjMatrix[7][5].srcAddr,"10.10.10.2");
 		strcpy(adjMatrix[7][5].dstAddr,"10.10.10.1");
 		strcpy(adjMatrix[7][5].srcInterface,"Ethernet1/0");
-		strcpy(adjMatrix[7][5].dstInterface,"Ethernet1/3");
+		strcpy(adjMatrix[7][5].dstInterface,"Ethernet1/2");
 		adjMatrix[7][5].capacity = 1024;
 		adjMatrix[7][5].used = 10;
 
@@ -462,7 +452,7 @@ void Topology::InitAdjMatrix(){
 		strcpy(adjMatrix[8][9].srcAddr,"10.30.30.2");
 		strcpy(adjMatrix[8][9].dstAddr,"10.30.30.1");
 		strcpy(adjMatrix[8][9].srcInterface,"Ethernet0/0");
-		strcpy(adjMatrix[8][9].dstInterface,"Ethernet1/1");
+		strcpy(adjMatrix[8][9].dstInterface,"Ethernet1/0");
 		adjMatrix[8][9].capacity = 1024;
 		adjMatrix[8][9].used = 10;
 
@@ -482,14 +472,6 @@ void Topology::InitAdjMatrix(){
 		adjMatrix[8][17].capacity = 1024;
 		adjMatrix[8][17].used = 10;
 
-		//From R10 to R6
-		strcpy(adjMatrix[9][5].srcAddr,"10.11.11.2");
-		strcpy(adjMatrix[9][5].dstAddr,"10.11.11.1");
-		strcpy(adjMatrix[9][5].srcInterface,"Ethernet1/0");
-		strcpy(adjMatrix[9][5].dstInterface,"Ethernet1/2");
-		adjMatrix[9][5].capacity = 1024;
-		adjMatrix[9][5].used = 10;
-
 		//From R10 to R8
 		strcpy(adjMatrix[9][7].srcAddr,"10.12.12.2");
 		strcpy(adjMatrix[9][7].dstAddr,"10.12.12.1");
@@ -501,7 +483,7 @@ void Topology::InitAdjMatrix(){
 		//From R10 to R9
 		strcpy(adjMatrix[9][8].srcAddr,"10.30.30.1");
 		strcpy(adjMatrix[9][8].dstAddr,"10.30.30.2");
-		strcpy(adjMatrix[9][8].srcInterface,"Ethernet1/4");
+		strcpy(adjMatrix[9][8].srcInterface,"Ethernet1/0");
 		strcpy(adjMatrix[9][8].dstInterface,"Ethernet0/0");
 		adjMatrix[9][8].capacity = 1024;
 		adjMatrix[9][8].used = 10;
@@ -767,20 +749,12 @@ void Topology::InitXmlStruct(){
 
 			k=i+j+t;
 
-
 			l[k].capacity = adjMatrix[i][j].capacity;
-			//printf("l[%d].capacity= %d\n",k,l[k].capacity);
 			l[k].used = adjMatrix[i][j].used;
-			//printf("l[%d].used= %d\n",k,l[k].used);
 			strcpy(l[k].srcAddr,adjMatrix[i][j].srcAddr);
-			//printf("l[%d].srcAddr= %s\n",k,l[k].srcAddr);
 			strcpy(l[k].dstAddr,adjMatrix[i][j].dstAddr);
-			//printf("l[%d].dstAddr= %s\n",k,l[k].dstAddr);
 			strcpy(l[k].srcInterface,adjMatrix[i][j].srcInterface);
-			//printf("l[%d].srcInterface= %s\n",k,l[k].srcInterface);
 			strcpy(l[k].dstInterface,adjMatrix[i][j].dstInterface);
-			//printf("l[%d].dstInterface= %s\n",k,l[k].dstInterface);
-
 		}
 		t=k-c;
 		c++;
@@ -856,19 +830,21 @@ void Topology::SaveTopology(){
 	if(simul==0){
 		if((Ptr=fopen("topology_xml","w"))==NULL){
 
-			printf("errore apertura topology_xml\n");
+			printf("Error opening topology_xml\n");
 		}
 		else{
 			structs_xml_output(&xmlRoot_type, "Topology", NULL, xmlStruct, Ptr, NULL, 0);
+			fclose(Ptr);
 		}
 	}
 	else{
 		if((Ptr=fopen("topology_xml_simul","w"))==NULL){
 
-			printf("errore apertura topology_xml_simul\n");
+			printf("Error opening topology_xml_simul\n");
 		}
 		else{
 			structs_xml_output(&xmlRoot_type, "Topology", NULL, xmlStruct, Ptr, NULL, 0);
+			fclose(Ptr);
 		}
 	}
 }
@@ -927,64 +903,64 @@ bool Topology::UpdateTopology(int *path,int len,int c){
 void ImportTopology(struct xmlRoot2* xmlTopology){
 
 	// Descriptor for 'struct topologyLink'
-		static const struct structs_field topologyLink_fields[] = {
-				STRUCTS_STRUCT_FIELD(topologyLink, capacity, &structs_type_int),
-				STRUCTS_STRUCT_FIELD(topologyLink, used, &structs_type_int),
-				STRUCTS_STRUCT_FIELD(topologyLink, srcAddr, &structs_type_string),
-				STRUCTS_STRUCT_FIELD(topologyLink, dstAddr, &structs_type_string),
-				STRUCTS_STRUCT_FIELD(topologyLink, srcInterface, &structs_type_string),
-				STRUCTS_STRUCT_FIELD(topologyLink, dstInterface, &structs_type_string),
-				STRUCTS_STRUCT_FIELD_END
-		};
+	static const struct structs_field topologyLink_fields[] = {
+			STRUCTS_STRUCT_FIELD(topologyLink, capacity, &structs_type_int),
+			STRUCTS_STRUCT_FIELD(topologyLink, used, &structs_type_int),
+			STRUCTS_STRUCT_FIELD(topologyLink, srcAddr, &structs_type_string),
+			STRUCTS_STRUCT_FIELD(topologyLink, dstAddr, &structs_type_string),
+			STRUCTS_STRUCT_FIELD(topologyLink, srcInterface, &structs_type_string),
+			STRUCTS_STRUCT_FIELD(topologyLink, dstInterface, &structs_type_string),
+			STRUCTS_STRUCT_FIELD_END
+	};
 
-		static const struct structs_type topology_type =
-				STRUCTS_STRUCT_TYPE(topologyLink, &topologyLink_fields);
+	static const struct structs_type topology_type =
+			STRUCTS_STRUCT_TYPE(topologyLink, &topologyLink_fields);
 
-		// Descriptor for field 'list' in 'struct topLink': array of strings
-		static const struct structs_type list_array_type =
-				STRUCTS_ARRAY_TYPE(&topology_type, "link", "link");
+	// Descriptor for field 'list' in 'struct topLink': array of strings
+	static const struct structs_type list_array_type =
+			STRUCTS_ARRAY_TYPE(&topology_type, "link", "link");
 
-		// Descriptor for 'struct topLink'
-		static const struct structs_field topLink_fields[] = {
-			    STRUCTS_STRUCT_FIELD(topLink, list, &list_array_type),
-			    STRUCTS_STRUCT_FIELD_END
-		};
+	// Descriptor for 'struct topLink'
+	static const struct structs_field topLink_fields[] = {
+			STRUCTS_STRUCT_FIELD(topLink, list, &list_array_type),
+			STRUCTS_STRUCT_FIELD_END
+	};
 
-		static const struct structs_type topLink_type =
-				STRUCTS_STRUCT_TYPE(topLink, &topLink_fields);
+	static const struct structs_type topLink_type =
+			STRUCTS_STRUCT_TYPE(topLink, &topLink_fields);
 
-		// Descriptor for a variable of type 'struct topLink *'
-		static const struct structs_type topLink_prt_type =
-				STRUCTS_POINTER_TYPE(&topLink_type, "struct topLink");
+	// Descriptor for a variable of type 'struct topLink *'
+	static const struct structs_type topLink_prt_type =
+			STRUCTS_POINTER_TYPE(&topLink_type, "struct topLink");
 
 
-		// Descriptor for field 'list' in 'struct loopbackAddr': array of strings
-		static const struct structs_type loop_array_type =
-				STRUCTS_ARRAY_TYPE(&structs_type_string, "loopbackAddr", "loopbackAddr");
+	// Descriptor for field 'list' in 'struct loopbackAddr': array of strings
+	static const struct structs_type loop_array_type =
+			STRUCTS_ARRAY_TYPE(&structs_type_string, "loopbackAddr", "loopbackAddr");
 
-		// Descriptor for 'struct loopbackAddr'
-		static const struct structs_field loop_fields[] = {
-				STRUCTS_STRUCT_FIELD(loopbackAddr, list, &loop_array_type),
-				STRUCTS_STRUCT_FIELD_END
-		};
+	// Descriptor for 'struct loopbackAddr'
+	static const struct structs_field loop_fields[] = {
+			STRUCTS_STRUCT_FIELD(loopbackAddr, list, &loop_array_type),
+			STRUCTS_STRUCT_FIELD_END
+	};
 
-		static const struct structs_type loop_type =
-				STRUCTS_STRUCT_TYPE(loopbackAddr, &loop_fields);
+	static const struct structs_type loop_type =
+			STRUCTS_STRUCT_TYPE(loopbackAddr, &loop_fields);
 
-		// Descriptor for a variable of type 'struct loopbackAddr *'
-		static const struct structs_type loop_prt_type =
-				STRUCTS_POINTER_TYPE(&loop_type, "struct loopbackAddr");
+	// Descriptor for a variable of type 'struct loopbackAddr *'
+	static const struct structs_type loop_prt_type =
+			STRUCTS_POINTER_TYPE(&loop_type, "struct loopbackAddr");
 
-		// Descriptor for 'struct xmlRoot2'
-		static const struct structs_field xmlRoot_fields[] = {
-			    STRUCTS_STRUCT_FIELD(xmlRoot2, nodes, &structs_type_int),
-			    STRUCTS_STRUCT_FIELD(xmlRoot2, xmlVector, &topLink_prt_type),
-				STRUCTS_STRUCT_FIELD(xmlRoot2, loopbackInterfaces, &loop_prt_type),
-			    STRUCTS_STRUCT_FIELD_END
-		};
+	// Descriptor for 'struct xmlRoot2'
+	static const struct structs_field xmlRoot_fields[] = {
+			STRUCTS_STRUCT_FIELD(xmlRoot2, nodes, &structs_type_int),
+			STRUCTS_STRUCT_FIELD(xmlRoot2, xmlVector, &topLink_prt_type),
+			STRUCTS_STRUCT_FIELD(xmlRoot2, loopbackInterfaces, &loop_prt_type),
+			STRUCTS_STRUCT_FIELD_END
+	};
 
-		static const struct structs_type xmlRoot_type =
-				STRUCTS_STRUCT_TYPE(xmlRoot2, &xmlRoot_fields);
+	static const struct structs_type xmlRoot_type =
+			STRUCTS_STRUCT_TYPE(xmlRoot2, &xmlRoot_fields);
 
 	FILE *Ptr;
 
@@ -995,6 +971,7 @@ void ImportTopology(struct xmlRoot2* xmlTopology){
 		}
 		else{
 			structs_xml_input(&xmlRoot_type, "Topology", NULL,NULL, Ptr, xmlTopology, STRUCTS_XML_UNINIT, NULL);
+			fclose(Ptr);
 		}
 	}
 	else{
@@ -1004,10 +981,9 @@ void ImportTopology(struct xmlRoot2* xmlTopology){
 		}
 		else{
 			structs_xml_input(&xmlRoot_type, "Topology", NULL,NULL, Ptr, xmlTopology, STRUCTS_XML_UNINIT, NULL);
+			fclose(Ptr);
 		}
 	}
-
-	fclose(Ptr);
 }
 
 /******************* END AUSILIARITY FUNCTIONS *****************************/

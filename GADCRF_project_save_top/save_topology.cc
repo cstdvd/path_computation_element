@@ -1,9 +1,7 @@
 /*
  * load_topology.cc
  *
- *  Created on: Jan 24, 2015
- * Last modify: Jan 26, 2015
- *      Author: Roberta Fumarola
+ *      Author: Roberta Fumarola, David Costa, Gaetano Alboreto
  * Description: Parsing from XML file to class Topology C++
  */
 
@@ -15,8 +13,8 @@ int main(int argc, char *argv[]) {
 
 	int nodes = 0;
 
-	printf("0: Stampa topologia per GNS3\n");
-	printf("1: Stampa topologia per simulazione\n");
+	printf("0: Export GNS3 topology\n");
+	printf("1: Export DEMO topology\n");
 	printf(">\n");
 	scanf("%i",&simul);
 

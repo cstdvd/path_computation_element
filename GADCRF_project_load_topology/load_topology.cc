@@ -1,9 +1,7 @@
 /*
  * load_topology.cc
  *
- *  Created on: Jan 24, 2015
- * Last modify: Jan 26, 2015
- *      Author: Roberta Fumarola
+ *      Author: Roberta Fumarola, David Costa, Gaetano Alboreto
  * Description: Parsing from XML file to class Topology C++
  */
 
@@ -45,7 +43,7 @@ int main(int argc, char *argv[]) {
 
 			//Enable tap interface and test it
 			printf("Enable tap interface and test it\n");
-			//system("chmod 700 ./script/config_tap.sh");
+
 			system("./script/config_tap.sh");
 			printf("test\n");
 			for (int i=0;i<nodes;i++){
@@ -59,6 +57,12 @@ int main(int argc, char *argv[]) {
 			break;
 		case 1:
 			printf("Real mode\n");
+			//Import from XML file topology_xml_simul
+			simul=1;
+			ImportTopology(xmlTopology);
+			nodes = xmlTopology->nodes;
+			net = new Topology(nodes);
+			net->LoadTopology(xmlTopology);
 			break;
 		case 2:
 			//Import from XML file topology_xml_simul
@@ -145,19 +149,19 @@ void installLSP(Topology *net,int nodes){
 	net->UpdateTopology(path,size,capacity);
 	command = (char*)calloc(CHAR_COMMAND,sizeof(char));
 	strcpy(command,"expect ./script/lsp.sh ");
-	strcat(command,net->LoopArray()[path[0]].loopAddr);//inserisco IP
+	strcat(command,net->LoopArray()[path[0]].loopAddr);//insert IP
 	strcat(command," ");
-	strcat(command,net->LoopArray()[path[size-1]].loopAddr);//inserisco DEST
+	strcat(command,net->LoopArray()[path[size-1]].loopAddr);//insert DEST
 	strcat(command," ");
 	char *buffer;
 	buffer = itoa(capacity);
-	strcat(command,buffer);//Inserisco CAPACITY
+	strcat(command,buffer);//Insert CAPACITY
 	strcat(command," ");
 	buffer = itoa(id++);
-	strcat(command,buffer);//Inserisco ID
+	strcat(command,buffer);//Insert ID
 	strcat(command," ");
 	for(int i=0;i<size-1;i++){
-		strcat(command,net->Matrix()[path[i]][path[i+1]].dstAddr);//inserisco PATH
+		strcat(command,net->Matrix()[path[i]][path[i+1]].dstAddr);//insert PATH
 		strcat(command," ");
 	}
 	system(command);
@@ -216,7 +220,6 @@ void configureNet(Topology *net,int nodes){
 				strcat(command[i],net->Matrix()[i][j].srcInterface);
 			}
 		}
-		//printf("system[%i]=%s\n",i,command[i]);
 		system(command[i]);
 	}
 }
@@ -224,22 +227,22 @@ void configureNet(Topology *net,int nodes){
 //Conversion from int to string
 char *itoa(int i)
 {
-  /* Room for INT_DIGITS digits, - and '\0' */
-  static char buf[INT_DIGITS + 2];
-  char *p = buf + INT_DIGITS + 1;	/* points to terminating '\0' */
-  if (i >= 0) {
-    do {
-      *--p = '0' + (i % 10);
-      i /= 10;
-    } while (i != 0);
-    return p;
-  }
-  else {			/* i < 0 */
-    do {
-      *--p = '0' - (i % 10);
-      i /= 10;
-    } while (i != 0);
-    *--p = '-';
-  }
-  return p;
+	/* Room for INT_DIGITS digits, - and '\0' */
+	static char buf[INT_DIGITS + 2];
+	char *p = buf + INT_DIGITS + 1;	/* points to terminating '\0' */
+	if (i >= 0) {
+		do {
+			*--p = '0' + (i % 10);
+			i /= 10;
+		} while (i != 0);
+		return p;
+	}
+	else {			/* i < 0 */
+		do {
+			*--p = '0' - (i % 10);
+			i /= 10;
+		} while (i != 0);
+		*--p = '-';
+	}
+	return p;
 }

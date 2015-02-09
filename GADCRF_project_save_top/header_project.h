@@ -1,11 +1,10 @@
 /*
  * header_project.h
  *
- *  Created on: Jan 24, 2015
- * Last modify: Jan 26, 2015
- *      Author: Roberta Fumarola
+ *      Author: Roberta Fumarola, David Costa, Gaetano Alboreto
  * Description: Declaration of all the structs and Topology Class.
- * 				Prototypes of ausiliarity functions for saving/loading a Topology object.
+ * 				Prototypes of ausiliarity functions for saving/loading a Topology object
+ * 				and for Dijkstra algorithm.
  *
  */
 
@@ -32,7 +31,9 @@
 #define NUM_NODES_DEMO 18
 #define CHAR_ADDRESS 50
 #define CHAR_INTERFACE 30
+#define CHAR_COMMAND 500
 #define DEBUG true
+#define INT_DIGITS 19
 
 struct topologyLink{
 	int capacity;
@@ -75,21 +76,22 @@ private:
 	struct topologyLink *l;
 
 public:
-	Topology(int nodes);	//Constructor
-	~Topology();			//Destructor
-	void InitAdjMatrix();	//Inizialization of adj matrix
-	void InitLoopbackAddresses(); //Initialization of loopbackArray
-	void PrintAdjMatrix();	//Print adj matrix
-	void PrintLoopbackArray();
-	void InitXmlStruct();	//Inizialization of xml structs
-	void SaveTopology();	//Export adj matrix in XML file
-	void LoadTopology(struct xmlRoot2* xmlTopology); //Load imported topology
-	struct topologyLink ** Matrix();
-	struct loopback * LoopArray();
-	bool UpdateTopology(int *path,int len,int c);
+	Topology(int nodes);							//Constructor
+	~Topology();									//Destructor
+	void InitAdjMatrix();							//Inizialization of adj matrix
+	void InitLoopbackAddresses(); 					//Initialization of loopbackArray
+	void PrintAdjMatrix();							//Print adj matrix
+	void PrintLoopbackArray();						//Print loopback array
+	void InitXmlStruct();							//Inizialization of xml structs
+	void SaveTopology();							//Export adj matrix in XML file
+	void LoadTopology(struct xmlRoot2* xmlTopology);//Load imported topology
+	struct topologyLink ** Matrix();				//Return pointer to adj matrix
+	struct loopback * LoopArray();					//Return pointer to loopback array
+	bool UpdateTopology(int *path,int len,int c);	//Update used capacity
 };
 
 //Import topology from XML file
 void ImportTopology(struct xmlRoot2* xmlTopology);
 
 int* find_path(struct topologyLink **net, int nodes, int src, int dest, int c,int *s);
+int* find_path_unconstrained(struct topologyLink ** net, int nodes, int src, int dest, int *s);

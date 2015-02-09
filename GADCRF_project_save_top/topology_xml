@@ -102,7 +102,6 @@
 	    <link>
 		<capacity>-1</capacity>
 		<used>0</used>
-		<used>0</used>
 		<srcAddr>NULL</srcAddr>
 		<dstAddr>NULL</dstAddr>
 		<srcInterface>NULL</srcInterface>
