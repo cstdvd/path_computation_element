@@ -95,3 +95,6 @@ void ImportTopology(struct xmlRoot2* xmlTopology);
 
 int* find_path(struct topologyLink **net, int nodes, int src, int dest, int c,int *s);
 int* find_path_unconstrained(struct topologyLink ** net, int nodes, int src, int dest, int *s);
+
+void showConfigureNet(struct loopback* loopArray, struct topologyLink** net, int i);
+void showConfigureLSP(int src, char* loopAddr1, char* loopAddr2, char*cap, char*id,int size,struct topologyLink **net);

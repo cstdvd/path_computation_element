@@ -10,6 +10,7 @@
 void installLSP(Topology *net,int nodes);
 void installLSPdemo(Topology *net,int nodes);
 void configureNet(Topology *net,int nodes);
+void configureNetdemo(Topology *net,int nodes);
 char *itoa(int i);
 
 int id=0;
@@ -58,11 +59,20 @@ int main(int argc, char *argv[]) {
 		case 1:
 			printf("Real mode\n");
 			//Import from XML file topology_xml_simul
-			simul=1;
+			simul=0;
 			ImportTopology(xmlTopology);
 			nodes = xmlTopology->nodes;
 			net = new Topology(nodes);
 			net->LoadTopology(xmlTopology);
+			printf("test\n");
+			for (int i=0;i<nodes;i++){
+					command = (char*)calloc(CHAR_COMMAND,sizeof(char));
+					strcpy(command,"ping ");
+					strcat(command,net->LoopArray()[i].loopAddr);
+					strcat(command," -c 3");
+					system(command);
+			}
+			printf("test ended\n");
 			break;
 		case 2:
 			//Import from XML file topology_xml_simul
@@ -94,7 +104,7 @@ int main(int argc, char *argv[]) {
 			break;
 		case 2:
 			if(mode==2)
-				printf("Network does not require configuration in demo mode\n");
+				configureNetdemo(net,nodes);
 			else
 				configureNet(net,nodes);
 			break;
@@ -201,7 +211,12 @@ void installLSPdemo(Topology *net,int nodes){
 		printf("It's not possible to install an LSP\n");
 		return;
 	}
+	char *buffer1,*buffer2;
+	buffer1 = itoa(capacity);
+	buffer2 = itoa(id++);
 	net->UpdateTopology(path,size,capacity);
+	showConfigureLSP(src,net->LoopArray()[path[0]].loopAddr,net->LoopArray()[path[size-1]].loopAddr,
+			buffer1,buffer2,size-1,net->Matrix());
 
 }
 
@@ -222,6 +237,10 @@ void configureNet(Topology *net,int nodes){
 		}
 		system(command[i]);
 	}
+}
+
+void configureNetdemo(Topology *net,int nodes){
+	showConfigureNet(net->LoopArray(),net->Matrix(),nodes);
 }
 
 //Conversion from int to string
